@@ -1,0 +1,11 @@
+moveit_setup_assistant_config:
+  URDF:
+    package: robot_description
+    relative_path: ur10_dual_arms.urdf
+    xacro_args: "--inorder "
+  SRDF:
+    relative_path: config/ur10_two_arms.srdf
+  CONFIG:
+    author_name: radlab
+    author_email: amit.parag@outlook.com
+    generated_timestamp: 1554976802

@@ -1,0 +1,8 @@
+prefix=/home/radlab/ur10_ws/install
+
+Name: ur_description
+Description: Description of ur_description
+Version: 1.2.1
+Cflags: 
+Libs: -L/home/radlab/ur10_ws/install/lib 
+Requires: 

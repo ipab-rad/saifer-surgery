@@ -1,0 +1,2 @@
+- setup-file:
+    local-name: /home/radlab/ur10_ws/install/setup.sh
