@@ -13,3 +13,10 @@ Ubuntu 16.04, ROS Kinetic or Ubuntu 18.04, ROS Melodic
 cd saifer-surgery
 catkin_make
 ```
+
+## Current functionality:
+
+Visualise dual arm setup and test moveit planning configuration
+```
+roslaunch ur10_moveit demo.launch
+```
