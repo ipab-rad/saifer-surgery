@@ -12,6 +12,7 @@ Ubuntu 16.04, ROS Kinetic or Ubuntu 18.04, ROS Melodic
 ```
 cd saifer-surgery
 catkin_make
+source devel/setup.bash
 ```
 
 ## Current functionality:
