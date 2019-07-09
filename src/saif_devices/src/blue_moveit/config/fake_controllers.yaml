@@ -1,0 +1,12 @@
+controller_list:
+  - name: fake_endeffector_controller
+    joints:
+      - blue_gripper_finger1_joint
+  - name: fake_ur10_controller
+    joints:
+      - blue_shoulder_pan_joint
+      - blue_shoulder_lift_joint
+      - blue_elbow_joint
+      - blue_wrist_1_joint
+      - blue_wrist_2_joint
+      - blue_wrist_3_joint
