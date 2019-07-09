@@ -16,7 +16,7 @@ blue:
       - blue_wrist_1_joint
       - blue_wrist_2_joint
       - blue_wrist_3_joint
-      - blue_gripper_finger1_joint
+      - gripper_finger1_joint
     sim_control_mode: 1  # 0: position, 1: velocity
 # Publish all joint states
 # Creates the /joint_states topic necessary in ROS
@@ -25,7 +25,7 @@ blue:
     publish_rate: 50
   controller_list:
     - name: ur10_controller
-      action_ns: follow_joint_trajectory
+      action_ns: blue/follow_joint_trajectory
       default: True
       type: FollowJointTrajectory
       joints:
@@ -35,7 +35,7 @@ blue:
         - blue_wrist_1_joint
         - blue_wrist_2_joint
         - blue_wrist_3_joint
-    - name: endeffector_controller
+    - name: end_effector_controller
       action_ns: follow_joint_trajectory
       default: True
       type: FollowJointTrajectory

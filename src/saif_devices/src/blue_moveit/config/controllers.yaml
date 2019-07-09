@@ -1,5 +1,7 @@
 controller_list:
-  - name: fake_ur10_controller
+  - name: ""
+    action_ns: blue/follow_joint_trajectory
+    type: FollowJointTrajectory
     joints:
       - blue_shoulder_pan_joint
       - blue_shoulder_lift_joint
@@ -7,6 +9,4 @@ controller_list:
       - blue_wrist_1_joint
       - blue_wrist_2_joint
       - blue_wrist_3_joint
-  - name: fake_end_effector_controller
-    joints:
-      - gripper_finger1_joint
+

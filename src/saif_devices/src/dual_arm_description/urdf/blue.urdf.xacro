@@ -9,7 +9,7 @@
 
 	<!-- arm -->
 	<xacro:ur10_robot prefix="blue_" joint_limited="false"/>
- 	<xacro:robotiq_85_gripper prefix="blue_" parent="blue_ee_link">
+ 	<xacro:robotiq_85_gripper prefix="" parent="blue_ee_link">
 		 <origin xyz="0.0 0.0 0.0" rpy="0 0 0"/>
 	</xacro:robotiq_85_gripper>
 </robot>

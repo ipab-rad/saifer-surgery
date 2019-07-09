@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+<launch>
+
+  <arg name="robot_ip" doc="IP of the controller" default="192.168.100.1" />
+  <arg name="reverse_ip" default="192.168.100.2" doc="IP of the computer running the driver" />
+  <arg name="prefix" default="blue"/>
+  <arg name="comport" default="/dev/ttyUSB1"/>
+  <arg name="baud" default="115200"/>
+
+  <include file="$(find dual_arm_description)/launch/blue_upload.launch"/>
+
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher">
+	<!--remap from="/joint_states" to="/$(arg prefix)/joint_states"-->
+  </node> 
+  
+  <node name="ur_driver" pkg="ur_modern_driver" type="ur_driver" output="screen" ns="blue">
+	<param name="robot_ip_address" type="str" value="$(arg robot_ip)" />
+	<param name="reverse_ip_address" type="str" value="$(arg reverse_ip)" />
+	<param name="prefix" type="str" value="$(arg prefix)_"/>
+  </node> 
+
+  <node pkg="robotiq_85_driver" type="robotiq_85_driver" name="robotiq_85_driver" respawn="true" output="screen" ns = "blue">
+	<param name="num_grippers" value="1"/>
+	<param name="comport" value="$(arg comport)" />
+	<param name="baud" value="$(arg baud)" />
+	<!--remap from="/gripper/joint_states" to="/blue/joint_states"/-->
+  </node>
+
+  <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher">
+	<rosparam param="source_list">[/blue/joint_states, /gripper/joint_states]</rosparam>
+  </node>
+
+</launch>
