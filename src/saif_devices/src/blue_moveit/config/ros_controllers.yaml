@@ -25,7 +25,7 @@ blue:
     publish_rate: 50
   controller_list:
     - name: ur10_controller
-      action_ns: blue/follow_joint_trajectory
+      action_ns: follow_joint_trajectory
       default: True
       type: FollowJointTrajectory
       joints:
