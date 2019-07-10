@@ -34,4 +34,8 @@
 	<param name="serial_id" value="ttyUSB0"/>
   </node>
 
+  <include file="$(find blue_moveit)/launch/move_group.launch"/>
+
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find blue_moveit)/launch/moveit.rviz"/>
+
 </launch>
