@@ -32,6 +32,7 @@
 
   <node name="blue_ft_sensor" pkg="robotiq_ft_sensor" type="rq_sensor" output="screen">
 	<param name="serial_id" value="ttyUSB0"/>
+        <param name="frame_id" value="blue_robotiq_ft_frame_id"/>
   </node>
 
   <include file="$(find blue_moveit)/launch/move_group.launch"/>
