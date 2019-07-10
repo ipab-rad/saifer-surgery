@@ -1,0 +1,12 @@
+controller_list:
+  - name: ""
+    action_ns: red/follow_joint_trajectory
+    type: FollowJointTrajectory
+    joints:
+      - red_shoulder_pan_joint
+      - red_shoulder_lift_joint
+      - red_elbow_joint
+      - red_wrist_1_joint
+      - red_wrist_2_joint
+      - red_wrist_3_joint
+

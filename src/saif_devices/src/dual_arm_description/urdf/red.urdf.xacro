@@ -1,15 +1,21 @@
 <?xml version="1.0"?>
 
 <robot name="red" xmlns:xacro="http://www.ros.org/wiki/xacro">
-        <xacro:include filename="$(find robotiq_85_description)/urdf/robotiq_85_gripper.urdf.xacro"/>
+	<xacro:include filename="$(find robotiq_3f_gripper_visualization)/cfg/robotiq-3f-gripper_articulated_macro.xacro" />
 
 	<xacro:include filename="$(find ur_description)/urdf/common.gazebo.xacro" />
 
 	<xacro:include filename="$(find ur_description)/urdf/ur10.urdf.xacro" />
 
+
 	<!-- arm -->
 	<xacro:ur10_robot prefix="red_" joint_limited="false"/>
- 	<xacro:robotiq_85_gripper prefix="red_" parent="red_ee_link">
-		 <origin xyz="0.0 0.0 0.0" rpy="0 0 0"/>
-	</xacro:robotiq_85_gripper>
+
+	<xacro:robotiq-3f-gripper_articulated prefix=""/>
+
+	<joint name="red_palm_arm" type="fixed">
+		<parent link="red_tool0"/>
+		<child link="palm"/>
+		<origin xyz="0 0 0" rpy="1.57079632679 0 0"/>
+	</joint>
 </robot>
