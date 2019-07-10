@@ -1,0 +1,104 @@
+dual:
+# MoveIt-specific simulation settings
+  moveit_sim_hw_interface:
+    joint_model_group: controllers_initial_group_
+    joint_model_group_pose: controllers_initial_pose_
+# Settings for ros_control control loop
+  generic_hw_control_loop:
+    loop_hz: 300
+    cycle_time_error_threshold: 0.01
+# Settings for ros_control hardware interface
+  hardware_interface:
+    joints:
+      - blue_shoulder_pan_joint
+      - blue_shoulder_lift_joint
+      - blue_elbow_joint
+      - blue_wrist_1_joint
+      - blue_wrist_2_joint
+      - blue_wrist_3_joint
+      - gripper_finger1_joint
+      - red_shoulder_pan_joint
+      - red_shoulder_lift_joint
+      - red_elbow_joint
+      - red_wrist_1_joint
+      - red_wrist_2_joint
+      - red_wrist_3_joint
+      - palm_finger_1_joint
+      - finger_1_joint_1
+      - finger_1_joint_2
+      - finger_1_joint_3
+      - palm_finger_2_joint
+      - finger_2_joint_1
+      - finger_2_joint_2
+      - finger_2_joint_3
+      - finger_middle_joint_1
+      - finger_middle_joint_2
+      - finger_middle_joint_3
+    sim_control_mode: 1  # 0: position, 1: velocity
+# Publish all joint states
+# Creates the /joint_states topic necessary in ROS
+  joint_state_controller:
+    type: joint_state_controller/JointStateController
+    publish_rate: 50
+  controller_list:
+    - name: blue_arm_controller
+      action_ns: follow_joint_trajectory
+      default: True
+      type: FollowJointTrajectory
+      joints:
+        - blue_shoulder_pan_joint
+        - blue_shoulder_lift_joint
+        - blue_elbow_joint
+        - blue_wrist_1_joint
+        - blue_wrist_2_joint
+        - blue_wrist_3_joint
+    - name: red_arm_controller
+      action_ns: follow_joint_trajectory
+      default: True
+      type: FollowJointTrajectory
+      joints:
+        - red_shoulder_pan_joint
+        - red_shoulder_lift_joint
+        - red_elbow_joint
+        - red_wrist_1_joint
+        - red_wrist_2_joint
+        - red_wrist_3_joint
+    - name: blue_gripper_controller
+      action_ns: follow_joint_trajectory
+      default: True
+      type: FollowJointTrajectory
+      joints:
+        gripper_finger1_joint
+    - name: red_gripper_controller
+      action_ns: follow_joint_trajectory
+      default: True
+      type: FollowJointTrajectory
+      joints:
+        - palm_finger_1_joint
+        - finger_1_joint_1
+        - finger_1_joint_2
+        - finger_1_joint_3
+        - palm_finger_2_joint
+        - finger_2_joint_1
+        - finger_2_joint_2
+        - finger_2_joint_3
+        - finger_middle_joint_1
+        - finger_middle_joint_2
+        - finger_middle_joint_3
+    - name: dual_controller
+      action_ns: follow_joint_trajectory
+      default: True
+      type: FollowJointTrajectory
+      joints:
+        - blue_shoulder_pan_joint
+        - blue_shoulder_lift_joint
+        - blue_elbow_joint
+        - blue_wrist_1_joint
+        - blue_wrist_2_joint
+        - blue_wrist_3_joint
+        - red_shoulder_pan_joint
+        - red_shoulder_lift_joint
+        - red_elbow_joint
+        - red_wrist_1_joint
+        - red_wrist_2_joint
+        - red_wrist_3_joint

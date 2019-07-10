@@ -1,0 +1,11 @@
+moveit_setup_assistant_config:
+  URDF:
+    package: dual_arm_description
+    relative_path: urdf/dual.urdf
+    xacro_args: "--inorder "
+  SRDF:
+    relative_path: config/dual.srdf
+  CONFIG:
+    author_name: Craig Innes
+    author_email: craig.innes@ed.ac.uk
+    generated_timestamp: 1562778416
