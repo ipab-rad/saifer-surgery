@@ -30,4 +30,8 @@
 	<rosparam param="source_list">[/blue/joint_states, /gripper/joint_states]</rosparam>
   </node>
 
+  <node name="blue_ft_sensor" pkg="robotiq_ft_sensor" type="rq_sensor" output="screen">
+	<param name="serial_id" value="ttyUSB0"/>
+  </node>
+
 </launch>
