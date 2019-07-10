@@ -4,3 +4,6 @@
 [submodule "src/saif_devices/src/robotiq_85_gripper"]
 	path = src/saif_devices/src/robotiq_85_gripper
 	url = https://github.com/StanleyInnovation/robotiq_85_gripper.git
+[submodule "src/saif_devices/src/robotiq"]
+	path = src/saif_devices/src/robotiq
+	url = https://github.com/ros-industrial/robotiq.git
