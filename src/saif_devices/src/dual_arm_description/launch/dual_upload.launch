@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<launch>
+
+<param name="robot_description" command="$(find xacro)/xacro --inorder '$(find dual_arm_description)/urdf/dual.urdf.xacro'"/>
+
+</launch>
+                  

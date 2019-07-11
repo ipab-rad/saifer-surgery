@@ -27,7 +27,7 @@
   <node name="robotiq_3f_controller" pkg="robotiq_3f_gripper_control" type="Robotiq3FGripperTcpNode.py" args="$(arg ip_gripper)"/>
 
   <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher">
-	<rosparam param="source_list">[/red/joint_states,/gripper3/joint_states]</rosparam>
+	<rosparam param="source_list">["/red/joint_states","/gripper3/joint_states"]</rosparam>
   </node>
 
   <include file="$(find red_moveit)/launch/move_group.launch"/>

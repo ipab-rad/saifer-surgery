@@ -1,0 +1,65 @@
+<?xml version="1.0"?>
+<launch>
+
+	<include file="$(find dual_arm_description)/launch/dual_upload.launch"/>
+
+	<node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"/>
+
+	<include file="$(find dual_moveit)/launch/move_group.launch"/>
+
+	<node name="rviz" pkg="rviz" type="rviz" args="-d $(find dual_moveit)/launch/moveit.rviz"/>
+
+	<node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher">
+	<rosparam param="source_list">[/blue/joint_states, /gripper/joint_states,/red/joint_states,/gripper3/joint_states]</rosparam>
+	</node>
+
+	<!--Blue-->
+	<arg name="blue_robot_ip" doc="IP of the controller" default="192.168.100.1" />
+	<arg name="blue_reverse_ip" default="192.168.100.2" doc="IP of the computer running the driver" />
+	<arg name="blue_prefix" default="blue"/>
+	<arg name="comport" default="/dev/ttyUSB1"/>
+	<arg name="baud" default="115200"/>
+	<arg name="blue_reverse_port" default="50002"/>
+
+	<node name="ur_driver_blue" pkg="ur_modern_driver" type="ur_driver" output="screen" ns="blue">
+	<param name="robot_ip_address" type="str" value="$(arg blue_robot_ip)" />
+	<param name="reverse_ip_address" type="str" value="$(arg blue_reverse_ip)" />
+	<param name="prefix" type="str" value="$(arg blue_prefix)_"/>
+	<param name="reverse_port" type="int" value="$(arg blue_reverse_port)"/>
+	</node> 
+
+	<node pkg="robotiq_85_driver" type="robotiq_85_driver" name="robotiq_85_driver" respawn="true" output="screen" ns = "blue">
+	<param name="num_grippers" value="1"/>
+	<param name="comport" value="$(arg comport)" />
+	<param name="baud" value="$(arg baud)" />
+	</node>
+
+	<node name="blue_ft_sensor" pkg="robotiq_ft_sensor" type="rq_sensor" output="screen">
+	<param name="serial_id" value="ttyUSB0"/>
+	<param name="frame_id" value="blue_robotiq_ft_frame_id"/>
+	</node>
+
+	<!--Red-->
+	<arg name="red_robot_ip" doc="IP of the controller" default="192.168.101.3" />
+	<arg name="red_reverse_ip" default="192.168.101.4" doc="IP of the computer running the driver" />
+	<arg name="red_reverse_port" default="50001"/>
+
+	<arg name="red_prefix" default="red"/>
+	<arg name="ip_gripper" default="192.168.1.11"/>
+
+
+	<node name="ur_driver_red" pkg="ur_modern_driver" type="ur_driver" output="screen" ns="red">
+	<param name="robot_ip_address" type="str" value="$(arg red_robot_ip)" />
+	<param name="reverse_ip_address" type="str" value="$(arg red_reverse_ip)" />
+	<param name="prefix" type="str" value="$(arg red_prefix)_"/>
+	<param name="reverse_port" type="int" value="$(arg red_reverse_port)"/>
+	</node> 
+
+	<node name="robotiq_3f_js_pub" pkg="robotiq_3f_gripper_joint_state_publisher" type="robotiq_3f_gripper_joint_states">
+	<remap from="joint_states" to="gripper3/joint_states"/>
+	</node>
+
+	<node name="robotiq_3f_controller" pkg="robotiq_3f_gripper_control" type="Robotiq3FGripperTcpNode.py" args="$(arg ip_gripper)"/>
+
+
+</launch>
