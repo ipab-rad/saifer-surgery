@@ -9,6 +9,8 @@
 
 	<node name="rviz" pkg="rviz" type="rviz" args="-d $(find dual_moveit)/launch/moveit.rviz"/>
 
+	<node name="planning_scene_constraints" pkg="planning_scene_constraints" type="add_static_objects.py" output="screen"/>
+
 	<node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher">
 	<rosparam param="source_list">[/blue/joint_states, /gripper/joint_states,/red/joint_states,/gripper3/joint_states]</rosparam>
 	</node>

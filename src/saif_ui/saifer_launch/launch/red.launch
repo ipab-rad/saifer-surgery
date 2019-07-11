@@ -8,6 +8,9 @@
 
   <include file="$(find dual_arm_description)/launch/red_upload.launch"/>
 
+  <!--node name="planning_scene_constraints" pkg="planning_scene_constraints" type="add_static_objects.py" output="screen"/-->
+
+
   <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher">
 	<!--remap from="/joint_states" to="/$(arg prefix)/joint_states"-->
   </node> 
