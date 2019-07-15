@@ -30,7 +30,7 @@
 	<param name="reverse_port" type="int" value="$(arg blue_reverse_port)"/>
 	</node> 
 
-	<node pkg="robotiq_85_driver" type="robotiq_85_driver" name="robotiq_85_driver" respawn="true" output="screen" ns = "blue">
+	<node pkg="robotiq_85_driver" type="robotiq_85_driver" name="robotiq_85_driver" output="screen" ns = "blue">
 	<param name="num_grippers" value="1"/>
 	<param name="comport" value="$(arg comport)" />
 	<param name="baud" value="$(arg baud)" />
