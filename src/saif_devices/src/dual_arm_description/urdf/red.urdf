@@ -101,7 +101,7 @@
     </collision>
     <inertial>
       <mass value="12.93"/>
-      <origin rpy="0 0 0" xyz="0.0 0.0 0.306"/>
+      <origin rpy="0 0 0" xyz="0.0 -0.045 0.306"/>
       <inertia ixx="0.421753803798" ixy="0.0" ixz="0.0" iyy="0.421753803798" iyz="0.0" izz="0.036365625"/>
     </inertial>
   </link>
@@ -157,7 +157,7 @@
     </collision>
     <inertial>
       <mass value="1.96"/>
-      <origin rpy="0 0 0" xyz="0.0 0.0 0.0"/>
+      <origin rpy="0 0 0" xyz="0.0 0.1149 0.0"/>
       <inertia ixx="0.0051082479567" ixy="0.0" ixz="0.0" iyy="0.0051082479567" iyz="0.0" izz="0.0055125"/>
     </inertial>
   </link>
@@ -185,7 +185,7 @@
     </collision>
     <inertial>
       <mass value="1.96"/>
-      <origin rpy="0 0 0" xyz="0.0 0.0 0.0"/>
+      <origin rpy="0 0 0" xyz="0.0 0.0 0.1157"/>
       <inertia ixx="0.0051082479567" ixy="0.0" ixz="0.0" iyy="0.0051082479567" iyz="0.0" izz="0.0055125"/>
     </inertial>
   </link>
@@ -213,8 +213,8 @@
     </collision>
     <inertial>
       <mass value="0.202"/>
-      <origin rpy="0 0 0" xyz="0.0 0.0 0.0"/>
-      <inertia ixx="0.000526462289415" ixy="0.0" ixz="0.0" iyy="0.000526462289415" iyz="0.0" izz="0.000568125"/>
+      <origin rpy="1.57079632679 0 0" xyz="0.0 0.07695 0.0"/>
+      <inertia ixx="0.000117921661165" ixy="0.0" ixz="0.0" iyy="0.000117921661165" iyz="0.0" izz="0.000204525"/>
     </inertial>
   </link>
   <joint name="red_ee_fixed_joint" type="fixed">
@@ -733,7 +733,7 @@
   <joint name="red_palm_arm" type="fixed">
     <parent link="red_tool0"/>
     <child link="palm"/>
-    <origin rpy="1.57079632679 0 0" xyz="0 0 0"/>
+    <origin rpy="1.57079632679 0 2.35619449019" xyz="0 0 0"/>
   </joint>
 </robot>
 

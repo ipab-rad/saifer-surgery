@@ -16,6 +16,6 @@
 	<joint name="red_palm_arm" type="fixed">
 		<parent link="red_tool0"/>
 		<child link="palm"/>
-		<origin xyz="0 0 0" rpy="1.57079632679 0 0"/>
+		<origin xyz="0 0 0" rpy="1.57079632679 0 2.35619449019"/>
 	</joint>
 </robot>
