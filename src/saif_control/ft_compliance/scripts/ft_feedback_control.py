@@ -2,13 +2,15 @@
 
 import rospy
 from sensor_msgs.msg import JointState
-from robotiq_ft_sensor.msg import ft_sensor
+from geometry_msgs.msg import PointStamped
+from geometry_msgs.msg import WrenchStamped
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 from control_msgs.msg import FollowJointTrajectoryAction, FollowJointTrajectoryGoal
 #from ur_kin_py.ur10_kin_py import forward, inverse
 from ur_kin_py.kin import Kinematics
 
 from trac_ik_python.trac_ik import IK
+import tf
 
 import numpy as np
 import moveit_commander
@@ -29,10 +31,11 @@ class Compensation():
 
 		self.robot = moveit_commander.RobotCommander()
 		self.group = moveit_commander.MoveGroupCommander('blue_arm')
-		
-
+	
+		self.listener = tf.TransformListener()
+	
 		rospy.Subscriber("/blue/joint_states",JointState,self.joint_callback)
-		rospy.Subscriber("/robotiq_ft_sensor",ft_sensor,self.ft_callback,queue_size=1)
+		rospy.Subscriber("/robotiq_ft_wrench",WrenchStamped,self.ft_callback,queue_size=1)
 
 		self.client = actionlib.SimpleActionClient('blue/follow_joint_trajectory',FollowJointTrajectoryAction)
 
@@ -43,7 +46,7 @@ class Compensation():
 		self.js_names = data.name
 
 	def ft_callback(self,data):
-		ft = np.array([data.Fx,data.Fy,data.Fz]) 
+		ft = np.array([data.wrench.force.x,data.wrench.force.y,data.wrench.force.z]) 
 		self.wind_up += 1
 		self.wind_up = min(self.wind_up,100)
 		df = np.sum(np.abs(ft-self.Fg))
@@ -51,16 +54,25 @@ class Compensation():
 		if (df > self.F_thresh) and (self.wind_up > 50):
 
 			if self.js is not None:
-				
+				self.listener.waitForTransform(self.group.get_planning_frame(),"/blue_robotiq_ft_frame_id",data.header.stamp,rospy.Duration(4.0))				
+				p = PointStamped()
+				p.header = data.header
+				p.point.x = self.K*(ft-self.Fg)[0]
+				p.point.y = self.K*(ft-self.Fg)[1] 
+				p.point.z = self.K*(ft-self.Fg)[2]				
+
 				pose = self.group.get_current_pose().pose
 				print('New force deviation:')
 				print(ft,self.Fg)
+				print(p.point.x,p.point.y,p.point.z)
+
+				pnew = self.listener.transformPoint('ceiling',p)
 			       
 				print('Original pose:',pose.position.z,pose.position.x,pose.position.y)
-				pose.position.z = pose.position.z + self.K*(ft-self.Fg)[2]
-				pose.position.y = pose.position.y + self.K*(ft-self.Fg)[1]
-				pose.position.x = pose.position.x + self.K*(ft-self.Fg)[0]
-				print('New pose',pose.position.z,pose.position.y,pose.position.x)
+				pose.position.z = pnew.point.z
+				pose.position.y = pnew.point.y
+				pose.position.x = pnew.point.x
+				print('New pose',pose.position.z,pose.position.x,pose.position.y)
 
 				sol = None
 				retries = 0
