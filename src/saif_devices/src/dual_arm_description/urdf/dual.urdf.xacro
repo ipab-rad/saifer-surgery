@@ -95,6 +95,46 @@
 		<origin xyz="0 0 0" rpy="1.57079632679 0 2.35619449019"/>
 	</joint>
 
+	<link name='red_cable_1'>
+		<visual>
+			<geometry>
+				<cylinder length="0.45" radius="0.05"/>
+			</geometry>
+			<material name="black"/>
+		</visual>
+	</link>
+	<joint name='red_arm_2_cable1' type="fixed">
+		<parent link='red_forearm_link'/>
+		<child link='red_cable_1'/>
+		<origin xyz="0.1 0.0 0.3"/>
+	</joint>
+	<link name='red_cable_2'>
+		<visual>
+			<geometry>
+				<cylinder length="0.45" radius="0.05"/>
+			</geometry>
+			<material name="black"/>
+		</visual>
+	</link>
+	<joint name='red_2_cable2' type="fixed">
+		<parent link='red_upper_arm_link'/>
+		<child link='red_cable_2'/>
+		<origin xyz="0.0 0.06 0.325"/>
+	</joint>
+	<link name='red_cable_ee'>
+		<visual>
+			<geometry>
+				<box size="0.1 0.1 0.1"/>
+			</geometry>
+			<material name="black"/>
+		</visual>
+	</link>
+	<joint name='red_arm_2_cable_22' type="fixed">
+		<parent link='red_tool0'/>
+		<child link='red_cable_ee'/>
+		<origin xyz="-0.07 -0.07 -0.03"/>
+	</joint>
+
 <!-- connecting the red and blue arms together -->
 	<joint name="ceiling_to_blue" type="fixed">
 		<parent link="ceiling" />

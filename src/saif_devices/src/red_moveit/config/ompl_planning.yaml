@@ -149,7 +149,7 @@ red_ur10:
   projection_evaluator: joints(red_shoulder_pan_joint,red_shoulder_lift_joint)
   longest_valid_segment_fraction: 0.005
 end_effector:
-  default_planner_config: None
+  default_planner_config: ""
   planner_configs:
     - SBL
     - EST
