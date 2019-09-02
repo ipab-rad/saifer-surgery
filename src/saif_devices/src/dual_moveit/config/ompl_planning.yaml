@@ -173,7 +173,7 @@ red_arm:
     - SPARS
     - SPARStwo
 blue_gripper:
-  default_planner_config: None
+  default_planner_config: ""
   planner_configs:
     - SBL
     - EST
@@ -199,7 +199,7 @@ blue_gripper:
     - SPARS
     - SPARStwo
 red_gripper:
-  default_planner_config: None
+  default_planner_config: ""
   planner_configs:
     - SBL
     - EST

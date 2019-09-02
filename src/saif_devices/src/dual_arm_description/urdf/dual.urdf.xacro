@@ -20,6 +20,66 @@
 		 <origin xyz="0.0 0.0 0.0" rpy="0 -1.57079632679 0"/>
 	</xacro:robotiq_85_gripper>
 
+<link name='cable_1'>
+		<visual>
+			<geometry>
+				<cylinder length="0.45" radius="0.05"/>
+			</geometry>
+			<material name="black"/>
+		</visual>
+	</link>
+	<joint name='arm_2_cable1' type="fixed">
+		<parent link='blue_forearm_link'/>
+		<child link='cable_1'/>
+		<origin xyz="0.1 0.0 0.3"/>
+	</joint>
+	<link name='cable_2'>
+		<visual>
+			<geometry>
+				<cylinder length="0.45" radius="0.05"/>
+			</geometry>
+			<material name="black"/>
+		</visual>
+	</link>
+	<joint name='arm_2_cable2' type="fixed">
+		<parent link='blue_upper_arm_link'/>
+		<child link='cable_2'/>
+		<origin xyz="0.0 0.06 0.325"/>
+	</joint>
+	<link name='cable_ee'>
+		<visual>
+			<geometry>
+				<box size="0.1 0.1 0.1"/>
+			</geometry>
+			<material name="black"/>
+		</visual>
+	</link>
+	<joint name='arm_2_cable_22' type="fixed">
+		<parent link='blue_tool0'/>
+		<child link='cable_ee'/>
+		<origin xyz="-0.1 0.0 0.06"/>
+	</joint>
+	<link name='realsense_mount'>
+		<visual>
+			<geometry>
+				<box size="0.05 0.05 0.05"/>
+			</geometry>
+			<material name="black"/>
+		</visual>
+	</link>
+	<joint name='ee_2_realsense_22' type="fixed">
+		<parent link='gripper_base_link'/>
+		<child link='realsense_mount'/>
+		<origin xyz="0.02 0.0 -0.05"/>
+	</joint>
+
+
+	<xacro:include filename="$(find dual_arm_description)/urdf/d435.urdf.xacro"/>
+
+	<xacro:sensor_d435 parent="gripper_base_link">
+		<origin xyz ="0.02 0 -0.1" rpy="0 0 3.14159"/> 
+	</xacro:sensor_d435>
+
 <!-- the red robot -->
 	<xacro:include filename="$(find robotiq_3f_gripper_visualization)/cfg/robotiq-3f-gripper_articulated_macro.xacro" />
 
