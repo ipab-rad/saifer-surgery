@@ -88,20 +88,20 @@ class ContourFollower():
             pcd.points = o3d.utility.Vector3dVector(xyz)
 
             print('Removing outliers...')
-            cl, ind = o3d.geometry.radius_outlier_removal(pcd,nb_points=16,radius=0.05)
+            cl, ind = o3d.geometry.radius_outlier_removal(pcd,nb_points=16,radius=0.08)
             pcd_clean = o3d.geometry.select_down_sample(cl, ind)
 
             print('Estimating normals...')
             o3d.geometry.estimate_normals(pcd_clean,search_param=o3d.geometry.KDTreeSearchParamHybrid(radius=0.1,max_nn=30))
-            o3d.geometry.orient_normals_to_align_with_direction(pcd_clean,orientation_reference=[0.,0., -1.])
-
+            #o3d.geometry.orient_normals_to_align_with_direction(pcd_clean,orientation_reference=[0.,0., -1.])
+	    o3d.geometry.orient_normals_towards_camera_location(pcd_clean)
             print('Downsampling points...')
             downpcd = o3d.geometry.voxel_down_sample(pcd_clean, voxel_size=self.sample_density)
             points = np.asarray(downpcd.points)
             norms = np.asarray(downpcd.normals)
             print("Points to plan through: ",points.shape[0])
             print(norms.shape)
-#        o3d.visualization.draw_geometries([downpcd])
+	   
             print('Travelling salesman...')
             route = self.travelling_salesman(points.copy())
 
@@ -116,15 +116,17 @@ class ContourFollower():
                 pose.pose.position.y = points[r,1]
                 pose.pose.position.z = points[r,2]
 
-                pose.pose.orientation.x = norms[r,1]
-                pose.pose.orientation.y = norms[r,2]
-                pose.pose.orientation.z = norms[r,0]
-                pose.pose.orientation.w = 1
+                d = np.sqrt(norms[r,0]**2+norms[r,1]**2 +norms[r,2]**2+1.0)
+		pose.pose.orientation.x = norms[r,0]/d
+                pose.pose.orientation.y = norms[r,1]/d
+                pose.pose.orientation.z = norms[r,2]/d
+                pose.pose.orientation.w = 1/d
 
                 path.poses.append(pose)
 
             self.traj_pub.publish(path)
             print('Done')
+	    o3d.visualization.draw_geometries([downpcd]) 
 
 if __name__ == '__main__':
     cf = ContourFollower()

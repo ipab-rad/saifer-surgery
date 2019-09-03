@@ -76,6 +76,6 @@
 	</xacro:robotiq_85_gripper>
 
 	<xacro:sensor_d435 parent="gripper_base_link">
-		<origin xyz ="0.02 0 -0.1" rpy="0 0 3.14159"/> 
+		<origin xyz ="0.02 0 -0.1" rpy="0 3.14159 3.14159"/> 
 	</xacro:sensor_d435>
 </robot>

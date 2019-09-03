@@ -25,7 +25,7 @@
 #include <pcl/filters/passthrough.h>
 #include <pcl/common/common.h>
 
-#include <pcl/filters/impl/box_clipper3D.hpp>
+//#include <pcl/filters/impl/box_clipper3D.hpp>
 
 
 #include <visualization_msgs/Marker.h>
