@@ -1,0 +1,12 @@
+<library path="libpublish_selected_patch">
+  <class name="publish_selected_patch/SelectedPointsPublisher"
+         type="publish_selected_patch::SelectedPointsPublisher"
+         base_class_type="rviz::Tool">
+    <description>
+      Fork of the rviz::SelectionTool:
+      Drag with the left button to select objects in the 3D scene.
+      Hold the Alt key to change viewpoint as in the Move tool.
+      Additionally publishes selected points on /selected_patch topic.
+    </description>
+  </class>
+</library>
