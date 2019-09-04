@@ -28,14 +28,27 @@ class ContourFollower():
 
     def path_cb(self,msg):
         planning_frame = self.group.get_planning_frame()
-        if self.listener.frameExists(msg.header.frame_id) and self.listener.frameExists(planning_frame):
+	self.listener.waitForTransform(msg.header.frame_id, planning_frame, rospy.Time.now(), rospy.Duration(1.0))
+        
+	if True:#self.listener.frameExists(msg.header.frame_id) and self.listener.frameExists('/camera_color/optical_frame'):
             rospy.loginfo('Planning path through waypoints')
-            waypoints = []
+	    pose = self.group.get_current_pose().pose
+            pose.position = self.listener.transformPose(planning_frame,msg.poses[0]).pose.position
+	    self.group.set_pose_target(pose)
+	    plan = self.group.go(wait=True)
+	    if not plan:
+		return
+	    self.group.stop()
+	    print('Moved to start point')
+            waypoints = [copy.deepcopy(self.group.get_current_pose().pose)]
             for j in range(len(msg.poses)):
-                pose = self.listener.transformPose(planning_frame,msg.poses[j]).pose
+		print(waypoints[-1])
+		pose = waypoints[-1]
+                pose.position = self.listener.transformPose(planning_frame,msg.poses[j]).pose.position
+#		pose.position.x = pose.position.x+0.01		
                 waypoints.append(copy.deepcopy(pose))
-
-            plan,fraction = self.group.compute_cartesian_path(waypoints,0.01,0.0)
+            print(waypoints[-1])
+            plan,fraction = self.group.compute_cartesian_path(waypoints,0.2,0.0)
             rospy.loginfo('Planning done')
             self.group.execute(plan,wait=True)
         else:

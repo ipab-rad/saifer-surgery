@@ -146,9 +146,9 @@ class ContourFollower():
                 pose = PoseStamped()
 		pose.pose = self.orientation_from_vector3D(norms[r,:])
                 pose.header = header
-                pose.pose.position.x = points[r,0]
-                pose.pose.position.y = points[r,1]
-                pose.pose.position.z = points[r,2]
+                pose.pose.position.x = points[r,0] + norms[r,0]*0.25
+                pose.pose.position.y = points[r,1] + norms[r,1]*0.25
+                pose.pose.position.z = points[r,2] + norms[r,2]*0.25
 		
                 path.poses.append(pose)
 

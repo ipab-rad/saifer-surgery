@@ -1557,7 +1557,8 @@
   <joint name="red_palm_arm" type="fixed">
     <parent link="red_tool0"/>
     <child link="palm"/>
-    <origin rpy="1.57079632679 0 2.35619449019" xyz="0 0 0"/>
+    <origin rpy="1.57079632679 0 -0.78539" xyz="0 0 0"/>
+    <!--2.35619449019"/-->
   </joint>
   <link name="red_cable_1">
     <visual>
@@ -1596,7 +1597,7 @@
   <joint name="red_arm_2_cable_22" type="fixed">
     <parent link="red_tool0"/>
     <child link="red_cable_ee"/>
-    <origin xyz="-0.07 -0.07 -0.03"/>
+    <origin xyz="0.07 0.0 -0.06"/>
   </joint>
   <!-- connecting the red and blue arms together -->
   <joint name="ceiling_to_blue" type="fixed">
