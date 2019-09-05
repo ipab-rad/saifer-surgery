@@ -74,35 +74,40 @@ class ContourFollower():
 
     def orientation_from_vector3D(self,n):
 
-	u = [1,0,0]
-	norm = np.linalg.norm(n)
-        v = -np.asarray(n)/norm 
+	#u = [1,0,0]
+	#norm = np.linalg.norm(n)
+        #v = -np.asarray(n)/norm 
 	pose = Pose()
-	if (np.array_equal(u, v)):
-	    pose.orientation.w = 1
-            pose.orientation.x = 0
-            pose.orientation.y = 0
-            pose.orientation.z = 0
-        elif (np.array_equal(u, np.negative(v))):
-            pose.orientation.w = 0
-            pose.orientation.x = 0
-            pose.orientation.y = 0
-            pose.orientation.z = 1
-        else:
-            half = [u[0]+v[0], u[1]+v[1], u[2]+v[2]]
-            pose.orientation.w = np.dot(u, half)
-            temp = np.cross(u, half)
-            pose.orientation.x = temp[0]
-            pose.orientation.y = temp[1]
-            pose.orientation.z = temp[2]
-            norm = math.sqrt(pose.orientation.x*pose.orientation.x + pose.orientation.y*pose.orientation.y + 
-            pose.orientation.z*pose.orientation.z + pose.orientation.w*pose.orientation.w)
-        if norm == 0:
-           norm = 1
-           pose.orientation.x /= norm
-           pose.orientation.y /= norm
-           pose.orientation.z /= norm
-           pose.orientation.w /= norm
+	pose.orientation.w = 1/np.sqrt(2)
+	pose.orientation.z = 1/np.sqrt(2)
+	pose.orientation.y = 0
+	pose.orientation.x = 0
+	
+	#if (np.array_equal(u, v)):
+	#    pose.orientation.w = 1
+        #    pose.orientation.x = 0
+        #    pose.orientation.y = 0
+        #    pose.orientation.z = 0
+        #elif (np.array_equal(u, np.negative(v))):
+        #    pose.orientation.w = 0
+        #    pose.orientation.x = 0
+        #    pose.orientation.y = 0
+        #    pose.orientation.z = 1
+        #else:
+        #    half = [u[0]+v[0], u[1]+v[1], u[2]+v[2]]
+        #    pose.orientation.w = np.dot(u, half)
+        #    temp = np.cross(u, half)
+        #    pose.orientation.x = temp[0]
+        #    pose.orientation.y = temp[1]
+        #    pose.orientation.z = temp[2]
+        #    norm = math.sqrt(pose.orientation.x*pose.orientation.x + pose.orientation.y*pose.orientation.y + 
+        #    pose.orientation.z*pose.orientation.z + pose.orientation.w*pose.orientation.w)
+        #if norm == 0:
+        #   norm = 1
+        #   pose.orientation.x /= norm
+        #   pose.orientation.y /= norm
+        #   pose.orientation.z /= norm
+        #   pose.orientation.w /= norm
         return pose
 
     def pc_callback(self,points):
@@ -144,11 +149,11 @@ class ContourFollower():
 
             for r in route:
                 pose = PoseStamped()
-		pose.pose = self.orientation_from_vector3D(norms[r,:])
+		pose.pose.orientation = self.orientation_from_vector3D(norms[r,:]).orientation
                 pose.header = header
-                pose.pose.position.x = points[r,0] + norms[r,0]*0.25
-                pose.pose.position.y = points[r,1] + norms[r,1]*0.25
-                pose.pose.position.z = points[r,2] + norms[r,2]*0.25
+                pose.pose.position.x = points[r,0]# + norms[r,0]*0.25
+                pose.pose.position.y = points[r,1]# + norms[r,1]*0.25
+                pose.pose.position.z = points[r,2]# + norms[r,2]*0.25
 		
                 path.poses.append(pose)
 
