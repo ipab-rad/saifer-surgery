@@ -431,6 +431,8 @@
     <disable_collisions link1="finger_1_link_1" link2="finger_2_link_3" reason="Never" />
     <disable_collisions link1="finger_1_link_1" link2="finger_middle_link_0" reason="Never" />
     <disable_collisions link1="finger_1_link_1" link2="finger_middle_link_1" reason="Never" />
+    <disable_collisions link1="finger_1_link_1" link2="finger_middle_link_2" reason="User" />
+    <disable_collisions link1="finger_1_link_1" link2="finger_middle_link_3" reason="User" />
     <disable_collisions link1="finger_1_link_1" link2="gripper_base_link" reason="Never" />
     <disable_collisions link1="finger_1_link_1" link2="gripper_finger1_finger_link" reason="Never" />
     <disable_collisions link1="finger_1_link_1" link2="gripper_finger1_finger_tip_link" reason="Never" />
@@ -452,6 +454,9 @@
     <disable_collisions link1="finger_1_link_2" link2="finger_2_link_2" reason="Never" />
     <disable_collisions link1="finger_1_link_2" link2="finger_2_link_3" reason="Never" />
     <disable_collisions link1="finger_1_link_2" link2="finger_middle_link_0" reason="Never" />
+    <disable_collisions link1="finger_1_link_2" link2="finger_middle_link_1" reason="User" />
+    <disable_collisions link1="finger_1_link_2" link2="finger_middle_link_2" reason="User" />
+    <disable_collisions link1="finger_1_link_2" link2="finger_middle_link_3" reason="User" />
     <disable_collisions link1="finger_1_link_2" link2="gripper_finger1_finger_link" reason="Never" />
     <disable_collisions link1="finger_1_link_2" link2="gripper_finger1_finger_tip_link" reason="Never" />
     <disable_collisions link1="finger_1_link_2" link2="gripper_finger1_inner_knuckle_link" reason="Never" />
@@ -467,13 +472,18 @@
     <disable_collisions link1="finger_1_link_3" link2="finger_2_link_0" reason="Never" />
     <disable_collisions link1="finger_1_link_3" link2="finger_2_link_1" reason="Never" />
     <disable_collisions link1="finger_1_link_3" link2="finger_2_link_2" reason="Never" />
+    <disable_collisions link1="finger_1_link_3" link2="finger_2_link_3" reason="User" />
     <disable_collisions link1="finger_1_link_3" link2="finger_middle_link_0" reason="Never" />
+    <disable_collisions link1="finger_1_link_3" link2="finger_middle_link_1" reason="User" />
+    <disable_collisions link1="finger_1_link_3" link2="finger_middle_link_2" reason="User" />
+    <disable_collisions link1="finger_1_link_3" link2="finger_middle_link_3" reason="User" />
     <disable_collisions link1="finger_1_link_3" link2="gripper_finger1_finger_link" reason="Never" />
     <disable_collisions link1="finger_1_link_3" link2="gripper_finger1_finger_tip_link" reason="Never" />
     <disable_collisions link1="finger_1_link_3" link2="gripper_finger1_inner_knuckle_link" reason="Never" />
     <disable_collisions link1="finger_1_link_3" link2="gripper_finger1_knuckle_link" reason="Never" />
     <disable_collisions link1="finger_1_link_3" link2="gripper_finger2_finger_link" reason="Never" />
     <disable_collisions link1="finger_1_link_3" link2="gripper_finger2_finger_tip_link" reason="Never" />
+    <disable_collisions link1="finger_1_link_3" link2="palm" reason="User" />
     <disable_collisions link1="finger_1_link_3" link2="realsense_mount" reason="Never" />
     <disable_collisions link1="finger_1_link_3" link2="red_cable_ee" reason="Never" />
     <disable_collisions link1="finger_1_link_3" link2="red_ee_link" reason="Never" />
@@ -507,6 +517,8 @@
     <disable_collisions link1="finger_2_link_1" link2="finger_2_link_3" reason="Never" />
     <disable_collisions link1="finger_2_link_1" link2="finger_middle_link_0" reason="Never" />
     <disable_collisions link1="finger_2_link_1" link2="finger_middle_link_1" reason="Never" />
+    <disable_collisions link1="finger_2_link_1" link2="finger_middle_link_2" reason="User" />
+    <disable_collisions link1="finger_2_link_1" link2="finger_middle_link_3" reason="User" />
     <disable_collisions link1="finger_2_link_1" link2="gripper_base_link" reason="Never" />
     <disable_collisions link1="finger_2_link_1" link2="gripper_finger1_finger_link" reason="Never" />
     <disable_collisions link1="finger_2_link_1" link2="gripper_finger1_finger_tip_link" reason="Never" />
@@ -525,6 +537,9 @@
     <disable_collisions link1="finger_2_link_1" link2="red_wrist_3_link" reason="Never" />
     <disable_collisions link1="finger_2_link_2" link2="finger_2_link_3" reason="Adjacent" />
     <disable_collisions link1="finger_2_link_2" link2="finger_middle_link_0" reason="Never" />
+    <disable_collisions link1="finger_2_link_2" link2="finger_middle_link_1" reason="User" />
+    <disable_collisions link1="finger_2_link_2" link2="finger_middle_link_2" reason="User" />
+    <disable_collisions link1="finger_2_link_2" link2="finger_middle_link_3" reason="User" />
     <disable_collisions link1="finger_2_link_2" link2="gripper_base_link" reason="Never" />
     <disable_collisions link1="finger_2_link_2" link2="gripper_finger1_finger_link" reason="Never" />
     <disable_collisions link1="finger_2_link_2" link2="gripper_finger1_finger_tip_link" reason="Never" />
@@ -541,6 +556,9 @@
     <disable_collisions link1="finger_2_link_2" link2="red_wrist_2_link" reason="Never" />
     <disable_collisions link1="finger_2_link_2" link2="red_wrist_3_link" reason="Never" />
     <disable_collisions link1="finger_2_link_3" link2="finger_middle_link_0" reason="Never" />
+    <disable_collisions link1="finger_2_link_3" link2="finger_middle_link_1" reason="User" />
+    <disable_collisions link1="finger_2_link_3" link2="finger_middle_link_2" reason="User" />
+    <disable_collisions link1="finger_2_link_3" link2="finger_middle_link_3" reason="User" />
     <disable_collisions link1="finger_2_link_3" link2="gripper_base_link" reason="Never" />
     <disable_collisions link1="finger_2_link_3" link2="gripper_finger1_finger_link" reason="Never" />
     <disable_collisions link1="finger_2_link_3" link2="gripper_finger1_finger_tip_link" reason="Never" />
@@ -549,6 +567,7 @@
     <disable_collisions link1="finger_2_link_3" link2="gripper_finger2_finger_link" reason="Never" />
     <disable_collisions link1="finger_2_link_3" link2="gripper_finger2_inner_knuckle_link" reason="Never" />
     <disable_collisions link1="finger_2_link_3" link2="gripper_finger2_knuckle_link" reason="Never" />
+    <disable_collisions link1="finger_2_link_3" link2="palm" reason="User" />
     <disable_collisions link1="finger_2_link_3" link2="realsense_mount" reason="Never" />
     <disable_collisions link1="finger_2_link_3" link2="red_cable_ee" reason="Never" />
     <disable_collisions link1="finger_2_link_3" link2="red_ee_link" reason="Never" />
@@ -611,6 +630,7 @@
     <disable_collisions link1="finger_middle_link_3" link2="gripper_finger1_inner_knuckle_link" reason="Never" />
     <disable_collisions link1="finger_middle_link_3" link2="gripper_finger1_knuckle_link" reason="Never" />
     <disable_collisions link1="finger_middle_link_3" link2="gripper_finger2_knuckle_link" reason="Never" />
+    <disable_collisions link1="finger_middle_link_3" link2="palm" reason="User" />
     <disable_collisions link1="finger_middle_link_3" link2="realsense_mount" reason="Never" />
     <disable_collisions link1="finger_middle_link_3" link2="red_cable_ee" reason="Never" />
     <disable_collisions link1="finger_middle_link_3" link2="red_ee_link" reason="Never" />
@@ -671,6 +691,7 @@
     <disable_collisions link1="gripper_finger1_knuckle_link" link2="gripper_finger2_finger_tip_link" reason="Never" />
     <disable_collisions link1="gripper_finger1_knuckle_link" link2="gripper_finger2_inner_knuckle_link" reason="Never" />
     <disable_collisions link1="gripper_finger1_knuckle_link" link2="gripper_finger2_knuckle_link" reason="Never" />
+    <disable_collisions link1="gripper_finger1_knuckle_link" link2="palm" reason="User" />
     <disable_collisions link1="gripper_finger1_knuckle_link" link2="realsense_mount" reason="Never" />
     <disable_collisions link1="gripper_finger1_knuckle_link" link2="red_base_link" reason="Never" />
     <disable_collisions link1="gripper_finger1_knuckle_link" link2="red_ee_link" reason="Never" />

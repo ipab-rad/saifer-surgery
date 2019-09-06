@@ -33,12 +33,13 @@ class ContourFollower():
 	if True:#self.listener.frameExists(msg.header.frame_id) and self.listener.frameExists('/camera_color/optical_frame'):
             rospy.loginfo('Planning path through waypoints')
 	    pose = self.group.get_current_pose().pose
+	    pose_start = copy.deepcopy(pose)
             pose.position = self.listener.transformPose(planning_frame,msg.poses[0]).pose.position
-	    pose.position.z = pose.position.z - 0.3
+	    pose.position.z = pose.position.z - 0.4
 	    self.group.set_pose_target(pose)
 	    plan = self.group.go(wait=True)
-	    #if not plan:
-	#	return
+	    if not plan:
+		return
 	    self.group.stop()
 	    print('Moved to start point')
             waypoints = [copy.deepcopy(self.group.get_current_pose().pose)]
@@ -49,7 +50,7 @@ class ContourFollower():
 		print(waypoints[-1])
 		pose = waypoints[-1]
                 pose.position = self.listener.transformPose(planning_frame,msg.poses[j]).pose.position
-		pose.position.z = pose.position.z-0.3		
+		pose.position.z = pose.position.z-0.20		
                 waypoints.append(copy.deepcopy(pose))
 		p_pose.pose = pose
 		path.poses.append(copy.deepcopy(p_pose))
@@ -58,6 +59,23 @@ class ContourFollower():
             plan,fraction = self.group.compute_cartesian_path(waypoints,0.2,0.0)
             rospy.loginfo('Planning done')
             self.group.execute(plan,wait=True)
+
+	    p_pose = path.poses[-1]
+	    p_pose.pose.position.z = p_pose.pose.position.z - 0.2
+	    self.group.set_pose_target(p_pose.pose)
+	    plan = self.group.go(wait=True)
+	    if not plan:
+		return
+	    self.group.stop()
+	    print('Moved above end')
+
+	    self.group.set_pose_target(pose_start)
+	    plan = self.group.go(wait=True)
+	    if not plan:
+		return
+	    self.group.stop()
+	    print('Moved to start point')
+	    
         else:
             rospy.logerr('No transform between '+planning_frame+' and '+msg.header.frame_id)
 

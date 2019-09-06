@@ -65,6 +65,8 @@
     <disable_collisions link1="finger_1_link_1" link2="finger_2_link_3" reason="Never" />
     <disable_collisions link1="finger_1_link_1" link2="finger_middle_link_0" reason="Never" />
     <disable_collisions link1="finger_1_link_1" link2="finger_middle_link_1" reason="Never" />
+    <disable_collisions link1="finger_1_link_1" link2="finger_middle_link_2" reason="User" />
+    <disable_collisions link1="finger_1_link_1" link2="finger_middle_link_3" reason="User" />
     <disable_collisions link1="finger_1_link_1" link2="palm" reason="Default" />
     <disable_collisions link1="finger_1_link_1" link2="red_cable_ee" reason="Never" />
     <disable_collisions link1="finger_1_link_1" link2="red_ee_link" reason="Never" />
@@ -77,6 +79,9 @@
     <disable_collisions link1="finger_1_link_2" link2="finger_2_link_2" reason="Never" />
     <disable_collisions link1="finger_1_link_2" link2="finger_2_link_3" reason="Never" />
     <disable_collisions link1="finger_1_link_2" link2="finger_middle_link_0" reason="Never" />
+    <disable_collisions link1="finger_1_link_2" link2="finger_middle_link_1" reason="User" />
+    <disable_collisions link1="finger_1_link_2" link2="finger_middle_link_2" reason="User" />
+    <disable_collisions link1="finger_1_link_2" link2="finger_middle_link_3" reason="User" />
     <disable_collisions link1="finger_1_link_2" link2="palm" reason="Never" />
     <disable_collisions link1="finger_1_link_2" link2="red_cable_ee" reason="Never" />
     <disable_collisions link1="finger_1_link_2" link2="red_ee_link" reason="Never" />
@@ -86,7 +91,12 @@
     <disable_collisions link1="finger_1_link_3" link2="finger_2_link_0" reason="Never" />
     <disable_collisions link1="finger_1_link_3" link2="finger_2_link_1" reason="Never" />
     <disable_collisions link1="finger_1_link_3" link2="finger_2_link_2" reason="Never" />
+    <disable_collisions link1="finger_1_link_3" link2="finger_2_link_3" reason="User" />
     <disable_collisions link1="finger_1_link_3" link2="finger_middle_link_0" reason="Never" />
+    <disable_collisions link1="finger_1_link_3" link2="finger_middle_link_1" reason="User" />
+    <disable_collisions link1="finger_1_link_3" link2="finger_middle_link_2" reason="User" />
+    <disable_collisions link1="finger_1_link_3" link2="finger_middle_link_3" reason="User" />
+    <disable_collisions link1="finger_1_link_3" link2="palm" reason="User" />
     <disable_collisions link1="finger_1_link_3" link2="red_cable_ee" reason="Never" />
     <disable_collisions link1="finger_1_link_3" link2="red_ee_link" reason="Never" />
     <disable_collisions link1="finger_1_link_3" link2="red_wrist_1_link" reason="Never" />
@@ -109,6 +119,8 @@
     <disable_collisions link1="finger_2_link_1" link2="finger_2_link_3" reason="Never" />
     <disable_collisions link1="finger_2_link_1" link2="finger_middle_link_0" reason="Never" />
     <disable_collisions link1="finger_2_link_1" link2="finger_middle_link_1" reason="Never" />
+    <disable_collisions link1="finger_2_link_1" link2="finger_middle_link_2" reason="User" />
+    <disable_collisions link1="finger_2_link_1" link2="finger_middle_link_3" reason="User" />
     <disable_collisions link1="finger_2_link_1" link2="palm" reason="Default" />
     <disable_collisions link1="finger_2_link_1" link2="red_cable_ee" reason="Never" />
     <disable_collisions link1="finger_2_link_1" link2="red_ee_link" reason="Never" />
@@ -117,6 +129,9 @@
     <disable_collisions link1="finger_2_link_1" link2="red_wrist_3_link" reason="Never" />
     <disable_collisions link1="finger_2_link_2" link2="finger_2_link_3" reason="Adjacent" />
     <disable_collisions link1="finger_2_link_2" link2="finger_middle_link_0" reason="Never" />
+    <disable_collisions link1="finger_2_link_2" link2="finger_middle_link_1" reason="User" />
+    <disable_collisions link1="finger_2_link_2" link2="finger_middle_link_2" reason="User" />
+    <disable_collisions link1="finger_2_link_2" link2="finger_middle_link_3" reason="User" />
     <disable_collisions link1="finger_2_link_2" link2="palm" reason="Never" />
     <disable_collisions link1="finger_2_link_2" link2="red_cable_ee" reason="Never" />
     <disable_collisions link1="finger_2_link_2" link2="red_ee_link" reason="Never" />
@@ -124,6 +139,9 @@
     <disable_collisions link1="finger_2_link_2" link2="red_wrist_2_link" reason="Never" />
     <disable_collisions link1="finger_2_link_2" link2="red_wrist_3_link" reason="Never" />
     <disable_collisions link1="finger_2_link_3" link2="finger_middle_link_0" reason="Never" />
+    <disable_collisions link1="finger_2_link_3" link2="finger_middle_link_1" reason="User" />
+    <disable_collisions link1="finger_2_link_3" link2="finger_middle_link_2" reason="User" />
+    <disable_collisions link1="finger_2_link_3" link2="finger_middle_link_3" reason="User" />
     <disable_collisions link1="finger_2_link_3" link2="red_cable_ee" reason="Never" />
     <disable_collisions link1="finger_2_link_3" link2="red_ee_link" reason="Never" />
     <disable_collisions link1="finger_2_link_3" link2="red_wrist_1_link" reason="Never" />
@@ -153,6 +171,7 @@
     <disable_collisions link1="finger_middle_link_2" link2="red_wrist_1_link" reason="Never" />
     <disable_collisions link1="finger_middle_link_2" link2="red_wrist_2_link" reason="Never" />
     <disable_collisions link1="finger_middle_link_2" link2="red_wrist_3_link" reason="Never" />
+    <disable_collisions link1="finger_middle_link_3" link2="palm" reason="User" />
     <disable_collisions link1="finger_middle_link_3" link2="red_cable_ee" reason="Never" />
     <disable_collisions link1="finger_middle_link_3" link2="red_ee_link" reason="Never" />
     <disable_collisions link1="finger_middle_link_3" link2="red_wrist_1_link" reason="Never" />
