@@ -17,7 +17,13 @@ source devel/setup.bash
 
 ## Current functionality:
 
-Visualise dual arm setup and test moveit planning configuration
+Launch arms, plan and execute using MoveIt!
 ```
-roslaunch ur10_moveit demo.launch
+roslaunch saifer_launch dual.launch
 ```
+
+User defined contour following.
+```
+roslaunch contour_launch contour.launch
+```
+
