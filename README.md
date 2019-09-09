@@ -17,13 +17,21 @@ source devel/setup.bash
 
 ## Current functionality:
 
+### Motion planning and control
+
 Launch arms, plan and execute using MoveIt!
 ```
 roslaunch saifer_launch dual.launch
 ```
 
-User defined contour following.
+### User defined contour following
+
+<img align="right" alt="" src="https://github.com/ipab-rad/saifer-surgery/blob/master/src/saif_ui/contour_launch/ims/surface.gif" width="200" /> Select a pointcloud region in Rviz and follow this surface using MoveIt! Cartesian waypoint following and position control. This requires calibrated offsets depending on the tool used for contour following. See the [contour launch](./src/saif_ui/contour_launch) node for more detail.
 ```
 roslaunch contour_launch contour.launch
 ```
+
+
+
+
 
