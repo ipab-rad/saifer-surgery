@@ -19,7 +19,7 @@ source devel/setup.bash
 
 ### Motion planning and control
 
-Launch arms, plan and execute using MoveIt!
+<img align="right" alt="" src="https://github.com/ipab-rad/saifer-surgery/blob/master/docs/images/arms.gif" width="200" /> Launch arms, plan and execute using MoveIt!
 ```
 roslaunch saifer_launch dual.launch
 ```
