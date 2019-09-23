@@ -19,7 +19,7 @@
 	<arg name="blue_robot_ip" doc="IP of the controller" default="192.168.100.1" />
 	<arg name="blue_reverse_ip" default="192.168.100.2" doc="IP of the computer running the driver" />
 	<arg name="blue_prefix" default="blue"/>
-	<arg name="comport" default="/dev/ttyUSB1"/>
+	<arg name="comport" default="/dev/ttyUSB0"/>
 	<arg name="baud" default="115200"/>
 	<arg name="blue_reverse_port" default="50002"/>
 
@@ -36,8 +36,8 @@
 	<param name="baud" value="$(arg baud)" />
 	</node>
 
-	<node name="blue_ft_sensor" pkg="robotiq_ft_sensor" type="rq_sensor" output="screen">
-	<param name="serial_id" value="ttyUSB0"/>
+	<node name="blue_ft_sensor" pkg="robotiq_ft_sensor" type="rq_sensor" output="screen" ns="blue">
+	<param name="serial_id" value="ttyUSB1"/>
 	<param name="frame_id" value="blue_robotiq_ft_frame_id"/>
 	</node>
 
@@ -62,6 +62,11 @@
 	</node>
 
 	<node name="robotiq_3f_controller" pkg="robotiq_3f_gripper_control" type="Robotiq3FGripperTcpNode.py" args="$(arg ip_gripper)"/>
+
+	<node name="red_ft_sensor" pkg="robotiq_ft_sensor" type="rq_sensor" output="screen" ns="red">
+		<param name="serial_id" value="ttyUSB2"/>
+		<param name="frame_id" value="red_robotiq_ft_frame_id"/>
+	</node>
 
 
 	<include file="$(find realsense2_camera)/launch/rs_rgbd.launch"/>
