@@ -23,7 +23,7 @@ class ContourFollower():
         self.group = moveit_commander.MoveGroupCommander(group)
 
         self.listener = TransformListener()
-	self.vertical_offset = rospy.get_param('countour_offset', 0.22)
+	self.vertical_offset = rospy.get_param('countour_offset', 0.21)
 	self.repositioning_offset = rospy.get_param('repositioning_offset', 0.4)
 
         rospy.spin()

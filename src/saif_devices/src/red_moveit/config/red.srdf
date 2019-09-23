@@ -54,6 +54,8 @@
     <disable_collisions link1="finger_1_link_0" link2="palm" reason="Adjacent" />
     <disable_collisions link1="finger_1_link_0" link2="red_cable_ee" reason="Never" />
     <disable_collisions link1="finger_1_link_0" link2="red_ee_link" reason="Never" />
+    <disable_collisions link1="finger_1_link_0" link2="red_ft300_mounting_plate" reason="Never" />
+    <disable_collisions link1="finger_1_link_0" link2="red_ft300_sensor" reason="Never" />
     <disable_collisions link1="finger_1_link_0" link2="red_wrist_1_link" reason="Never" />
     <disable_collisions link1="finger_1_link_0" link2="red_wrist_2_link" reason="Never" />
     <disable_collisions link1="finger_1_link_0" link2="red_wrist_3_link" reason="Never" />
@@ -65,11 +67,11 @@
     <disable_collisions link1="finger_1_link_1" link2="finger_2_link_3" reason="Never" />
     <disable_collisions link1="finger_1_link_1" link2="finger_middle_link_0" reason="Never" />
     <disable_collisions link1="finger_1_link_1" link2="finger_middle_link_1" reason="Never" />
-    <disable_collisions link1="finger_1_link_1" link2="finger_middle_link_2" reason="User" />
-    <disable_collisions link1="finger_1_link_1" link2="finger_middle_link_3" reason="User" />
     <disable_collisions link1="finger_1_link_1" link2="palm" reason="Default" />
     <disable_collisions link1="finger_1_link_1" link2="red_cable_ee" reason="Never" />
     <disable_collisions link1="finger_1_link_1" link2="red_ee_link" reason="Never" />
+    <disable_collisions link1="finger_1_link_1" link2="red_ft300_mounting_plate" reason="Never" />
+    <disable_collisions link1="finger_1_link_1" link2="red_ft300_sensor" reason="Never" />
     <disable_collisions link1="finger_1_link_1" link2="red_wrist_1_link" reason="Never" />
     <disable_collisions link1="finger_1_link_1" link2="red_wrist_2_link" reason="Never" />
     <disable_collisions link1="finger_1_link_1" link2="red_wrist_3_link" reason="Never" />
@@ -79,26 +81,22 @@
     <disable_collisions link1="finger_1_link_2" link2="finger_2_link_2" reason="Never" />
     <disable_collisions link1="finger_1_link_2" link2="finger_2_link_3" reason="Never" />
     <disable_collisions link1="finger_1_link_2" link2="finger_middle_link_0" reason="Never" />
-    <disable_collisions link1="finger_1_link_2" link2="finger_middle_link_1" reason="User" />
-    <disable_collisions link1="finger_1_link_2" link2="finger_middle_link_2" reason="User" />
-    <disable_collisions link1="finger_1_link_2" link2="finger_middle_link_3" reason="User" />
     <disable_collisions link1="finger_1_link_2" link2="palm" reason="Never" />
     <disable_collisions link1="finger_1_link_2" link2="red_cable_ee" reason="Never" />
     <disable_collisions link1="finger_1_link_2" link2="red_ee_link" reason="Never" />
+    <disable_collisions link1="finger_1_link_2" link2="red_ft300_mounting_plate" reason="Never" />
+    <disable_collisions link1="finger_1_link_2" link2="red_ft300_sensor" reason="Never" />
     <disable_collisions link1="finger_1_link_2" link2="red_wrist_1_link" reason="Never" />
     <disable_collisions link1="finger_1_link_2" link2="red_wrist_2_link" reason="Never" />
     <disable_collisions link1="finger_1_link_2" link2="red_wrist_3_link" reason="Never" />
     <disable_collisions link1="finger_1_link_3" link2="finger_2_link_0" reason="Never" />
     <disable_collisions link1="finger_1_link_3" link2="finger_2_link_1" reason="Never" />
     <disable_collisions link1="finger_1_link_3" link2="finger_2_link_2" reason="Never" />
-    <disable_collisions link1="finger_1_link_3" link2="finger_2_link_3" reason="User" />
     <disable_collisions link1="finger_1_link_3" link2="finger_middle_link_0" reason="Never" />
-    <disable_collisions link1="finger_1_link_3" link2="finger_middle_link_1" reason="User" />
-    <disable_collisions link1="finger_1_link_3" link2="finger_middle_link_2" reason="User" />
-    <disable_collisions link1="finger_1_link_3" link2="finger_middle_link_3" reason="User" />
-    <disable_collisions link1="finger_1_link_3" link2="palm" reason="User" />
     <disable_collisions link1="finger_1_link_3" link2="red_cable_ee" reason="Never" />
     <disable_collisions link1="finger_1_link_3" link2="red_ee_link" reason="Never" />
+    <disable_collisions link1="finger_1_link_3" link2="red_ft300_mounting_plate" reason="Never" />
+    <disable_collisions link1="finger_1_link_3" link2="red_ft300_sensor" reason="Never" />
     <disable_collisions link1="finger_1_link_3" link2="red_wrist_1_link" reason="Never" />
     <disable_collisions link1="finger_1_link_3" link2="red_wrist_2_link" reason="Never" />
     <disable_collisions link1="finger_1_link_3" link2="red_wrist_3_link" reason="Never" />
@@ -112,6 +110,8 @@
     <disable_collisions link1="finger_2_link_0" link2="palm" reason="Adjacent" />
     <disable_collisions link1="finger_2_link_0" link2="red_cable_ee" reason="Never" />
     <disable_collisions link1="finger_2_link_0" link2="red_ee_link" reason="Never" />
+    <disable_collisions link1="finger_2_link_0" link2="red_ft300_mounting_plate" reason="Never" />
+    <disable_collisions link1="finger_2_link_0" link2="red_ft300_sensor" reason="Never" />
     <disable_collisions link1="finger_2_link_0" link2="red_wrist_1_link" reason="Never" />
     <disable_collisions link1="finger_2_link_0" link2="red_wrist_2_link" reason="Never" />
     <disable_collisions link1="finger_2_link_0" link2="red_wrist_3_link" reason="Never" />
@@ -119,31 +119,29 @@
     <disable_collisions link1="finger_2_link_1" link2="finger_2_link_3" reason="Never" />
     <disable_collisions link1="finger_2_link_1" link2="finger_middle_link_0" reason="Never" />
     <disable_collisions link1="finger_2_link_1" link2="finger_middle_link_1" reason="Never" />
-    <disable_collisions link1="finger_2_link_1" link2="finger_middle_link_2" reason="User" />
-    <disable_collisions link1="finger_2_link_1" link2="finger_middle_link_3" reason="User" />
     <disable_collisions link1="finger_2_link_1" link2="palm" reason="Default" />
     <disable_collisions link1="finger_2_link_1" link2="red_cable_ee" reason="Never" />
     <disable_collisions link1="finger_2_link_1" link2="red_ee_link" reason="Never" />
+    <disable_collisions link1="finger_2_link_1" link2="red_ft300_mounting_plate" reason="Never" />
+    <disable_collisions link1="finger_2_link_1" link2="red_ft300_sensor" reason="Never" />
     <disable_collisions link1="finger_2_link_1" link2="red_wrist_1_link" reason="Never" />
     <disable_collisions link1="finger_2_link_1" link2="red_wrist_2_link" reason="Never" />
     <disable_collisions link1="finger_2_link_1" link2="red_wrist_3_link" reason="Never" />
     <disable_collisions link1="finger_2_link_2" link2="finger_2_link_3" reason="Adjacent" />
     <disable_collisions link1="finger_2_link_2" link2="finger_middle_link_0" reason="Never" />
-    <disable_collisions link1="finger_2_link_2" link2="finger_middle_link_1" reason="User" />
-    <disable_collisions link1="finger_2_link_2" link2="finger_middle_link_2" reason="User" />
-    <disable_collisions link1="finger_2_link_2" link2="finger_middle_link_3" reason="User" />
     <disable_collisions link1="finger_2_link_2" link2="palm" reason="Never" />
     <disable_collisions link1="finger_2_link_2" link2="red_cable_ee" reason="Never" />
     <disable_collisions link1="finger_2_link_2" link2="red_ee_link" reason="Never" />
+    <disable_collisions link1="finger_2_link_2" link2="red_ft300_mounting_plate" reason="Never" />
+    <disable_collisions link1="finger_2_link_2" link2="red_ft300_sensor" reason="Never" />
     <disable_collisions link1="finger_2_link_2" link2="red_wrist_1_link" reason="Never" />
     <disable_collisions link1="finger_2_link_2" link2="red_wrist_2_link" reason="Never" />
     <disable_collisions link1="finger_2_link_2" link2="red_wrist_3_link" reason="Never" />
     <disable_collisions link1="finger_2_link_3" link2="finger_middle_link_0" reason="Never" />
-    <disable_collisions link1="finger_2_link_3" link2="finger_middle_link_1" reason="User" />
-    <disable_collisions link1="finger_2_link_3" link2="finger_middle_link_2" reason="User" />
-    <disable_collisions link1="finger_2_link_3" link2="finger_middle_link_3" reason="User" />
     <disable_collisions link1="finger_2_link_3" link2="red_cable_ee" reason="Never" />
     <disable_collisions link1="finger_2_link_3" link2="red_ee_link" reason="Never" />
+    <disable_collisions link1="finger_2_link_3" link2="red_ft300_mounting_plate" reason="Never" />
+    <disable_collisions link1="finger_2_link_3" link2="red_ft300_sensor" reason="Never" />
     <disable_collisions link1="finger_2_link_3" link2="red_wrist_1_link" reason="Never" />
     <disable_collisions link1="finger_2_link_3" link2="red_wrist_2_link" reason="Never" />
     <disable_collisions link1="finger_2_link_3" link2="red_wrist_3_link" reason="Never" />
@@ -153,6 +151,8 @@
     <disable_collisions link1="finger_middle_link_0" link2="palm" reason="Adjacent" />
     <disable_collisions link1="finger_middle_link_0" link2="red_cable_ee" reason="Never" />
     <disable_collisions link1="finger_middle_link_0" link2="red_ee_link" reason="Never" />
+    <disable_collisions link1="finger_middle_link_0" link2="red_ft300_mounting_plate" reason="Never" />
+    <disable_collisions link1="finger_middle_link_0" link2="red_ft300_sensor" reason="Never" />
     <disable_collisions link1="finger_middle_link_0" link2="red_wrist_1_link" reason="Never" />
     <disable_collisions link1="finger_middle_link_0" link2="red_wrist_2_link" reason="Never" />
     <disable_collisions link1="finger_middle_link_0" link2="red_wrist_3_link" reason="Never" />
@@ -161,6 +161,8 @@
     <disable_collisions link1="finger_middle_link_1" link2="palm" reason="Default" />
     <disable_collisions link1="finger_middle_link_1" link2="red_cable_ee" reason="Never" />
     <disable_collisions link1="finger_middle_link_1" link2="red_ee_link" reason="Never" />
+    <disable_collisions link1="finger_middle_link_1" link2="red_ft300_mounting_plate" reason="Never" />
+    <disable_collisions link1="finger_middle_link_1" link2="red_ft300_sensor" reason="Never" />
     <disable_collisions link1="finger_middle_link_1" link2="red_wrist_1_link" reason="Never" />
     <disable_collisions link1="finger_middle_link_1" link2="red_wrist_2_link" reason="Never" />
     <disable_collisions link1="finger_middle_link_1" link2="red_wrist_3_link" reason="Never" />
@@ -168,22 +170,26 @@
     <disable_collisions link1="finger_middle_link_2" link2="palm" reason="Never" />
     <disable_collisions link1="finger_middle_link_2" link2="red_cable_ee" reason="Never" />
     <disable_collisions link1="finger_middle_link_2" link2="red_ee_link" reason="Never" />
+    <disable_collisions link1="finger_middle_link_2" link2="red_ft300_mounting_plate" reason="Never" />
+    <disable_collisions link1="finger_middle_link_2" link2="red_ft300_sensor" reason="Never" />
     <disable_collisions link1="finger_middle_link_2" link2="red_wrist_1_link" reason="Never" />
     <disable_collisions link1="finger_middle_link_2" link2="red_wrist_2_link" reason="Never" />
     <disable_collisions link1="finger_middle_link_2" link2="red_wrist_3_link" reason="Never" />
-    <disable_collisions link1="finger_middle_link_3" link2="palm" reason="User" />
     <disable_collisions link1="finger_middle_link_3" link2="red_cable_ee" reason="Never" />
     <disable_collisions link1="finger_middle_link_3" link2="red_ee_link" reason="Never" />
+    <disable_collisions link1="finger_middle_link_3" link2="red_ft300_mounting_plate" reason="Never" />
+    <disable_collisions link1="finger_middle_link_3" link2="red_ft300_sensor" reason="Never" />
     <disable_collisions link1="finger_middle_link_3" link2="red_wrist_1_link" reason="Never" />
     <disable_collisions link1="finger_middle_link_3" link2="red_wrist_2_link" reason="Never" />
     <disable_collisions link1="finger_middle_link_3" link2="red_wrist_3_link" reason="Never" />
-    <disable_collisions link1="palm" link2="red_cable_ee" reason="Adjacent" />
+    <disable_collisions link1="palm" link2="red_cable_ee" reason="Never" />
     <disable_collisions link1="palm" link2="red_ee_link" reason="Never" />
+    <disable_collisions link1="palm" link2="red_ft300_mounting_plate" reason="Never" />
+    <disable_collisions link1="palm" link2="red_ft300_sensor" reason="Adjacent" />
     <disable_collisions link1="palm" link2="red_wrist_1_link" reason="Never" />
-    <disable_collisions link1="palm" link2="red_wrist_2_link" reason="Default" />
-    <disable_collisions link1="palm" link2="red_wrist_3_link" reason="Adjacent" />
+    <disable_collisions link1="palm" link2="red_wrist_2_link" reason="Never" />
+    <disable_collisions link1="palm" link2="red_wrist_3_link" reason="Never" />
     <disable_collisions link1="red_base_link" link2="red_cable_2" reason="Never" />
-    <disable_collisions link1="red_base_link" link2="red_ee_link" reason="Never" />
     <disable_collisions link1="red_base_link" link2="red_shoulder_link" reason="Adjacent" />
     <disable_collisions link1="red_base_link" link2="red_upper_arm_link" reason="Never" />
     <disable_collisions link1="red_base_link" link2="red_wrist_1_link" reason="Never" />
@@ -195,13 +201,24 @@
     <disable_collisions link1="red_cable_2" link2="red_upper_arm_link" reason="Adjacent" />
     <disable_collisions link1="red_cable_2" link2="red_wrist_1_link" reason="Never" />
     <disable_collisions link1="red_cable_ee" link2="red_ee_link" reason="Never" />
+    <disable_collisions link1="red_cable_ee" link2="red_ft300_mounting_plate" reason="Adjacent" />
+    <disable_collisions link1="red_cable_ee" link2="red_ft300_sensor" reason="Never" />
     <disable_collisions link1="red_cable_ee" link2="red_wrist_2_link" reason="Default" />
     <disable_collisions link1="red_cable_ee" link2="red_wrist_3_link" reason="Adjacent" />
+    <disable_collisions link1="red_ee_link" link2="red_ft300_mounting_plate" reason="Never" />
+    <disable_collisions link1="red_ee_link" link2="red_ft300_sensor" reason="Never" />
     <disable_collisions link1="red_ee_link" link2="red_wrist_1_link" reason="Never" />
     <disable_collisions link1="red_ee_link" link2="red_wrist_2_link" reason="Never" />
     <disable_collisions link1="red_ee_link" link2="red_wrist_3_link" reason="Adjacent" />
     <disable_collisions link1="red_forearm_link" link2="red_upper_arm_link" reason="Adjacent" />
     <disable_collisions link1="red_forearm_link" link2="red_wrist_1_link" reason="Adjacent" />
+    <disable_collisions link1="red_ft300_mounting_plate" link2="red_ft300_sensor" reason="Adjacent" />
+    <disable_collisions link1="red_ft300_mounting_plate" link2="red_wrist_1_link" reason="Never" />
+    <disable_collisions link1="red_ft300_mounting_plate" link2="red_wrist_2_link" reason="Never" />
+    <disable_collisions link1="red_ft300_mounting_plate" link2="red_wrist_3_link" reason="Adjacent" />
+    <disable_collisions link1="red_ft300_sensor" link2="red_wrist_1_link" reason="Never" />
+    <disable_collisions link1="red_ft300_sensor" link2="red_wrist_2_link" reason="Never" />
+    <disable_collisions link1="red_ft300_sensor" link2="red_wrist_3_link" reason="Never" />
     <disable_collisions link1="red_shoulder_link" link2="red_upper_arm_link" reason="Adjacent" />
     <disable_collisions link1="red_shoulder_link" link2="red_wrist_1_link" reason="Never" />
     <disable_collisions link1="red_shoulder_link" link2="red_wrist_2_link" reason="Never" />

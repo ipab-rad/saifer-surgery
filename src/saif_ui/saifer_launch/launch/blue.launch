@@ -4,7 +4,7 @@
   <arg name="robot_ip" doc="IP of the controller" default="192.168.100.1" />
   <arg name="reverse_ip" default="192.168.100.2" doc="IP of the computer running the driver" />
   <arg name="prefix" default="blue"/>
-  <arg name="comport" default="/dev/ttyUSB1"/>
+  <arg name="comport" default="/dev/ttyUSB0"/>
   <arg name="baud" default="115200"/>
 
   <include file="$(find dual_arm_description)/launch/blue_upload.launch"/>
@@ -32,8 +32,8 @@
 	<rosparam param="source_list">[/blue/joint_states, /gripper/joint_states]</rosparam>
   </node>
 
-  <node name="blue_ft_sensor" pkg="robotiq_ft_sensor" type="rq_sensor" output="screen">
-	<param name="serial_id" value="ttyUSB0"/>
+  <node name="blue_ft_sensor" pkg="robotiq_ft_sensor" type="rq_sensor" output="screen" ns="blue">
+	<param name="serial_id" value="ttyUSB1"/>
         <param name="frame_id" value="blue_robotiq_ft_frame_id"/>
   </node>
 

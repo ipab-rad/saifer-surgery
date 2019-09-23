@@ -7,16 +7,22 @@
 
 	<xacro:include filename="$(find ur_description)/urdf/ur10.urdf.xacro" />
 
+        <xacro:include filename="$(find robotiq_ft_sensor)/urdf/robotiq_ft300.urdf.xacro"/>
 
 	<!-- arm -->
 	<xacro:ur10_robot prefix="red_" joint_limited="false"/>
 
 	<xacro:robotiq-3f-gripper_articulated prefix=""/>
 
+        <xacro:robotiq_ft300 parent="red_tool0" prefix="red_">
+                <origin xyz="0 0 0" rpy="0 0 0"/>
+        </xacro:robotiq_ft300>
+	
+
 	<joint name="red_palm_arm" type="fixed">
-		<parent link="red_tool0"/>
+		<parent link="red_robotiq_ft_frame_id"/>
 		<child link="palm"/>
-		<origin xyz="0 0 0" rpy="1.57079632679 0 -0.78539"/>
+		<origin xyz="0 0 0.05" rpy="1.57079632679 0 0.78539"/>
 	</joint>
 
 	<link name='red_cable_1'>
@@ -56,6 +62,6 @@
 	<joint name='red_arm_2_cable_22' type="fixed">
 		<parent link='red_tool0'/>
 		<child link='red_cable_ee'/>
-		<origin xyz="0.07 0.0 -0.06"/>
+		<origin xyz="0.00 -0.08 -0.05"/>
 	</joint>
 </robot>
