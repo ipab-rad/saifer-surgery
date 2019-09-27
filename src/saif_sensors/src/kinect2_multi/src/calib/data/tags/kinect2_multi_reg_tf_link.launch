@@ -1,0 +1,7 @@
+<launch>
+  <node pkg="tf" type="static_transform_publisher" name="kinect_1_tfs" args="1.386197 -0.561551 1.152301 -0.808698 -0.436593 0.170410 0.355464 map kinect_1_link 50"/>
+  <node pkg="tf" type="static_transform_publisher" name="kinect_2_tfs" args="1.294049 0.945531 1.092502 -0.502610 -0.778276 0.343832 0.153133 map kinect_2_link 50"/>
+  <node pkg="tf" type="static_transform_publisher" name="kinect_3_tfs" args="-1.634269 0.794212 1.164065 -0.433848 0.783143 -0.394453 0.207049 map kinect_3_link 50"/>
+  <node pkg="tf" type="static_transform_publisher" name="kinect_4_tfs" args="-1.536465 -0.757401 1.151071 -0.792830 0.428911 -0.229433 0.367174 map kinect_4_link 50"/>
+  <node pkg="tf" type="static_transform_publisher" name="realsense_5_tfs" args="0.125934 -0.831165 0.604428 0.009707 -0.876378 -0.479839 0.040270 map realsense_5_link 50"/>
+</launch>
