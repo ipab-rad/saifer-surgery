@@ -1,1 +1,1 @@
-/home/ratchet/saifer-surgery/src/saif_sensors/src/kinect2_multi/src/calib/data/tags/kinect2_multi_reg_tf_link.launch
+<include file="$(find kinect2_multi)/src/calib/data/tags/kinect2_multi_reg_tf_link.launch"/>
