@@ -64,6 +64,8 @@
 	<param name="frame_id" value="red_robotiq_ft_frame_id"/>
 	</node>
 
-	
+	<include file="$(find kinect2_multi)/launch/kinect_multi_tf.launch"/>
+
+	<node pkg="tf" type="static_transform_publisher" name="map_to_ceiling" args="0 0 1.4 0 3.14159 0 map ceiling 100" />	
 
 </launch>
