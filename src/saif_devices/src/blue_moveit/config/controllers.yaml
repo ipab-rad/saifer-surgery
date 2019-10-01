@@ -1,6 +1,6 @@
 controller_list:
   - name: ""
-    action_ns: blue/follow_joint_trajectory
+    action_ns: blue/vel_based_pos_traj_controller/follow_joint_trajectory
     type: FollowJointTrajectory
     joints:
       - blue_shoulder_pan_joint

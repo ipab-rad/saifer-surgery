@@ -24,6 +24,7 @@
 	<param name="reverse_ip_address" type="str" value="$(arg blue_reverse_ip)" />
 	<param name="prefix" type="str" value="$(arg blue_prefix)_"/>
 	<param name="reverse_port" type="int" value="$(arg blue_reverse_port)"/>
+	<param name="use_ros_control" value="True"/>
 	</node> 
 
 	<node pkg="robotiq_85_driver" type="robotiq_85_driver" name="robotiq_85_driver" output="screen" ns = "blue">
@@ -51,6 +52,7 @@
 	<param name="reverse_ip_address" type="str" value="$(arg red_reverse_ip)" />
 	<param name="prefix" type="str" value="$(arg red_prefix)_"/>
 	<param name="reverse_port" type="int" value="$(arg red_reverse_port)"/>
+	<param name="use_ros_control" value="True"/>
 	</node> 
 
 	<node name="robotiq_3f_js_pub" pkg="robotiq_3f_gripper_joint_state_publisher" type="robotiq_3f_gripper_joint_states">
