@@ -6,12 +6,6 @@
 
   <!-- Load the controllers -->
   <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false"
-    output="screen" ns="dual" args="blue_arm_controller red_arm_controller blue_gripper_controller red_gripper_controller dual_controller "/>
-
-  <!-- Convert joint states to TF transforms for rviz, etc -->
-  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"
-    respawn="false" output="screen">
-    <remap from="/joint_states" to="dual/joint_states" />
-  </node>
+    output="screen" args=""/>
 
 </launch>

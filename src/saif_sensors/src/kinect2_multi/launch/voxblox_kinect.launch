@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="ISO-8859-15"?>
+<launch>
+  <arg name="voxel_size" default="0.05"/>
+  
+  <node pkg="tf" type="static_transform_publisher" name="world_tf" args="0 0 0 1 0 0 0 map world 50"/>
+
+
+  <node name="voxblox_node" pkg="voxblox_ros" type="voxblox_node" output="screen" args="--alsologtostderr" clear_params="true">
+    <remap from="pointcloud" to="/kinect_all/sd/points"/>
+    <param name="tsdf_voxel_size" value="$(arg voxel_size)" />
+    <param name="tsdf_voxels_per_side" value="16" />
+    <param name="voxel_carving_enabled" value="true" />
+    <param name="color_mode" value="color" />
+    <param name="use_tf_transforms" value="true" />
+    <!-- <remap from="transform" to="camera_imu/vrpn_client/estimated_transform" /> -->
+    <param name="update_mesh_every_n_sec" value="1.0" />
+    <param name="verbose" value="true" />
+    <param name="min_time_between_msgs_sec" value="0.2" />
+    <!--<param name="truncation_distance" value="1.0" /> -->
+    <param name="max_ray_length_m" value="3.0" />
+
+    <!--<rosparam file="$(find voxblox_ros)/cfg/rgbd_dataset.yaml"/>  -->
+
+    <param name="mesh_filename" value="$(find voxblox_ros)/mesh_results/$(anon rgbd).ply" />
+  </node>
+</launch>

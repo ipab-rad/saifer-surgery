@@ -1,0 +1,105 @@
+id5:
+  hamming: 1
+  distance: 2.39198
+  translation: [2.28329, 0.658883, 0.272055]
+  rotation: [-2.77184, 0.439337, 0.832436]
+id19:
+  hamming: 1
+  distance: 2.26976
+  translation: [2.25556, 0.075205, 0.242064]
+  rotation: [-2.78106, 0.438185, 0.838932]
+id15:
+  hamming: 1
+  distance: 2.26465
+  translation: [2.22811, 0.335998, 0.22638]
+  rotation: [-2.77452, 0.437261, 0.83415]
+id11:
+  hamming: 0
+  distance: 2.29541
+  translation: [2.20656, 0.596303, 0.210789]
+  rotation: [-2.77099, 0.438595, 0.831427]
+id20:
+  hamming: 1
+  distance: 2.20927
+  translation: [2.19309, 0.173523, 0.202702]
+  rotation: [-2.77941, 0.439938, 0.840251]
+id16:
+  hamming: 0
+  distance: 2.22408
+  translation: [2.17332, 0.433688, 0.18747]
+  rotation: [-2.77396, 0.440157, 0.834067]
+id25:
+  hamming: 0
+  distance: 2.19238
+  translation: [2.18485, 0.0122548, 0.181165]
+  rotation: [-2.77885, 0.433739, 0.833614]
+id21:
+  hamming: 0
+  distance: 2.1708
+  translation: [2.14727, 0.27281, 0.164908]
+  rotation: [-2.77602, 0.437956, 0.834453]
+id30:
+  hamming: 1
+  distance: 2.17917
+  translation: [2.16811, -0.15148, 0.158542]
+  rotation: [-2.77853, 0.441839, 0.832944]
+id17:
+  hamming: 1
+  distance: 2.2026
+  translation: [2.13161, 0.534158, 0.149547]
+  rotation: [-2.76979, 0.434669, 0.829422]
+id26:
+  hamming: 1
+  distance: 2.13115
+  translation: [2.12349, 0.111193, 0.142227]
+  rotation: [-2.7782, 0.437417, 0.836072]
+id31:
+  hamming: 0
+  distance: 2.09688
+  translation: [2.09289, -0.050757, 0.118781]
+  rotation: [-2.78111, 0.442351, 0.835426]
+id22:
+  hamming: 1
+  distance: 2.13258
+  translation: [2.09623, 0.371134, 0.126403]
+  rotation: [-2.77296, 0.437528, 0.83413]
+id27:
+  hamming: 1
+  distance: 2.08321
+  translation: [2.07001, 0.209952, 0.10371]
+  rotation: [-2.77481, 0.436764, 0.834065]
+id23:
+  hamming: 0
+  distance: 2.10321
+  translation: [2.04814, 0.469958, 0.0879302]
+  rotation: [-2.77185, 0.43692, 0.833563]
+id32:
+  hamming: 0
+  distance: 2.04092
+  translation: [2.03876, 0.0481056, 0.0805818]
+  rotation: [-2.77634, 0.439351, 0.83337]
+id28:
+  hamming: 0
+  distance: 2.04508
+  translation: [2.02058, 0.308797, 0.0653866]
+  rotation: [-2.77125, 0.434177, 0.830944]
+id33:
+  hamming: 0
+  distance: 1.99058
+  translation: [1.98473, 0.146525, 0.0424215]
+  rotation: [-2.77655, 0.439838, 0.833578]
+id29:
+  hamming: 0
+  distance: 2.01339
+  translation: [1.97153, 0.407547, 0.026868]
+  rotation: [-2.77199, 0.437175, 0.831954]
+id34:
+  hamming: 0
+  distance: 1.95664
+  translation: [1.94113, 0.245818, 0.00426918]
+  rotation: [-2.77087, 0.436317, 0.830722]
+id35:
+  hamming: 0
+  distance: 1.92599
+  translation: [1.89454, 0.344969, -0.034165]
+  rotation: [-2.76851, 0.435289, 0.82742]

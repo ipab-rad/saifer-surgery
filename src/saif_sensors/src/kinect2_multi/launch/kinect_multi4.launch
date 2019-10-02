@@ -1,0 +1,37 @@
+<launch>
+<param name="fps" value="15" />
+<param name="tf" value="true" />
+
+<include file="$(find kinect2_bridge)/launch/kinect2_bridge.launch">
+  <arg name="base_name" value="kinect_1" />
+  <arg name="sensor" value="004804563247" />
+  <arg name="publish_tf" value="$(arg tf)" />
+  <arg name="fps_limit" value="$(arg fps)" />
+  <arg name="worker_threads" value="2" />
+</include>
+
+<include file="$(find kinect2_bridge)/launch/kinect2_bridge.launch">
+  <arg name="base_name" value="kinect_2" />
+  <arg name="sensor" value="006109563347" />
+  <arg name="publish_tf" value="$(arg tf)" />
+  <arg name="fps_limit" value="$(arg fps)" />
+  <arg name="worker_threads" value="2" />
+</include>
+
+<include file="$(find kinect2_bridge)/launch/kinect2_bridge.launch">
+  <arg name="base_name" value="kinect_3" />
+  <arg name="sensor" value="004158363347" />
+  <arg name="publish_tf" value="$(arg tf)" />
+  <arg name="fps_limit" value="$(arg fps)" />
+  <arg name="worker_threads" value="2" />
+</include>
+
+<include file="$(find kinect2_bridge)/launch/kinect2_bridge.launch">
+  <arg name="base_name" value="kinect_4" />
+  <arg name="sensor" value="009587663447" />
+  <arg name="publish_tf" value="$(arg tf)" />
+  <arg name="fps_limit" value="$(arg fps)" />
+  <arg name="worker_threads" value="2" />
+</include>
+ 
+</launch>

@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<launch>
+	<!-- arms, grippers and ft sensor launch-->
+    <include file="$(find saifer_launch)/launch/startup_blue.launch"/>
+
+    <!-- arms, grippers and ft sensor launch-->
+    <include file="$(find saifer_launch)/launch/startup_red.launch"/>
+
+</launch>
