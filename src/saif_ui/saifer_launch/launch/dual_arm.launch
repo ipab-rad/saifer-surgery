@@ -1,9 +1,26 @@
 <?xml version="1.0"?>
 <launch>
-        <include file="$(find saifer_launch)/launch/startup_arms.launch"/>        
-	
+
+ 	<!-- arms, grippers and ft sensor launch + calibrated kinect frames-->
+    <include file="$(find saifer_launch)/launch/startup_arms.launch"/>
+
+	<include file="$(find dual_arm_description)/launch/dual_upload.launch"/> 
+
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"/>
+
+	<node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher">
+        	<rosparam param="source_list">[/blue/joint_states, /gripper/joint_states,/red/joint_states,/gripper3/joint_states]</rosparam>
+        </node>
+
+    <include file="$(find kinect2_multi)/launch/kinect_multi_tf.launch"/>
+
+    <node pkg="tf" type="static_transform_publisher" name="map_to_ceiling" args="0 0 1.4 0 3.14159 0 map ceiling 100" />
+
 	<node name="rviz" pkg="rviz" type="rviz" args="-d $(find dual_moveit)/launch/moveit.rviz"/>
 
 	<node name="planning_scene_constraints" pkg="planning_scene_constraints" type="add_static_objects.py" output="screen"/>
+
+	<include file="$(find dual_moveit)/launch/move_group.launch"/>
+
 
 </launch>
