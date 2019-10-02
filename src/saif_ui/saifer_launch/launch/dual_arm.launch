@@ -1,9 +1,102 @@
 <?xml version="1.0"?>
 <launch>
-        <include file="$(find saifer_launch)/launch/startup_arms.launch"/>        
-	
+
+ 	<arg name="comport" default="/dev/ttyUSB0"/>
+        <arg name="baud" default="115200"/>
+	<arg name="ip_gripper" default="192.168.1.11"/> 
+
+        <!--include file="$(find saifer_launch)/launch/startup_arms.launch"/-->        
+	<include file="$(find saifer_launch)/launch/ur10_ros_control_blue.launch"/> 
+	<include file="$(find saifer_launch)/launch/ur10_ros_control_red.launch"/> 
+
+	<include file="$(find dual_arm_description)/launch/dual_upload.launch"/> 
+
+        <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"/>
+
+  	<node pkg="robotiq_85_driver" type="robotiq_85_driver" name="robotiq_85_driver" respawn="true" output="screen" ns = "blue">
+        	<param name="num_grippers" value="1"/>
+        	<param name="comport" value="$(arg comport)" />
+        	<param name="baud" value="$(arg baud)" />
+        <!--remap from="/gripper/joint_states" to="/blue/joint_states"/-->
+  	</node>
+
+	<node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher">
+        	<rosparam param="source_list">[/blue/joint_states, /gripper/joint_states,/red/joint_states,/gripper3/joint_states]</rosparam>
+        </node>
+
+
+  	<node name="blue_ft_sensor" pkg="robotiq_ft_sensor" type="rq_sensor" output="screen" ns="blue">
+        	<param name="serial_id" value="ttyUSB1"/>
+        	<param name="frame_id" value="blue_robotiq_ft_frame_id"/>
+  	</node>
+
+  	<node name="robotiq_3f_js_pub" pkg="robotiq_3f_gripper_joint_state_publisher" type="robotiq_3f_gripper_joint_states">
+        <remap from="joint_states" to="gripper3/joint_states"/>
+        </node>
+
+        <node name="robotiq_3f_controller" pkg="robotiq_3f_gripper_control" type="Robotiq3FGripperTcpNode.py" args="$(arg ip_gripper)"/>
+
+        <node name="red_ft_sensor" pkg="robotiq_ft_sensor" type="rq_sensor" output="screen" ns='red'>
+        <param name="serial_id" value="ttyUSB2"/>
+        <param name="frame_id" value="red_robotiq_ft_frame_id"/>
+        </node>
+
+        <include file="$(find kinect2_multi)/launch/kinect_multi_tf.launch"/>
+
+        <node pkg="tf" type="static_transform_publisher" name="map_to_ceiling" args="0 0 1.4 0 3.14159 0 map ceiling 100" />
+
+
 	<node name="rviz" pkg="rviz" type="rviz" args="-d $(find dual_moveit)/launch/moveit.rviz"/>
 
 	<node name="planning_scene_constraints" pkg="planning_scene_constraints" type="add_static_objects.py" output="screen"/>
+
+	<!-- Verbose Mode Option -->
+  <arg name="info" default="false" />
+  <arg unless="$(arg info)" name="command_args" value="" />
+  <arg     if="$(arg info)" name="command_args" value="--debug" />
+
+  <include file="$(find dual_moveit)/launch/planning_context.launch" />
+
+  <!-- move_group settings -->
+  <arg name="allow_trajectory_execution" default="true"/>
+  <arg name="fake_execution" default="false"/>
+  <arg name="max_safe_path_cost" default="1"/>
+  <arg name="jiggle_fraction" default="0.05" />
+  <arg name="publish_monitored_planning_scene" default="true"/>
+
+  <arg name="capabilities" default=""/>
+  <arg name="disable_capabilities" default=""/>
+
+  <!-- Planning Functionality -->
+  <include ns="move_group" file="$(find dual_moveit)/launch/planning_pipeline.launch.xml">
+    <arg name="pipeline" value="ompl" />
+  </include>
+
+  <!-- Sensors Functionality -->
+  <include ns="move_group" file="$(find dual_moveit)/launch/sensor_manager.launch.xml" if="$(arg allow_trajectory_execution)">
+    <arg name="moveit_sensor_manager" value="dual" />
+  </include>
+<!-- Trajectory Execution Functionality -->
+  <include ns="move_group" file="$(find dual_moveit)/launch/trajectory_execution.launch.xml" if="$(arg allow_trajectory_execution)">
+    <arg name="moveit_manage_controllers" value="true" />
+    <arg name="moveit_controller_manager" value="dual" unless="$(arg fake_execution)"/>
+    <arg name="moveit_controller_manager" value="fake" if="$(arg fake_execution)"/>
+  </include>
+
+  <!-- Start the actual move_group node/action server -->
+  <node name="move_group" pkg="moveit_ros_move_group" type="move_group" respawn="false" output="screen" args="$(arg command_args)">
+
+    <param name="allow_trajectory_execution" value="$(arg allow_trajectory_execution)"/>
+    <param name="max_safe_path_cost" value="$(arg max_safe_path_cost)"/>
+    <param name="jiggle_fraction" value="$(arg jiggle_fraction)" />
+    <param name="capabilities" value="$(arg capabilities)"/>
+    <param name="disable_capabilities" value="$(arg disable_capabilities)"/>
+
+    <param name="planning_scene_monitor/publish_planning_scene" value="$(arg publish_monitored_planning_scene)" />
+    <param name="planning_scene_monitor/publish_geometry_updates" value="$(arg publish_monitored_planning_scene)" />
+    <param name="planning_scene_monitor/publish_state_updates" value="$(arg publish_monitored_planning_scene)" />
+    <param name="planning_scene_monitor/publish_transforms_updates" value="$(arg publish_monitored_planning_scene)" />
+  </node>
+
 
 </launch>

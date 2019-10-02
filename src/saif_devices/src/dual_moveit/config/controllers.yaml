@@ -1,6 +1,6 @@
 controller_list:
   - name: "blue"
-    action_ns: follow_joint_trajectory
+    action_ns: vel_based_pos_traj_controller/follow_joint_trajectory
     type: FollowJointTrajectory
     joints:
       - blue_shoulder_pan_joint
@@ -10,7 +10,7 @@ controller_list:
       - blue_wrist_2_joint
       - blue_wrist_3_joint
   - name: "red"
-    action_ns: follow_joint_trajectory
+    action_ns: vel_based_pos_traj_controller/follow_joint_trajectory
     type: FollowJointTrajectory
     joints:
       - red_shoulder_pan_joint
@@ -18,4 +18,4 @@ controller_list:
       - red_elbow_joint
       - red_wrist_1_joint
       - red_wrist_2_joint
-      - red_wrist_3_joint   
+      - red_wrist_3_joint
