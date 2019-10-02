@@ -23,7 +23,7 @@ class ContourFollower():
         self.group = moveit_commander.MoveGroupCommander(group)
 
         self.listener = TransformListener()
-	self.vertical_offset = rospy.get_param('countour_offset', 0.21)
+	self.vertical_offset = rospy.get_param('countour_offset', 0.25)
 	self.repositioning_offset = rospy.get_param('repositioning_offset', 0.4)
 
         rospy.spin()
@@ -58,7 +58,9 @@ class ContourFollower():
 		path.poses.append(copy.deepcopy(p_pose))
 	    self.traj_pub.publish(path)
             print(waypoints[-1])
-            plan,fraction = self.group.compute_cartesian_path(waypoints,0.2,0.0)
+            plan,fraction = self.group.compute_cartesian_path(waypoints[1:],0.2,0.0)
+	    for j in range(len(plan.joint_trajectory.points)):
+		plan.joint_trajectory.points[j].time_from_start = rospy.Duration(j)
             rospy.loginfo('Planning done')
             self.group.execute(plan,wait=True)
 

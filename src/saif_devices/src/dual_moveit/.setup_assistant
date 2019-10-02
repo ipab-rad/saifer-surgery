@@ -8,4 +8,4 @@ moveit_setup_assistant_config:
   CONFIG:
     author_name: Craig Innes
     author_email: craig.innes@ed.ac.uk
-    generated_timestamp: 1570009338
+    generated_timestamp: 1570023622
