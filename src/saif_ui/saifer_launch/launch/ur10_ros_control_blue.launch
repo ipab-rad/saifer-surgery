@@ -39,7 +39,7 @@
   </node>
 
   <!-- Load controller settings -->
-  <rosparam file="$(find saifer_launch)/launch/ur10_controllers_blue.yaml" command="load"/>
+  <rosparam file="$(find blue_moveit)/config/ur10_controllers_blue.yaml" command="load"/>
 
   <!-- spawn controller manager -->
   <node name="ros_control_controller_spawner" pkg="controller_manager" type="spawner" respawn="false"
