@@ -1,5 +1,6 @@
 <?xml version="1.0"?>
 <launch>
+  <arg name="ip_gripper" default="192.168.1.11"/>
   <include file="$(find saifer_launch)/launch/ur10_ros_control_red.launch"/>
 
   <node name="red_ft_sensor" pkg="robotiq_ft_sensor" type="rq_sensor" output="screen" ns="red">

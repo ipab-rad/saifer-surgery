@@ -24,15 +24,3 @@ joint_state_controller:
   publish_rate: 50
 controller_list:
   []
-position_control:
-  type: position_controllers/JointTrajectoryController
-  joints:
-    []
-  gains:
-    {}
-velocity_control:
-  type: velocity_controllers/JointTrajectoryController
-  joints:
-    []
-  gains:
-    {}
