@@ -4,7 +4,7 @@
   <arg name="robot_ip" doc="IP of the controller" default="192.168.100.1" />
   <arg name="reverse_ip" default="192.168.100.2" doc="IP of the computer running the driver" />
   <arg name="prefix" default="blue"/>
-  <arg name="comport" default="/dev/ttyUSB0"/>
+  <arg name="comport" default="/dev/ttyUSB2"/>
   <arg name="baud" default="115200"/>
 
   <include file="$(find dual_arm_description)/launch/blue_upload.launch"/>
