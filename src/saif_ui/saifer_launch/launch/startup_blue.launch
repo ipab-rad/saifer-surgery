@@ -2,7 +2,7 @@
 <launch>
   <include file="$(find saifer_launch)/launch/ur10_ros_control_blue.launch"/>
 
-  <arg name="comport" default="/dev/ttyUSB0"/>
+  <arg name="comport" default="/dev/ttyUSB2"/>
   <arg name="baud" default="115200"/>
  
   <node pkg="robotiq_85_driver" type="robotiq_85_driver" name="robotiq_85_driver" respawn="true" output="screen" ns = "blue">

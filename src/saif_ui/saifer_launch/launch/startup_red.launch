@@ -4,7 +4,7 @@
   <include file="$(find saifer_launch)/launch/ur10_ros_control_red.launch"/>
 
   <node name="red_ft_sensor" pkg="robotiq_ft_sensor" type="rq_sensor" output="screen" ns="red">
-	<param name="serial_id" value="ttyUSB2"/>
+	<param name="serial_id" value="ttyUSB0"/>
         <param name="frame_id" value="red_robotiq_ft_frame_id"/>
   </node>
   
