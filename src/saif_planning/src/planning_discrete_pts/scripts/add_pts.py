@@ -10,7 +10,7 @@ from sensor_msgs.msg import JointState
 
 
 
-class GraphBuilder(object):
+class PlanningGraph(object):
 
     def __init__(self, vertex_file, edge_file):
 
@@ -37,15 +37,15 @@ class GraphBuilder(object):
     def dist(self, node1, node2):
         return np.linalg.norm(node1 - node2)
 
-    def get_graph_dist(self, node1, node2):
+    def getGraphDist(self, node1, node2):
         """number of transitions in shortest path between two nodes"""
-        path = self.find_shortest_path(node1, node2)
+        path = self.findShortestPath(node1, node2)
         return len(path) - 1
 
-    def get_nodes_within_dist(self, node, dist):
-        return [n for n in range(self.nodes) if self.get_graph_dist(node, n) <= dist]
+    def getNodesWithinDist(self, node, dist):
+        return [n for n in range(self.nodes) if self.getGraphDist(node, n) <= dist]
 
-    def find_shortest_path(self, node_index1, node_index2):
+    def findShortestPath(self, node_index1, node_index2):
 
         if node_index1 == node_index2:
             return [node_index1]
@@ -89,7 +89,7 @@ class GraphBuilder(object):
     def index2state(self, index):
         return self.nodes[index]
 
-    def store_node(self, data):
+    def storeNode(self, data):
 
         position = np.array(data.position)
         thresh = .1
@@ -111,22 +111,22 @@ class GraphBuilder(object):
             else:
                 data_index = self.current_node
         if len(self.nodes) > 1:
-            self.add_connection(self.current_node, data_index)
+            self.addConnection(self.current_node, data_index)
         self.current_node = data_index 
 
 
-    def add_connection(self, index1, index2):
+    def addConnection(self, index1, index2):
         if {index1, index2} not in self.connections and index1 != index2:  
             self.connections.append({index1, index2})
         else:
             return 
 
 
-    def build_graph(self):
+    def buildGraph(self):
 
         rospy.init_node('set_pts', anonymous=True)
 
-        rospy.Subscriber("/joint_states", numpy_msg(JointState), self.store_node)
+        rospy.Subscriber("/joint_states", numpy_msg(JointState), self.storeNode)
 
         rospy.spin()
 
@@ -136,8 +136,8 @@ class GraphBuilder(object):
 if __name__ == "__main__":
 
     
-    gb = GraphBuilder('test_graph_pts.npy', 'test_graph_edges.npy')
-    gb.build_graph()
+    gb = PlanningGraph('test_graph_pts.npy', 'test_graph_edges.npy')
+    gb.buildGraph()
 
 
     
