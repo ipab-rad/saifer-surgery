@@ -55,10 +55,11 @@ class ActivePlanner(object):
 
         reward = self.imageCompare(self.toFeatureRepresentation(cv_image, (img.height, img.width, 3)))
 
-        self.training_pts.append(joint_state)
+        position = joint_state.position
+        self.training_pts.append(position)
         self.training_labels.append(reward)
 
-        next_view = self.chooseNextView(joint_state)
+        next_view = self.chooseNextView(position)
 
     def toFeatureRepresentation(self, img, img_shape=(480,640,3)):
         img = np.expand_dims(img, axis=0)
@@ -76,13 +77,17 @@ class ActivePlanner(object):
 
 if __name__ == "__main__":
 
-    group_name = 'ur10'
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--vfile", default="test_graph_pts.npy", help="File path for saving vertices")
+    parser.add_argument("--efile", default="test_graph_edges.npy", help="File path for saving edges")
+    parser.add_argument("--group_name", default="ur10", help="Name of moveit move group")
+    args, unknown_args = parser.parse_known_args()
 
     rospy.init_node('active_planner', anonymous=False)
 
     target_im = cv2.imread('left0000.jpg')
 
-    ap = ActivePlanner(target_im, vf, ef, group_name)
+    ap = ActivePlanner(target_im, args.vfile, args.efile, args.group_name)
 
     rospy.spin()
 
