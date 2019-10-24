@@ -7,7 +7,7 @@ from rospy.numpy_msg import numpy_msg
 import numpy as np 
 import os
 from sensor_msgs.msg import JointState
-
+import argparse
 
 
 class PlanningGraph(object):
@@ -42,7 +42,12 @@ class PlanningGraph(object):
         path = self.findShortestPath(node1, node2)
         return len(path) - 1
 
-    def getNodesWithinDist(self, node, dist):
+    def getNodesWithinDist(self, position, dist):
+        if position not in self.nodes:
+            node = self.findClosestNode(position)
+        else:
+            node = self.state2index(position)
+
         return [n for n in range(self.nodes) if self.getGraphDist(node, n) <= dist]
 
     def findShortestPath(self, node_index1, node_index2):
@@ -105,13 +110,16 @@ class PlanningGraph(object):
             if min_dist < thresh:
                 data_index = dist_list.index(min_dist) 
             elif min_dist > add_thresh:
+                print('adding node with dist: ' + str(self.dist(self.current_node, position)))
                 self.nodes.append(position)
                 data_index = len(self.nodes) - 1
 
             else:
                 data_index = self.current_node
+
         if len(self.nodes) > 1:
             self.addConnection(self.current_node, data_index)
+
         self.current_node = data_index 
 
 
@@ -135,8 +143,12 @@ class PlanningGraph(object):
 
 if __name__ == "__main__":
 
-    
-    gb = PlanningGraph('test_graph_pts.npy', 'test_graph_edges.npy')
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--vfile", default="test_graph_pts.npy", help="File path for saving vertices")
+    parser.add_argument("--efile", default="test_graph_edges.npy", help="File path for saving edges")
+    args, unknown_args = parser.parse_known_args()
+
+    gb = PlanningGraph(args.vfile, args.efile)
     gb.buildGraph()
 
 
