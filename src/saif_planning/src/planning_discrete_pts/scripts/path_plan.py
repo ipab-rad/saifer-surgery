@@ -30,18 +30,24 @@ def planAndExecuteFromWaypoints(start, stop, graph, move_group, max_dist = .5):
         return
 
     waypoints = graph.findShortestPath(start_node, stop_node)
+    print("waypoints: " + str(waypoints))
 
-    (plan, fraction) = group.compute_cartesian_path(
-                                   waypoints,   
-                                   0.01,        
-                                   0.0)
+    for w in waypoints:
+        w = graph.index2state(w)
+        group.go(w, wait=True)
+        group.stop()
 
-    group.execute(plan, wait=True)
+    #(plan, fraction) = group.compute_cartesian_path(
+    #                               waypoints,   
+    #                               0.01,        
+    #                               0.0)
+
+    #group.execute(plan, wait=True)
 
 
 if __name__ == "__main__":
 
-    group_name = 'ur10'
+    group_name = 'blue_arm'
 
     rospy.init_node('path_plan', anonymous=True)
 
@@ -49,12 +55,19 @@ if __name__ == "__main__":
 
     group = moveit_commander.MoveGroupCommander(group_name)
 
+    wpose = group.get_current_pose().pose
+    print("wpose: " + str(wpose))
+    print(wpose.position)
     joint_vals = group.get_current_joint_values()
 
+    print("current joint vals" + str(joint_vals))
     nodes = gb.getNodes()
 
-    current = gb.findClosestNode(joint_vals)
-    print("start at: " + str(start))
+    print("first stored node" + str(nodes[0]))
+    current, _ = gb.findClosestNode(joint_vals)
+    current = gb.index2state(current)
+    
+    print("start at: " + str(current))
 
     for n in nodes:
 
