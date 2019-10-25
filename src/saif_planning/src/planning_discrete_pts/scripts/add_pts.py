@@ -71,7 +71,7 @@ class PlanningGraph(object):
                 q.put(c)
                 visited.add(c)
 
-            if node_index2 is in children:
+            if node_index2 in children:
                 path_found = True 
 
         point = node_index2
