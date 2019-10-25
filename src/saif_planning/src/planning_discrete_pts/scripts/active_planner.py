@@ -14,8 +14,8 @@ import path_plan as pp
 def kernel(dist):
     return np.exp(dist**2 / -2)
 
-def acquisition(m, s):
-    return m + .3 * s 
+def acquisition(m, s, scale=.3):
+    return m + scale * s 
 
 class ActivePlanner(object):
 
