@@ -8,7 +8,7 @@ import numpy as np
 import os
 from sensor_msgs.msg import JointState
 import argparse
-
+import Queue
 
 class PlanningGraph(object):
 
@@ -60,14 +60,17 @@ class PlanningGraph(object):
 
         path_found = False
         parent_dict = {}
-        q = queue.Queue()
+        q = Queue.Queue()
         q.put(node_index1)
         visited = {node_index1}
 
         while not path_found:
             current = q.get()
-            edges = [e.remove(current).pop() for e in self.connections if current in e]
-            children = [c for c in edges if c not in visited]
+            edges = [e for e in self.connections if current in e]
+            for e in edges:
+                e.remove(current)
+	    print("edges with current: " + str(edges))
+            children = [c.pop() for c in edges if c not in visited]
 
             for c in children:
                 parent_dict[c] = current
@@ -99,7 +102,7 @@ class PlanningGraph(object):
 
     def storeNode(self, data):
 
-        position = np.array(data.position)
+        position = np.array(data.position)[0:6]
         thresh = .1
         add_thresh = .5
         dist_list = [self.dist(node, position) for node in self.nodes]
