@@ -123,7 +123,7 @@ class PlanningGraph(object):
             else:
                 data_index = self.current_node
 
-        if len(self.nodes) > 1:
+        if len(self.nodes) > 1 and self.current_node:
             self.addConnection(self.current_node, data_index)
 
         self.current_node = data_index 
