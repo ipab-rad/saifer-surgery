@@ -63,17 +63,19 @@ if __name__ == "__main__":
     print("current joint vals" + str(joint_vals))
     nodes = gb.getNodes()
 
-    print("first stored node" + str(nodes[0]))
-    current, _ = gb.findClosestNode(joint_vals)
-    current = gb.index2state(current)
-    
-    print("start at: " + str(current))
+    print("nodes" + str(nodes))
+    print("edges: " + str(gb.connections))
+    cur_index, min_dist = gb.findClosestNode(joint_vals)
+    current = gb.index2state(cur_index)
+    print("min dist to graph: " + str(min_dist))    
+
+    print("start at: " + str(current) + " index: " + str(cur_index))
 
     for n in nodes:
 
         planAndExecuteFromWaypoints(current, n, gb, group_name, max_dist = .5)
         current = n
-        print("moved to node: " + str(gb.state2index(n)))
+        #print("moved to node: " + str(gb.state2index(n)))
 
     # target = group.get_joint_value_target() 
 

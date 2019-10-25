@@ -66,6 +66,9 @@ class PlanningGraph(object):
 
         while not path_found:
             current = q.get()
+            if q.empty():
+                print("ERROR: no valid path")
+                exit()
             edges = [e for e in self.connections if current in e]
             for e in edges:
                 e.remove(current)
