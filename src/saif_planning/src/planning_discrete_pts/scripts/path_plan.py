@@ -41,9 +41,9 @@ def planAndExecuteFromWaypoints(start, stop, graph, move_group, max_dist = .5):
 
 if __name__ == "__main__":
 
-    group_name = 'panda_arm'
+    group_name = 'ur10'
 
-    rospy.init_node('set_pts', anonymous=True)
+    rospy.init_node('path_plan', anonymous=True)
 
     gb = PlanningGraph('test_graph_pts.npy', 'test_graph_edges.npy')
 
@@ -51,16 +51,27 @@ if __name__ == "__main__":
 
     joint_vals = group.get_current_joint_values()
 
-    target = group.get_joint_value_target() 
+    nodes = gb.getNodes()
 
-    waypoints = planJointWaypoints(joint_vals, target, gb)
+    current = gb.findClosestNode(joint_vals)
+    print("start at: " + str(start))
 
-    (plan, fraction) = group.compute_cartesian_path(
-                                   waypoints,   
-                                   0.01,        
-                                   0.0)
+    for n in nodes:
 
-    group.execute(plan, wait=True)
+        planAndExecuteFromWaypoints(current, n, gb, group_name, max_dist = .5)
+        current = n
+        print("moved to node: " + str(gb.state2index(n)))
+
+    # target = group.get_joint_value_target() 
+
+    # waypoints = planJointWaypoints(joint_vals, target, gb)
+
+    # (plan, fraction) = group.compute_cartesian_path(
+    #                                waypoints,   
+    #                                0.01,        
+    #                                0.0)
+
+    # group.execute(plan, wait=True)
 
 
     rospy.spin()
