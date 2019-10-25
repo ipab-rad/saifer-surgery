@@ -38,7 +38,7 @@ class ActivePlanner(object):
         # get candidate set using graph, train gp
         cand_pts = self.PG.getNodesWithinDist(position, self.search_dist)
 
-        GP = sklearn.gaussian_process.GaussianProcessRegressor(kernel=None, alpha=1e-10, optimizer=’fmin_l_bfgs_b’, n_restarts_optimizer=0, normalize_y=True, copy_X_train=True, random_state=None)
+        GP = sklearn.gaussian_process.GaussianProcessRegressor(kernel=None, alpha=0.001, optimizer=’fmin_l_bfgs_b’, n_restarts_optimizer=0, normalize_y=True, copy_X_train=True, random_state=None)
         GP.fit(self.training_pts, self.training_labels)
         means, stds = GP.predict(cand_pts, return_std=True)
 
