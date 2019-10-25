@@ -34,6 +34,9 @@ class PlanningGraph(object):
         self.connections = connections 
         self.current_node = None 
 
+    def getNodes(self):
+        return self.nodes 
+
     def dist(self, node1, node2):
         return np.linalg.norm(node1 - node2)
 
