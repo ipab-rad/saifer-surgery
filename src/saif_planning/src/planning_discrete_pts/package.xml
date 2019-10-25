@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>planning_scene_constraints</name>
+  <name>planning_discrete_points</name>
   <version>0.0.0</version>
-  <description>The planning_scene_constraints package</description>
+  <description>The planning_discrete_points package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
   <!-- Example:  -->
