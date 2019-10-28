@@ -90,6 +90,9 @@ class PlanningGraph(object):
         return waypoints
 
     def findClosestNode(self, state):
+        if len(self.nodes) == 0:
+            return None, None 
+            
         dists = [self.dist(state, n) for n in self.nodes]
         return dists.index(min(dists)), min(dists)
 
@@ -107,23 +110,37 @@ class PlanningGraph(object):
         add_thresh = .5
         dist_list = [self.dist(node, position) for node in self.nodes]
 
-        if len(self.nodes) == 0:
+        index, min_dist = self.findClosestNode(position)
+
+        if not index or min_dist > add_thresh:
             self.nodes.append(position)
             data_index = len(self.nodes) - 1
+            #print('adding node with dist: ' + str(self.dist(self.current_node, position)))
+
+        elif min_dist < thresh:
+            data_index = index
 
         else:
-            min_dist = min(dist_list)
-            if min_dist < thresh:
-                data_index = dist_list.index(min_dist) 
-            elif min_dist > add_thresh:
-                print('adding node with dist: ' + str(self.dist(self.current_node, position)))
-                self.nodes.append(position)
-                data_index = len(self.nodes) - 1
+             data_index = self.current_node
 
-            else:
-                data_index = self.current_node
 
-        if len(self.nodes) > 1 and self.current_node:
+        # if len(self.nodes) == 0:
+        #     self.nodes.append(position)
+        #     data_index = len(self.nodes) - 1
+
+        # else:
+        #     min_dist = min(dist_list)
+        #     if min_dist < thresh:
+        #         data_index = dist_list.index(min_dist) 
+        #     elif min_dist > add_thresh:
+        #         print('adding node with dist: ' + str(self.dist(self.current_node, position)))
+        #         self.nodes.append(position)
+        #         data_index = len(self.nodes) - 1
+
+        #     else:
+        #         data_index = self.current_node
+
+        if data_index and self.current_node:
             self.addConnection(self.current_node, data_index)
 
         self.current_node = data_index 
