@@ -71,12 +71,13 @@ if __name__ == "__main__":
 
     print("start at: " + str(current) + " index: " + str(cur_index))
 
-    for n in nodes:
-
-        planAndExecuteFromWaypoints(current, n, gb, group_name, max_dist = .5)
-        current = n
+    #for n in nodes[1:]:
+        #print("attempting to reach: " + str(gb.state2index(n)))
+    #    planAndExecuteFromWaypoints(current, n, gb, group_name, max_dist = .5)
+    #    current = n
         #print("moved to node: " + str(gb.state2index(n)))
 
+    planAndExecuteFromWaypoints(current, nodes[-1], gb, group_name, max_dist = .5)
     # target = group.get_joint_value_target() 
 
     # waypoints = planJointWaypoints(joint_vals, target, gb)
