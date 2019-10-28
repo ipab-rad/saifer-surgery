@@ -7,9 +7,13 @@ sys.path.remove('/opt/ros/kinetic/lib/python2.7/dist-packages') # in order to im
 import cv2
 sys.path.append('/opt/ros/kinetic/lib/python2.7/dist-packages') # append back in order to import rospy
 import rospy 
-
+import message_filters
+import argparse
 from add_pts import PlanningGraph
+from sensor_msgs.msg import Image
 import path_plan as pp 
+from sensor_msgs.msg import JointState
+import numpy as np
 
 def kernel(dist):
     return np.exp(dist**2 / -2)
@@ -28,21 +32,23 @@ class ActivePlanner(object):
         self.group_name = group_name
 
         im_sub = message_filters.Subscriber("/camera/color/image_raw", Image)
-        joints_sub = message_filters.Subscriber("joint_states",JointState)
+        joints_sub = message_filters.Subscriber("/blue/joint_states",JointState)
         # message_filters.Subscriber("/kinect2/sd/image_depth_rect",Image)
 
         synched_sub = message_filters.ApproximateTimeSynchronizer([im_sub, joints_sub], queue_size=250, slop=0.05)
-        synched_sub.registerCallback(callback)
+        synched_sub.registerCallback(self.callback)
 
     def chooseNextView(self, position):
         # get candidate set using graph, train gp
+	print("current position: " + str(position))
         cand_pts = self.PG.getNodesWithinDist(position, self.search_dist)
-
-        GP = sklearn.gaussian_process.GaussianProcessRegressor(kernel=None, alpha=0.001, optimizer=’fmin_l_bfgs_b’, n_restarts_optimizer=0, normalize_y=True, copy_X_train=True, random_state=None)
+        print("cand pts: " + str(cand_pts))
+        GP = sklearn.gaussian_process.GaussianProcessRegressor(kernel=None, alpha=0.001, optimizer='fmin_l_bfgs_b', n_restarts_optimizer=0, normalize_y=True, copy_X_train=True, random_state=None)
         GP.fit(self.training_pts, self.training_labels)
         means, stds = GP.predict(cand_pts, return_std=True)
 
         scores = [acquisition(m, s) for (m, s) in zip(means, stds)]
+        print("scores: " + str(scores))
         best_index = np.argmax(np.array(scores))
         best_view = cand_pts[best_index]
 
@@ -51,10 +57,11 @@ class ActivePlanner(object):
 
 
     def callback(self, img, joint_state): # use eef
-        cv_image = self.bridge.imgmsg_to_cv2(img, "bgr8")
+        cv_image = CvBridge().imgmsg_to_cv2(img, "bgr8")
+#        cv2.imshow(cv_image)
 
         reward = self.imageCompare(self.toFeatureRepresentation(cv_image, (img.height, img.width, 3)))
-
+        print("reward: " + str(reward))
         position = joint_state.position
         self.training_pts.append(position)
         self.training_labels.append(reward)
@@ -64,9 +71,9 @@ class ActivePlanner(object):
     def toFeatureRepresentation(self, img, img_shape=(480,640,3)):
         img = np.expand_dims(img, axis=0)
 
-        model = keras.applications.inception_v3.InceptionV3(include_top=False, weights='imagenet', input_tensor=None, input_shape=img_shape, pooling='avg', classes=1000)
+        model = InceptionV3(include_top=False, weights='imagenet', input_tensor=None, input_shape=(480,640,3), pooling='avg', classes=1000)
 
-        return np.flatten(np.array(model.predict(img)))
+        return np.array(model.predict(img)).flatten()
 
 
     def imageCompare(self, img):
