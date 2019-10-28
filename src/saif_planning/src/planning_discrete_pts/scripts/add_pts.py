@@ -9,6 +9,7 @@ import os
 from sensor_msgs.msg import JointState
 import argparse
 import Queue
+import copy
 
 class PlanningGraph(object):
 
@@ -20,13 +21,13 @@ class PlanningGraph(object):
         print(self.vertex_file)
 
         if os.path.isfile(vertex_file):
-            nodes = list(np.load(vertex_file))
+            nodes = list(np.load(vertex_file, allow_pickle=True))
         else:
             print('no such file')
             nodes = []
             
         if os.path.isfile(edge_file):
-            connections = list(np.load(edge_file))
+            connections = list(np.load(edge_file, allow_pickle=True))
         else:
             connections = [] 
 
@@ -46,12 +47,9 @@ class PlanningGraph(object):
         return len(path) - 1
 
     def getNodesWithinDist(self, position, dist):
-        if position not in self.nodes:
-            node = self.findClosestNode(position)
-        else:
-            node = self.state2index(position)
+        node, _ = self.findClosestNode(position)
 
-        return [n for n in range(self.nodes) if self.getGraphDist(node, n) <= dist]
+        return [n for n in range(1, len(self.nodes)) if self.getGraphDist(node, n) <= dist]
 
     def findShortestPath(self, node_index1, node_index2):
 
@@ -64,21 +62,27 @@ class PlanningGraph(object):
         q.put(node_index1)
         visited = {node_index1}
 
+        print("searching for path between: " + str(node_index1) + " and " + str(node_index2))
+
         while not path_found:
-            current = q.get()
             if q.empty():
                 print("ERROR: no valid path")
                 exit()
-            edges = [e for e in self.connections if current in e]
+            current = q.get()
+	    print("current: " + str(current))
+            edges = [copy.copy(e) for e in self.connections if current in e]
+	
+
             for e in edges:
                 e.remove(current)
 	    print("edges with current: " + str(edges))
             children = [c.pop() for c in edges if c not in visited]
-
+	    print("children: " + str(children))
             for c in children:
                 parent_dict[c] = current
                 q.put(c)
                 visited.add(c)
+	    print("visited: " + str(visited))
 
             if node_index2 in children:
                 path_found = True 
