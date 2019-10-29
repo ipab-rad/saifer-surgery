@@ -69,20 +69,23 @@ class PlanningGraph(object):
                 print("ERROR: no valid path")
                 exit()
             current = q.get()
-	    print("current: " + str(current))
+	        print("current: " + str(current))
             edges = [copy.copy(e) for e in self.connections if current in e]
 	
 
             for e in edges:
                 e.remove(current)
-	    print("edges with current: " + str(edges))
-            children = [c.pop() for c in edges if c not in visited]
-	    print("children: " + str(children))
+                
+	        print("edges with current: " + str(edges))
+            children = [c.pop() for c in edges]
+            print("children: " + str(children))
+            children = [c for c in children if c not in visited]
+
             for c in children:
                 parent_dict[c] = current
                 q.put(c)
                 visited.add(c)
-	    print("visited: " + str(visited))
+	        print("visited: " + str(visited))
 
             if node_index2 in children:
                 path_found = True 
