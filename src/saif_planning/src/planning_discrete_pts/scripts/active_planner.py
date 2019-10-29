@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 from cv_bridge import CvBridge, CvBridgeError
-import sklearn
+from sklearn.gaussian_process import GaussianProcessRegressor 
 from keras.applications.inception_v3 import InceptionV3
 import sys
 sys.path.remove('/opt/ros/kinetic/lib/python2.7/dist-packages') # in order to import cv2 under python3
@@ -23,7 +23,7 @@ def acquisition(m, s, scale=.3):
 
 class ActivePlanner(object):
 
-    def __init__(self, target_img, vfile, efile, group_name, search_dist=5):
+    def __init__(self, target_img, vfile, efile, group_name, search_dist=1):
         self.target_img = target_img
         self.training_pts = []
         self.training_labels = []
@@ -34,25 +34,34 @@ class ActivePlanner(object):
         im_sub = message_filters.Subscriber("/camera/color/image_raw", Image)
         joints_sub = message_filters.Subscriber("/blue/joint_states",JointState)
         # message_filters.Subscriber("/kinect2/sd/image_depth_rect",Image)
+        joints_sub.registerCallback(self.test)
 
         synched_sub = message_filters.ApproximateTimeSynchronizer([im_sub, joints_sub], queue_size=250, slop=0.05)
         synched_sub.registerCallback(self.callback)
 
+    def test(self, data):
+        print("test callback: " + str(data))
+
     def chooseNextView(self, position):
         # get candidate set using graph, train gp
-	print("current position: " + str(position))
+	print("current position: " + str(self.PG.findClosestNode(position)))
         cand_pts = self.PG.getNodesWithinDist(position, self.search_dist)
         print("cand pts: " + str(cand_pts))
-        GP = sklearn.gaussian_process.GaussianProcessRegressor(kernel=None, alpha=0.001, optimizer='fmin_l_bfgs_b', n_restarts_optimizer=0, normalize_y=True, copy_X_train=True, random_state=None)
+        cand_pts = [self.PG.index2state(c) for c in cand_pts]
+
+
+        GP = GaussianProcessRegressor(kernel=None, alpha=0.001, optimizer='fmin_l_bfgs_b', n_restarts_optimizer=0, normalize_y=True, copy_X_train=True, random_state=None)
         GP.fit(self.training_pts, self.training_labels)
+        print("training labels: " + str(self.training_labels))
         means, stds = GP.predict(cand_pts, return_std=True)
+        print("means: " + str(means))
 
         scores = [acquisition(m, s) for (m, s) in zip(means, stds)]
         print("scores: " + str(scores))
         best_index = np.argmax(np.array(scores))
         best_view = cand_pts[best_index]
-
-        pp.planAndExecuteFromWaypoints(position, best_view, self.PG, max_dist = .5)
+        print("best view: " + str(self.PG.findClosestNode(best_view)))
+        pp.planAndExecuteFromWaypoints(position, best_view, self.PG, self.group_name, max_dist = .5)
 
 
 
@@ -63,6 +72,7 @@ class ActivePlanner(object):
         reward = self.imageCompare(self.toFeatureRepresentation(cv_image, (img.height, img.width, 3)))
         print("reward: " + str(reward))
         position = joint_state.position
+        print("position: {}, index: {}".format(position, self.PG.findClosestNode(position)))
         self.training_pts.append(position)
         self.training_labels.append(reward)
 
@@ -87,7 +97,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--vfile", default="test_graph_pts.npy", help="File path for saving vertices")
     parser.add_argument("--efile", default="test_graph_edges.npy", help="File path for saving edges")
-    parser.add_argument("--group_name", default="ur10", help="Name of moveit move group")
+    parser.add_argument("--group_name", default="blue_arm", help="Name of moveit move group")
     args, unknown_args = parser.parse_known_args()
 
     rospy.init_node('active_planner', anonymous=False)

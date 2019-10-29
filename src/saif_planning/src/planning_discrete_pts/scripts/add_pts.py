@@ -62,40 +62,41 @@ class PlanningGraph(object):
         q.put(node_index1)
         visited = {node_index1}
 
-        print("searching for path between: " + str(node_index1) + " and " + str(node_index2))
+        #print("searching for path between: " + str(node_index1) + " and " + str(node_index2))
 
         while not path_found:
             if q.empty():
                 print("ERROR: no valid path")
                 exit()
             current = q.get()
-	        print("current: " + str(current))
+	    #print("current: " + str(current))
             edges = [copy.copy(e) for e in self.connections if current in e]
 	
 
             for e in edges:
                 e.remove(current)
                 
-	        print("edges with current: " + str(edges))
+	    #print("edges with current: " + str(edges))
             children = [c.pop() for c in edges]
-            print("children: " + str(children))
+            #print("children: " + str(children))
             children = [c for c in children if c not in visited]
 
             for c in children:
                 parent_dict[c] = current
                 q.put(c)
                 visited.add(c)
-	        print("visited: " + str(visited))
+	    #print("visited: " + str(visited))
 
             if node_index2 in children:
                 path_found = True 
 
         point = node_index2
-        waypoints = [point]
+        waypoints = []
 
         while point != node_index1:
-            point = parent_dict[point]
+
             waypoints.insert(0, point)
+            point = parent_dict[point]
 
         return waypoints
 
