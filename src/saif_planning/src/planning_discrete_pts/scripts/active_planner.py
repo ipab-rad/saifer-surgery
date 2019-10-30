@@ -31,16 +31,19 @@ class ActivePlanner(object):
         self.search_dist = search_dist
         self.group_name = group_name
 
-        im_sub = message_filters.Subscriber("/camera/color/image_raw", Image)
-        joints_sub = message_filters.Subscriber("/blue/joint_states",JointState)
+
+
+
+    def run(self):
+   
+        rospy.init_node('active_planner', anonymous=False)
+        im_sub = message_filters.Subscriber("/camera/color/image_raw", Image, queue_size=1)
+        joints_sub = message_filters.Subscriber("/blue/joint_states",JointState, queue_size=1)
         # message_filters.Subscriber("/kinect2/sd/image_depth_rect",Image)
-        joints_sub.registerCallback(self.test)
 
-        synched_sub = message_filters.ApproximateTimeSynchronizer([im_sub, joints_sub], queue_size=250, slop=0.05)
+        synched_sub = message_filters.ApproximateTimeSynchronizer([im_sub, joints_sub], queue_size=1, slop=0.05)
         synched_sub.registerCallback(self.callback)
-
-    def test(self, data):
-        print("test callback: " + str(data))
+        rospy.spin()
 
     def chooseNextView(self, position):
         # get candidate set using graph, train gp
@@ -100,12 +103,12 @@ if __name__ == "__main__":
     parser.add_argument("--group_name", default="blue_arm", help="Name of moveit move group")
     args, unknown_args = parser.parse_known_args()
 
-    rospy.init_node('active_planner', anonymous=False)
+
 
     target_im = cv2.imread('left0000.jpg')
 
     ap = ActivePlanner(target_im, args.vfile, args.efile, args.group_name)
 
-    rospy.spin()
+    ap.run()
 
 
