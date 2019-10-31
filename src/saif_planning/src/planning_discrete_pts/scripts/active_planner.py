@@ -47,10 +47,10 @@ class ActivePlanner(object):
 
     def chooseNextView(self, position):
         # get candidate set using graph, train gp
-	print("current position: " + str(self.PG.findClosestNode(position)))
+	    print("current position: " + str(self.PG.findClosestNode(position)))
         cand_pts = self.PG.getNodesWithinDist(position, self.search_dist)
         print("cand pts: " + str(cand_pts))
-        cand_pts = [self.PG.index2state(c) for c in cand_pts]
+        cand_pts = [self.PG.index2state(c) for c in list(cand_pts)]
 
 
         GP = GaussianProcessRegressor(kernel=None, alpha=0.001, optimizer='fmin_l_bfgs_b', n_restarts_optimizer=0, normalize_y=True, copy_X_train=True, random_state=None)

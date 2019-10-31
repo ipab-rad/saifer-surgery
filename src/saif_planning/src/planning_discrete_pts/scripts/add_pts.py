@@ -46,10 +46,26 @@ class PlanningGraph(object):
         path = self.findShortestPath(node1, node2)
         return len(path) - 1
 
-    def getNodesWithinDist(self, position, dist):
-        node, _ = self.findClosestNode(position)
+    # def getNodesWithinDist(self, position, dist):
+    #     # TODO make faster
+    #     node, _ = self.findClosestNode(position)
 
-        return [n for n in range(1, len(self.nodes)) if self.getGraphDist(node, n) <= dist]
+    #     return [n for n in range(1, len(self.nodes)) if self.getGraphDist(node, n) <= dist]
+
+    def getNodesWithinDist(self, position, dist=1):
+        edges = [copy.copy(e) for e in self.connections if position in e]
+	
+        for e in edges:
+            e.remove(position)
+                
+        children = [c.pop() for c in edges]
+        #print("children: " + str(children))
+        children = [c for c in children if c not in visited]
+        
+        if dist == 1:
+            return set(children)
+
+        return set(children + reduce(lambda x, y: x + y, [getNodesWithinDist(c, dist - 1) for c in children]))
 
     def findShortestPath(self, node_index1, node_index2):
 
