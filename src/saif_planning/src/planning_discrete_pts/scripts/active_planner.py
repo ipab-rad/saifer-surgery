@@ -23,22 +23,23 @@ def acquisition(m, s, scale=.3):
 
 class ActivePlanner(object):
 
-    def __init__(self, target_img, vfile, efile, group_name, search_dist=1):
+    def __init__(self, target_img, vfile, efile, group_name, joint_topic="/blue/joint_states", image_topic="/camera/color/image_raw", search_dist=1):
         self.target_img = target_img
         self.training_pts = []
         self.training_labels = []
         self.PG = PlanningGraph(vfile, efile)
         self.search_dist = search_dist
         self.group_name = group_name
-
-
+        self.next_view = None
+        self.joint_topic = joint_topic
+        self.image_topic = image_topic
 
 
     def run(self):
    
         rospy.init_node('active_planner', anonymous=False)
-        im_sub = message_filters.Subscriber("/camera/color/image_raw", Image, queue_size=1)
-        joints_sub = message_filters.Subscriber("/blue/joint_states",JointState, queue_size=1)
+        im_sub = message_filters.Subscriber(self.image_topic, Image, queue_size=1)
+        joints_sub = message_filters.Subscriber(self.joint_topic, JointState, queue_size=1)
         # message_filters.Subscriber("/kinect2/sd/image_depth_rect",Image)
 
         synched_sub = message_filters.ApproximateTimeSynchronizer([im_sub, joints_sub], queue_size=1, slop=0.05)
@@ -48,7 +49,7 @@ class ActivePlanner(object):
     def chooseNextView(self, position):
         # get candidate set using graph, train gp
 	    print("current position: " + str(self.PG.findClosestNode(position)))
-        cand_pts = self.PG.getNodesWithinDist(position, self.search_dist)
+        cand_pts = self.PG.getNodesWithinDist(self.PG.state2index(position), self.search_dist)
         print("cand pts: " + str(cand_pts))
         cand_pts = [self.PG.index2state(c) for c in list(cand_pts)]
 
@@ -67,6 +68,23 @@ class ActivePlanner(object):
         pp.planAndExecuteFromWaypoints(position, best_view, self.PG, self.group_name, max_dist = .5)
 
 
+    def sampleTrajectories(self, node, num_t=10, depth=5):
+        
+
+        children = self.PG.getNodesWithinDist(node, 1)
+        to_expand = [children[random.randint(0, len(children) - 1)] for c in range(num_t)]
+        trajectories = [[t] for t in to_expand]
+
+        i = 1
+        while i < depth:
+            i += 1
+            children = [self.PG.getNodesWithinDist(c, 1) for c in to_expand]
+            to_expand = [c[random.randint(0, len(c) - 1)] for c in children]
+
+            for k in range(num_t):
+                trajectories[k].append(to_expand[k])
+
+        return trajectories
 
     def callback(self, img, joint_state): # use eef
         cv_image = CvBridge().imgmsg_to_cv2(img, "bgr8")
@@ -79,7 +97,8 @@ class ActivePlanner(object):
         self.training_pts.append(position)
         self.training_labels.append(reward)
 
-        next_view = self.chooseNextView(position)
+        if np.linalg.norm(np.array(position) - np.array(self.next_view)) < .1:
+            self.next_view = self.chooseNextView(position)
 
     def toFeatureRepresentation(self, img, img_shape=(480,640,3)):
         img = np.expand_dims(img, axis=0)
@@ -94,6 +113,10 @@ class ActivePlanner(object):
 
         return np.dot(target, img)/(np.linalg.norm(target) * np.linalg.norm(img))
 
+    def saveRewards(self, fname):
+        with open(fname, "w+") as f:
+            f.write(",".join(self.training_labels))
+
 
 if __name__ == "__main__":
 
@@ -101,13 +124,15 @@ if __name__ == "__main__":
     parser.add_argument("--vfile", default="test_graph_pts.npy", help="File path for saving vertices")
     parser.add_argument("--efile", default="test_graph_edges.npy", help="File path for saving edges")
     parser.add_argument("--group_name", default="blue_arm", help="Name of moveit move group")
+    parser.add_argument("--image_topic", default="/camera/color/image_raw", help="Name of image topic")
+    parser.add_argument("--joint_topic", default="/blue/joint_states", help="Name of joint topic")
     args, unknown_args = parser.parse_known_args()
 
 
 
     target_im = cv2.imread('left0000.jpg')
 
-    ap = ActivePlanner(target_im, args.vfile, args.efile, args.group_name)
+    ap = ActivePlanner(target_im, args.vfile, args.efile, args.group_name, args.joint_topic, args.image_topic)
 
     ap.run()
 
