@@ -136,4 +136,6 @@ if __name__ == "__main__":
 
     ap.run()
 
+    ap.saveRewards("rewards.csv")
+
 
