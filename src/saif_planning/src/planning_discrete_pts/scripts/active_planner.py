@@ -74,7 +74,11 @@ class ActivePlanner(object):
 
         sampleTs = self.sampleTrajectories(self.PG.state2index(position))
 
+        print("sampled trajectories: " + str(sampleTs))
+
         samplePreds = [[self.GP.predict(pts, return_std=True) for pts in traj] for traj in sampleTs]
+
+        print("sample preds: " + str(samplePreds))
 
         scores = [sum([acquisition(*pred) for pred in preds]) for preds in samplePreds]
 
@@ -82,8 +86,6 @@ class ActivePlanner(object):
         # print("training labels: " + str(self.training_labels))
         # means, stds = self.GP.predict(cand_pts, return_std=True)
         # print("means: " + str(means))
-
-
 
         #scores = [acquisition(m, s) for (m, s) in zip(means, stds)]
         print("scores: " + str(scores))

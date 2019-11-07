@@ -49,7 +49,6 @@ class PlanningGraph(object):
         return len(path) - 1
 
     # def getNodesWithinDist(self, position, dist):
-    #     # TODO make faster
     #     node, _ = self.findClosestNode(position)
 
     #     return [n for n in range(1, len(self.nodes)) if self.getGraphDist(node, n) <= dist]
