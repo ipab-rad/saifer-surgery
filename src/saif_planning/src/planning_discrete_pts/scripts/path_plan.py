@@ -47,11 +47,19 @@ def planAndExecuteFromWaypoints(start, stop, graph, move_group, max_dist = .5):
 
 if __name__ == "__main__":
 
-    group_name = 'left_arm'
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--vfile", default="test_graph_pts.npy", help="File path for saving vertices")
+    parser.add_argument("--efile", default="test_graph_edges.npy", help="File path for saving edges")
+    parser.add_argument("--group_name", default="left_arm", help="Name of moveit move group")
+    parser.add_argument("--index", default=1, help="Index of node to move to")
+    parser.add_argument("--robot_name", default="pr2", help="Name of robot")
+    args, unknown_args = parser.parse_known_args()
+
+    group_name = args.group_name
 
     rospy.init_node('path_plan', anonymous=True)
 
-    gb = PlanningGraph('test_graph_pts.npy', 'test_graph_edges.npy')
+    gb = PlanningGraph(args.vfile, args.efile, args.robot_name)
 
     group = moveit_commander.MoveGroupCommander(group_name)
 
@@ -77,7 +85,7 @@ if __name__ == "__main__":
     #    current = n
         #print("moved to node: " + str(gb.state2index(n)))
 
-    planAndExecuteFromWaypoints(current, nodes[293], gb, group_name, max_dist = .5)
+    planAndExecuteFromWaypoints(current, nodes[args.index], gb, group_name, max_dist = .5)
     # target = group.get_joint_value_target() 
 
     # waypoints = planJointWaypoints(joint_vals, target, gb)

@@ -14,7 +14,7 @@ import copy
 
 class PlanningGraph(object):
 
-    def __init__(self, vertex_file, edge_file):
+    def __init__(self, vertex_file, edge_file, robot):
 
         self.vertex_file = vertex_file
         self.edge_file = edge_file
@@ -35,6 +35,7 @@ class PlanningGraph(object):
         self.nodes = nodes
         self.connections = connections 
         self.current_node = None 
+        self.robot = robot
 
     def getNodes(self):
         return self.nodes 
@@ -187,7 +188,13 @@ class PlanningGraph(object):
 
         rospy.init_node('set_pts', anonymous=True)
 
-        rospy.Subscriber("/l_arm_controller/state/", numpy_msg(JointTrajectoryControllerState), self.storeNode)
+        if self.robot == "pr2":
+            rospy.Subscriber("/l_arm_controller/state", numpy_msg(JointTrajectoryControllerState), self.storeNode)
+        elif self.robot == "ur10":
+            rospy.Subscriber("/blue/joint_states", numpy_msg(JointState), self.storeNode)
+        else:
+            print("robot name not valid")
+            exit() 
 
         rospy.spin()
 
@@ -199,9 +206,10 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--vfile", default="test_graph_pts.npy", help="File path for saving vertices")
     parser.add_argument("--efile", default="test_graph_edges.npy", help="File path for saving edges")
+    parser.add_argument("--robot_name", default="pr2", help="Name of robot")
     args, unknown_args = parser.parse_known_args()
 
-    gb = PlanningGraph(args.vfile, args.efile)
+    gb = PlanningGraph(args.vfile, args.efile, args.robot_name)
     gb.buildGraph()
 
 
