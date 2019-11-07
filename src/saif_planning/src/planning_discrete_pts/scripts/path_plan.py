@@ -47,7 +47,7 @@ def planAndExecuteFromWaypoints(start, stop, graph, move_group, max_dist = .5):
 
 if __name__ == "__main__":
 
-    group_name = 'blue_arm'
+    group_name = 'left_arm'
 
     rospy.init_node('path_plan', anonymous=True)
 
@@ -77,7 +77,7 @@ if __name__ == "__main__":
     #    current = n
         #print("moved to node: " + str(gb.state2index(n)))
 
-    planAndExecuteFromWaypoints(current, nodes[-1], gb, group_name, max_dist = .5)
+    planAndExecuteFromWaypoints(current, nodes[293], gb, group_name, max_dist = .5)
     # target = group.get_joint_value_target() 
 
     # waypoints = planJointWaypoints(joint_vals, target, gb)

@@ -7,6 +7,7 @@ from rospy.numpy_msg import numpy_msg
 import numpy as np 
 import os
 from sensor_msgs.msg import JointState
+from pr2_controllers_msgs.msg import JointTrajectoryControllerState
 import argparse
 import Queue
 import copy
@@ -132,15 +133,16 @@ class PlanningGraph(object):
         return self.nodes[index]
 
     def storeNode(self, data):
-
-        position = np.array(data.position)[0:6]
+        position = np.array(data.actual.positions)
         thresh = .1
         add_thresh = .5
         dist_list = [self.dist(node, position) for node in self.nodes]
 
         index, min_dist = self.findClosestNode(position)
+	#print("index: {}, min dist: {}".format(index, min_dist))
 
         if not index or min_dist > add_thresh:
+	    print("adding new node")
             self.nodes.append(position)
             data_index = len(self.nodes) - 1
             #print('adding node with dist: ' + str(self.dist(self.current_node, position)))
@@ -185,7 +187,7 @@ class PlanningGraph(object):
 
         rospy.init_node('set_pts', anonymous=True)
 
-        rospy.Subscriber("/joint_states", numpy_msg(JointState), self.storeNode)
+        rospy.Subscriber("/l_arm_controller/state/", numpy_msg(JointTrajectoryControllerState), self.storeNode)
 
         rospy.spin()
 
