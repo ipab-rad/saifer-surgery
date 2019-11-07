@@ -14,6 +14,7 @@ from sensor_msgs.msg import Image
 import path_plan as pp 
 from sensor_msgs.msg import JointState
 import numpy as np
+from pr2_controllers_msgs.msg import JointTrajectoryControllerState
 
 def kernel(dist):
     return np.exp(dist**2 / -2)
@@ -27,7 +28,7 @@ class ActivePlanner(object):
         self.target_img = target_img
         self.training_pts = []
         self.training_labels = []
-        self.PG = PlanningGraph(vfile, efile)
+        self.PG = PlanningGraph(vfile, efile, robot)
         self.search_dist = search_dist
 
         self.next_view = None
@@ -50,7 +51,7 @@ class ActivePlanner(object):
         rospy.init_node('active_planner', anonymous=False)
 
         if self.robot == "pr2":
-            im_sub = message_filters.Subscriber("/camera/color/image_raw", Image, queue_size=1)
+            im_sub = message_filters.Subscriber("/l_forearm_cam/image_color", Image, queue_size=1)
             joints_sub = message_filters.Subscriber("/l_arm_controller/state", JointTrajectoryControllerState, queue_size=1) 
         elif self.robot == "ur10":
             im_sub = message_filters.Subscriber("/camera/color/image_raw", Image, queue_size=1)
@@ -67,7 +68,7 @@ class ActivePlanner(object):
 
     def chooseNextView(self, position):
         # get candidate set using graph, train gp
-	    print("current position: " + str(self.PG.findClosestNode(position)))
+	print("current position: " + str(self.PG.findClosestNode(position)))
         # cand_pts = self.PG.getNodesWithinDist(self.PG.state2index(position), self.search_dist)
         # print("cand pts: " + str(cand_pts))
         # cand_pts = [self.PG.index2state(c) for c in list(cand_pts)]

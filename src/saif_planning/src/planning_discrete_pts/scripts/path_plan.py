@@ -2,7 +2,7 @@
 from add_pts import PlanningGraph
 import rospy
 import moveit_commander
-
+import argparse
 
 def planJointWaypoints(start, stop, graph, max_dist = .5):
 
@@ -61,7 +61,7 @@ if __name__ == "__main__":
 
     gb = PlanningGraph(args.vfile, args.efile, args.robot_name)
 
-    group = moveit_commander.MoveGroupCommander(group_name)
+    group = moveit_commander.MoveGroupCommander("left_arm")
 
     wpose = group.get_current_pose().pose
     print("wpose: " + str(wpose))
@@ -85,7 +85,7 @@ if __name__ == "__main__":
     #    current = n
         #print("moved to node: " + str(gb.state2index(n)))
 
-    planAndExecuteFromWaypoints(current, nodes[args.index], gb, group_name, max_dist = .5)
+    planAndExecuteFromWaypoints(current, nodes[int(args.index)], gb, group_name, max_dist = .5)
     # target = group.get_joint_value_target() 
 
     # waypoints = planJointWaypoints(joint_vals, target, gb)
