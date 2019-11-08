@@ -15,7 +15,7 @@
 	<arg name="blue_robot_ip" doc="IP of the controller" default="192.168.100.1" />
 	<arg name="blue_reverse_ip" default="192.168.100.2" doc="IP of the computer running the driver" />
 	<arg name="blue_prefix" default="blue"/>
-	<arg name="comport" default="/dev/ttyUSB2"/>
+	<arg name="comport" default="/dev/gripper_2f"/>
 	<arg name="baud" default="115200"/>
 	<arg name="blue_reverse_port" default="50002"/>
 
@@ -33,7 +33,7 @@
 	</node>
 
 	<node name="blue_ft_sensor" pkg="robotiq_ft_sensor" type="rq_sensor" output="screen" ns='blue'>
-	<param name="serial_id" value="ttyUSB0"/>
+	<param name="serial_id" value="ft_blue"/>
 	<param name="frame_id" value="blue_robotiq_ft_frame_id"/>
 	</node>
 
@@ -60,7 +60,7 @@
 	<node name="robotiq_3f_controller" pkg="robotiq_3f_gripper_control" type="Robotiq3FGripperTcpNode.py" args="$(arg ip_gripper)"/>
 
 	<node name="red_ft_sensor" pkg="robotiq_ft_sensor" type="rq_sensor" output="screen" ns='red'>
-	<param name="serial_id" value="ttyUSB1"/>
+	<param name="serial_id" value="ft_red"/>
 	<param name="frame_id" value="red_robotiq_ft_frame_id"/>
 	</node>
 
