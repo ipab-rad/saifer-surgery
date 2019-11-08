@@ -205,7 +205,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--vfile", default="test_graph_pts.npy", help="File path for saving vertices")
     parser.add_argument("--efile", default="test_graph_edges.npy", help="File path for saving edges")
-    parser.add_argument("--robot_name", default="pr2", help="Name of robot")
+    parser.add_argument("--robot_name", default="ur10", help="Name of robot")
     args, unknown_args = parser.parse_known_args()
 
     gb = PlanningGraph(args.vfile, args.efile, args.robot_name)

@@ -24,12 +24,15 @@ def acquisition(m, s, scale=.3):
 
 class ActivePlanner(object):
 
-    def __init__(self, target_img, vfile, efile, robot, search_dist=1):
+    def __init__(self, target_img, vfile, efile, robot, target_name, search_dist=1):
         self.target_img = target_img
         self.training_pts = []
         self.training_labels = []
         self.PG = PlanningGraph(vfile, efile, robot)
         self.search_dist = search_dist
+        self.rewards = []
+        self.target_name = target_name
+        self.views = 0
 
         self.next_view = None
         #self.image_topic = image_topic
@@ -45,9 +48,31 @@ class ActivePlanner(object):
 
         self.GP = GaussianProcessRegressor(kernel=None, alpha=0.001, optimizer='fmin_l_bfgs_b', n_restarts_optimizer=0, normalize_y=True, copy_X_train=True, random_state=None)
 
+    def setInitialPose(self):
+        group = moveit_commander.MoveGroupCommander(self.group_name)
 
-    def run(self):
-   
+        wpose = group.get_current_pose().pose
+        print("wpose: " + str(wpose))
+        print(wpose.position)
+        joint_vals = group.get_current_joint_values()
+
+        print("current joint vals" + str(joint_vals))
+        nodes = self.PG.getNodes()
+
+        print("nodes" + str(nodes))
+        print("edges: " + str(self.PG.connections))
+        cur_index, min_dist = self.PG.findClosestNode(joint_vals)
+        current = self.PG.index2state(cur_index)
+        print("min dist to graph: " + str(min_dist))    
+
+        print("start at: " + str(current) + " index: " + str(cur_index))
+
+        index = random.randint(1, len(nodes) - 1)
+
+        pp.planAndExecuteFromWaypoints(current, nodes[index], self.PG, self.group_name, max_dist = .5)
+
+    def run(self, num_views=20):
+        self.setInitialPose()
         rospy.init_node('active_planner', anonymous=False)
 
         if self.robot == "pr2":
@@ -66,9 +91,12 @@ class ActivePlanner(object):
         synched_sub.registerCallback(self.callback)
         rospy.spin()
 
+        if self.veiws >= num_views:
+            break
+
     def chooseNextView(self, position):
         # get candidate set using graph, train gp
-	print("current position: " + str(self.PG.findClosestNode(position)))
+	    print("current position: " + str(self.PG.findClosestNode(position)))
         # cand_pts = self.PG.getNodesWithinDist(self.PG.state2index(position), self.search_dist)
         # print("cand pts: " + str(cand_pts))
         # cand_pts = [self.PG.index2state(c) for c in list(cand_pts)]
@@ -126,8 +154,10 @@ class ActivePlanner(object):
         self.training_pts.append(position)
         self.training_labels.append(reward)
 
-        if np.linalg.norm(np.array(position) - np.array(self.next_view)) < .1:
+        if not self.next_view or np.linalg.norm(np.array(position) - np.array(self.next_view)) < .1:
+            self.rewards.append(reward)
             self.next_view = self.chooseNextView(position)
+            self.views += 1
 
     def toFeatureRepresentation(self, img, img_shape=(480,640,3)):
         img = np.expand_dims(img, axis=0)
@@ -146,23 +176,45 @@ class ActivePlanner(object):
         with open(fname, "w+") as f:
             f.write(",".join(self.training_labels))
 
+    def reset(self, saveTrajectory=False):
+        self.training_pts = []
+        self.training_labels = []
+        self.next_view = None 
+        self.views = 0
+        self.GP = GaussianProcessRegressor(kernel=None, alpha=0.001, optimizer='fmin_l_bfgs_b', n_restarts_optimizer=0, normalize_y=True, copy_X_train=True, random_state=None)
+        self.saveRewards("rewards_{}.csv".format(self.target_name))
+        if saveTrajectory == True:
+            np.save("trajectory_{}.npy".format(self.target_name), self.training_pts)
+
+    # def setNewTarget(self, target_file, target_name):
+    #     self.reset()
+    #     self.target_img = cv2.imread(target_file, target_name)
+        
+        
+
 
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--vfile", default="test_graph_pts.npy", help="File path for saving vertices")
     parser.add_argument("--efile", default="test_graph_edges.npy", help="File path for saving edges")
-    parser.add_argument("--robot_name", default="pr2", help="Name of robot")
+    parser.add_argument("--robot_name", default="ur10", help="Name of robot")
     args, unknown_args = parser.parse_known_args()
 
+    targets = ['left0000.jpg']
+    target_names = ['torso']
 
-
-    target_im = cv2.imread('left0000.jpg')
-
-    ap = ActivePlanner(target_im, args.vfile, args.efile, args.robot_name)
-
-    ap.run()
+    for t, n in zip(targets, target_names):
+        # send to initial position
+        target_im = cv2.imread(t)
+        ap = ActivePlanner(target_im, args.vfile, args.efile, args.robot_name, n)
+        ap.setNewTarget(t, n)
+        for i in range(10):
+            ap.run()
+            ap.reset()
 
     ap.saveRewards("rewards.csv")
+
+    np.save("trajectory.npy", ap.training_pts)
 
 

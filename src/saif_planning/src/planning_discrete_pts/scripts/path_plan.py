@@ -52,7 +52,7 @@ if __name__ == "__main__":
     parser.add_argument("--efile", default="test_graph_edges.npy", help="File path for saving edges")
     parser.add_argument("--group_name", default="left_arm", help="Name of moveit move group")
     parser.add_argument("--index", default=1, help="Index of node to move to")
-    parser.add_argument("--robot_name", default="pr2", help="Name of robot")
+    parser.add_argument("--robot_name", default="ur10", help="Name of robot")
     args, unknown_args = parser.parse_known_args()
 
     group_name = args.group_name
