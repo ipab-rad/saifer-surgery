@@ -14,7 +14,9 @@ from sensor_msgs.msg import Image
 import path_plan as pp 
 from sensor_msgs.msg import JointState
 import numpy as np
-from pr2_controllers_msgs.msg import JointTrajectoryControllerState
+import moveit_commander
+import random
+#from pr2_controllers_msgs.msg import JointTrajectoryControllerState
 
 def kernel(dist):
     return np.exp(dist**2 / -2)
@@ -68,12 +70,13 @@ class ActivePlanner(object):
         print("start at: " + str(current) + " index: " + str(cur_index))
 
         index = random.randint(1, len(nodes) - 1)
-
+        print("initial index: " + str(index))
         pp.planAndExecuteFromWaypoints(current, nodes[index], self.PG, self.group_name, max_dist = .5)
 
     def run(self, num_views=20):
-        self.setInitialPose()
+
         rospy.init_node('active_planner', anonymous=False)
+        self.setInitialPose()
 
         if self.robot == "pr2":
             im_sub = message_filters.Subscriber("/l_forearm_cam/image_color", Image, queue_size=1)
@@ -91,8 +94,8 @@ class ActivePlanner(object):
         synched_sub.registerCallback(self.callback)
         rospy.spin()
 
-        if self.veiws >= num_views:
-            break
+        #if self.views >= num_views:
+        #    break
 
     def chooseNextView(self, position):
         # get candidate set using graph, train gp
@@ -101,12 +104,12 @@ class ActivePlanner(object):
         # cand_pts = self.PG.getNodesWithinDist(self.PG.state2index(position), self.search_dist)
         # print("cand pts: " + str(cand_pts))
         # cand_pts = [self.PG.index2state(c) for c in list(cand_pts)]
-
-        sampleTs = self.sampleTrajectories(self.PG.state2index(position))
+        current_index, _ = self.PG.findClosestNode(position)
+        sampleTs = self.sampleTrajectories(current_index)
 
         print("sampled trajectories: " + str(sampleTs))
 
-        samplePreds = [[self.GP.predict(pts, return_std=True) for pts in traj] for traj in sampleTs]
+        samplePreds = [[self.GP.predict(self.PG.index2state(pts).reshape(1, -1), return_std=True) for pts in traj] for traj in sampleTs]
 
         print("sample preds: " + str(samplePreds))
 
@@ -120,11 +123,11 @@ class ActivePlanner(object):
         #scores = [acquisition(m, s) for (m, s) in zip(means, stds)]
         print("scores: " + str(scores))
         best_index = np.argmax(np.array(scores))
-        best_view = cand_pts[best_index]
+        best_view = self.PG.index2state(sampleTs[best_index][0])
         self.next_view = best_view
         print("best view: " + str(self.PG.findClosestNode(best_view)))
         pp.planAndExecuteFromWaypoints(position, best_view, self.PG, self.group_name, max_dist = .5)
-
+        print("num views: " + str(self.views))
 
     def sampleTrajectories(self, node, num_t=10, depth=5):
         
@@ -137,7 +140,7 @@ class ActivePlanner(object):
         while i < depth:
             i += 1
             children = [self.PG.getNodesWithinDist(c, 1) for c in to_expand]
-            to_expand = [c[random.randint(0, len(c) - 1)] for c in children]
+            to_expand = [c[random.randint(0, len(c) - 1)] for c in children if len(c) > 0]
 
             for k in range(num_t):
                 trajectories[k].append(to_expand[k])
@@ -174,8 +177,10 @@ class ActivePlanner(object):
         return np.dot(target, img)/(np.linalg.norm(target) * np.linalg.norm(img))
 
     def saveRewards(self, fname):
-        with open(fname, "w+") as f:
-            f.write(",".join(self.training_labels))
+        #rewards = [str(tl) for tl in self.training_labels]
+        #with open(fname, "w+") as f:
+        #    f.write(",".join(rewards))
+        np.save(fname, np.array(self.training_labels))
 
     def reset(self, saveTrajectory=False):
         self.training_pts = []
@@ -206,16 +211,19 @@ if __name__ == "__main__":
     target_names = ['torso']
 
     for t, n in zip(targets, target_names):
+        print("target: " + n)
         # send to initial position
         target_im = cv2.imread(t)
         ap = ActivePlanner(target_im, args.vfile, args.efile, args.robot_name, n)
-        ap.setNewTarget(t, n)
-        for i in range(10):
-            ap.run()
-            ap.reset()
+        ap.run()
+        #for i in range(10):
+        #    ap.run()
+        #    if ap.views >= 20:
+        #        print("resetting")
+        #        ap.reset()
 
-    ap.saveRewards("rewards.csv")
+        ap.saveRewards("rewards_{}.csv".format(n))
 
-    np.save("trajectory.npy", ap.training_pts)
+        np.save("trajectory_{}.npy".format(n), ap.training_pts)
 
 

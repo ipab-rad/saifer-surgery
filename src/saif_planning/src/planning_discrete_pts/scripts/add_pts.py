@@ -7,7 +7,7 @@ from rospy.numpy_msg import numpy_msg
 import numpy as np 
 import os
 from sensor_msgs.msg import JointState
-from pr2_controllers_msgs.msg import JointTrajectoryControllerState
+#from pr2_controllers_msgs.msg import JointTrajectoryControllerState
 import argparse
 import Queue
 import copy
@@ -54,9 +54,11 @@ class PlanningGraph(object):
     #     return [n for n in range(1, len(self.nodes)) if self.getGraphDist(node, n) <= dist]
 
     def getNodesWithinDist(self, position, dist=1):
+        print("node: " + str(position))
         #node, _ = self.findClosestNode(position)
         edges = [copy.copy(e) for e in self.connections if position in e]
-	
+        print("all edges: " + str(self.connections))
+        print("edges with current pos: " + str(edges))	
         for e in edges:
             e.remove(position)
                 
@@ -133,24 +135,28 @@ class PlanningGraph(object):
         return self.nodes[index]
 
     def storeNode(self, data):
-        position = np.array(data.actual.positions)
-        thresh = .1
-        add_thresh = .5
+        position = np.array(data.position)[0:6]
+        thresh = .05
+        add_thresh = .2
         dist_list = [self.dist(node, position) for node in self.nodes]
 
         index, min_dist = self.findClosestNode(position)
-	#print("index: {}, min dist: {}".format(index, min_dist))
+#	print("index: {}, min dist: {}".format(index, min_dist))
 
-        if not index or min_dist > add_thresh:
-	    print("adding new node")
+        if index is None or min_dist > add_thresh:
+	   
             self.nodes.append(position)
             data_index = len(self.nodes) - 1
-            #print('adding node with dist: ' + str(self.dist(self.current_node, position)))
+	    #print("adding new node: " + str(data_index))
+            print('adding node ' + str(data_index) + ' with dist: ' + str(min_dist) + " from " + str(index))
 
         elif min_dist < thresh:
+            print("position: " + str(position))
+            print("close to node {} with dist {}".format(index, min_dist))
             data_index = index
 
         else:
+             print("no significant change, min dist: {}".format(min_dist))
              data_index = self.current_node
 
 
@@ -171,6 +177,7 @@ class PlanningGraph(object):
         #         data_index = self.current_node
 
         if data_index and self.current_node:
+            print("adding connection between {} and {}".format(data_index, self.current_node))
             self.addConnection(self.current_node, data_index)
 
         self.current_node = data_index 
@@ -190,7 +197,7 @@ class PlanningGraph(object):
         if self.robot == "pr2":
             rospy.Subscriber("/l_arm_controller/state", numpy_msg(JointTrajectoryControllerState), self.storeNode)
         elif self.robot == "ur10":
-            rospy.Subscriber("/blue/joint_states", numpy_msg(JointState), self.storeNode)
+            rospy.Subscriber("/joint_states", numpy_msg(JointState), self.storeNode)
         else:
             print("robot name not valid")
             exit() 

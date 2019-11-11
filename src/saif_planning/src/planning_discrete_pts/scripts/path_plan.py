@@ -35,6 +35,7 @@ def planAndExecuteFromWaypoints(start, stop, graph, move_group, max_dist = .5):
     for w in waypoints:
 	print("moving to waypoint: " + str(w))
         w = graph.index2state(w)
+        
         group.go(w, wait=True)
         group.stop()
 
@@ -51,7 +52,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--vfile", default="test_graph_pts.npy", help="File path for saving vertices")
     parser.add_argument("--efile", default="test_graph_edges.npy", help="File path for saving edges")
-    parser.add_argument("--group_name", default="left_arm", help="Name of moveit move group")
+    parser.add_argument("--group_name", default="blue_arm", help="Name of moveit move group")
     parser.add_argument("--index", default=1, help="Index of node to move to")
     parser.add_argument("--robot_name", default="ur10", help="Name of robot")
     args, unknown_args = parser.parse_known_args()
@@ -62,7 +63,7 @@ if __name__ == "__main__":
 
     gb = PlanningGraph(args.vfile, args.efile, args.robot_name)
 
-    group = moveit_commander.MoveGroupCommander("left_arm")
+    group = moveit_commander.MoveGroupCommander("blue_arm")
 
     wpose = group.get_current_pose().pose
     print("wpose: " + str(wpose))
