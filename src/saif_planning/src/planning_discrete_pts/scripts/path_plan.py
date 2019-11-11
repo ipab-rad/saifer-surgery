@@ -33,6 +33,7 @@ def planAndExecuteFromWaypoints(start, stop, graph, move_group, max_dist = .5):
     print("waypoints: " + str(waypoints))
 
     for w in waypoints:
+	print("moving to waypoint: " + str(w))
         w = graph.index2state(w)
         group.go(w, wait=True)
         group.stop()
@@ -85,7 +86,11 @@ if __name__ == "__main__":
     #    current = n
         #print("moved to node: " + str(gb.state2index(n)))
 
+
     planAndExecuteFromWaypoints(current, nodes[int(args.index)], gb, group_name, max_dist = .5)
+
+
+
     # target = group.get_joint_value_target() 
 
     # waypoints = planJointWaypoints(joint_vals, target, gb)
