@@ -54,11 +54,11 @@ class PlanningGraph(object):
     #     return [n for n in range(1, len(self.nodes)) if self.getGraphDist(node, n) <= dist]
 
     def getNodesWithinDist(self, position, dist=1):
-        print("node: " + str(position))
+        #print("node: " + str(position))
         #node, _ = self.findClosestNode(position)
         edges = [copy.copy(e) for e in self.connections if position in e]
-        print("all edges: " + str(self.connections))
-        print("edges with current pos: " + str(edges))	
+        #print("all edges: " + str(self.connections))
+        #print("edges with current pos: " + str(edges))	
         for e in edges:
             e.remove(position)
                 

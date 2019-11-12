@@ -16,7 +16,7 @@ from sensor_msgs.msg import JointState
 import numpy as np
 import moveit_commander
 import random
-from threading import Thread 
+import threading 
 #from pr2_controllers_msgs.msg import JointTrajectoryControllerState
 
 def kernel(dist):
@@ -31,6 +31,7 @@ class ActivePlanner(object):
         self.target_img = target_img
         self.training_pts = []
         self.training_labels = []
+        self.trajectory = []
         self.PG = PlanningGraph(vfile, efile, robot)
         self.search_dist = search_dist
         self.rewards = []
@@ -50,38 +51,40 @@ class ActivePlanner(object):
             print("robot name not valid")
             exit() 
 
-        self.update = True
-        self.lock = Lock()
+        self.update = False
+        self.lock = threading.Lock()
 
         self.GP = GaussianProcessRegressor(kernel=None, alpha=0.001, optimizer='fmin_l_bfgs_b', n_restarts_optimizer=0, normalize_y=True, copy_X_train=True, random_state=None)
+
+        rospy.init_node('active_planner', anonymous=False)
+        self.setInitialPose()
 
     def setInitialPose(self):
         group = moveit_commander.MoveGroupCommander(self.group_name)
 
         wpose = group.get_current_pose().pose
-        print("wpose: " + str(wpose))
-        print(wpose.position)
+        #print("wpose: " + str(wpose))
+        #print(wpose.position)
         joint_vals = group.get_current_joint_values()
 
-        print("current joint vals" + str(joint_vals))
+        #print("current joint vals" + str(joint_vals))
         nodes = self.PG.getNodes()
 
-        print("nodes" + str(nodes))
-        print("edges: " + str(self.PG.connections))
+        #print("nodes" + str(nodes))
+        #print("edges: " + str(self.PG.connections))
         cur_index, min_dist = self.PG.findClosestNode(joint_vals)
         current = self.PG.index2state(cur_index)
-        print("min dist to graph: " + str(min_dist))    
+        #print("min dist to graph: " + str(min_dist))    
 
-        print("start at: " + str(current) + " index: " + str(cur_index))
+        #print("start at: " + str(current) + " index: " + str(cur_index))
 
         index = random.randint(1, len(nodes) - 1)
-        print("initial index: " + str(index))
+        #print("initial index: " + str(index))
         pp.planAndExecuteFromWaypoints(current, nodes[index], self.PG, self.group_name, max_dist = .5)
 
     def run(self, num_views=20):
 
-        rospy.init_node('active_planner', anonymous=False)
-        self.setInitialPose()
+
 
         if self.robot == "pr2":
             im_sub = message_filters.Subscriber("/l_forearm_cam/image_color", Image, queue_size=1)
@@ -120,13 +123,14 @@ class ActivePlanner(object):
 
         print("sampled trajectories: " + str(sampleTs))
 
-        samplePreds = [[self.GP.predict(self.PG.index2state(pts).reshape(1, -1), return_std=True) for pts in traj] for traj in sampleTs]
+        #samplePreds = [[self.GP.predict(self.PG.index2state(pts).reshape(1, -1), return_std=True) for pts in traj] for traj in sampleTs]
 
+        samplePreds = [self.GP.predict(self.PG.index2state(traj[-1]).reshape(1, -1), return_std=True) for traj in sampleTs]
         print("sample preds: " + str(samplePreds))
 
-        scores = [sum([acquisition(*pred) for pred in preds]) for preds in samplePreds]
+        #scores = [sum([acquisition(*pred) for pred in preds]) for preds in samplePreds]
 
-        
+        scores = [acquisition(*pred) for pred in samplePreds]        
         # print("training labels: " + str(self.training_labels))
         # means, stds = self.GP.predict(cand_pts, return_std=True)
         # print("means: " + str(means))
@@ -134,13 +138,13 @@ class ActivePlanner(object):
         #scores = [acquisition(m, s) for (m, s) in zip(means, stds)]
         print("scores: " + str(scores))
         best_index = np.argmax(np.array(scores))
-        best_view = self.PG.index2state(sampleTs[best_index][0])
+        best_view = self.PG.index2state(sampleTs[best_index][-1])
         
         print("best view: " + str(self.PG.findClosestNode(best_view)))
         pp.planAndExecuteFromWaypoints(position, best_view, self.PG, self.group_name, max_dist = .5)
         self.views += 1
         print("num views: " + str(self.views))
-
+	self.trajectory.append(sampleTs[best_index][-1])
         self.update = False
         self.next_view = best_view
 
@@ -165,20 +169,24 @@ class ActivePlanner(object):
     def callback(self, img, joint_state): # use eef
         cv_image = CvBridge().imgmsg_to_cv2(img, "bgr8")
 #        cv2.imshow(cv_image)
-
+        #print("h,w: {}, {}".format(img.height, img.width))
         reward = self.imageCompare(self.toFeatureRepresentation(cv_image, (img.height, img.width, 3)))
         print("reward: " + str(reward))
         position = joint_state.position
-        print("position: {}, index: {}".format(position, self.PG.findClosestNode(position)))
-        self.training_pts.append(position)
-        self.training_labels.append(reward)
-        self.position = position
+        #print("position: {}, index: {}".format(position, self.PG.findClosestNode(position)))
+        with self.lock:
+            self.training_pts.append(position)
+            self.training_labels.append(reward)
+            print("training labels: {}".format(self.training_labels))
+            self.position = position
 
 
 
-        if not self.next_view or np.linalg.norm(np.array(position) - np.array(self.next_view)) < .1:
-            self.rewards.append(reward)
-            self.update = True
+            if self.next_view is None or np.linalg.norm(np.array(position) - np.array(self.next_view)) < .1:
+                self.rewards.append(reward)
+                self.update = True
+                print("rewards: {}".format(self.rewards))
+                print("trajectory: {}".format(self.trajectory))
             #self.next_view = self.chooseNextView(position)
             #self.views += 1
 
@@ -196,7 +204,9 @@ class ActivePlanner(object):
         return np.dot(target, img)/(np.linalg.norm(target) * np.linalg.norm(img))
 
     def saveRewards(self, fname):
-        rewards = [str(tl) for tl in self.training_labels]
+        print("saving rewards in: " + str(fname))
+        rewards = [str(tl) for tl in self.rewards]
+        print("rewards: {}, array: {}".format(",".join(rewards), self.rewards))
         with open(fname, "w+") as f:
            f.write(",".join(rewards))
         #np.save(fname, np.array(self.training_labels))
@@ -211,6 +221,7 @@ class ActivePlanner(object):
             self.saveRewards("rewards_{}.csv".format(self.target_name))
             if saveTrajectory == True:
                 np.save("trajectory_{}.npy".format(self.target_name), self.training_pts)
+            self.rewards = []
 
     # def setNewTarget(self, target_file, target_name):
     #     self.reset()
@@ -227,19 +238,24 @@ if __name__ == "__main__":
     parser.add_argument("--robot_name", default="ur10", help="Name of robot")
     args, unknown_args = parser.parse_known_args()
 
-    targets = ['pink_ball.png', 'left0000.jpg']
+    targets = ['pink_ball.jpg', 'left0000.jpg']
     target_names = ['pink_ball', 'torso']
 
     num_views = 10
-    num_trials = 5
+    num_trials = 1
 
     for t, n in zip(targets, target_names):
-        print("target: " + n)
+        print("t, n: {}, {}".format(t, n))
         # send to initial position
         target_im = cv2.imread(t)
+        #print(np.shape(np.array(target_im)))
+        #print(target_im)
+        cv2.imshow('target', target_im)
         ap = ActivePlanner(target_im, args.vfile, args.efile, args.robot_name, n)
-        sub_thread = Thread(target=ap.run, args=())
+        sub_thread = threading.Thread(target=ap.run, args=())
+        sub_thread.setDaemon(True)
         sub_thread.start()
+
 
         for i in range(0, num_trials):
             while ap.views < num_views:
@@ -248,7 +264,7 @@ if __name__ == "__main__":
 
             ap.reset()
 
-        sub_thread.exit()
+        #sub_thread.exit()
         #ap.run()
         #for i in range(10):
         #    ap.run()
