@@ -128,33 +128,45 @@ class ActivePlanner(object):
 
         self.GP.fit(points, labels)
         current_index, _ = self.PG.findClosestNode(position)
-        sampleTs = self.sampleTrajectories(current_index)
+        
 
-        print("sampled trajectories: " + str(sampleTs))
+        # SAMPLE MPC
+        best_score, best_index = self.getMaxScore(self, current_index)
+        best_view = self.PG.index2state(best_index)
 
-        #samplePreds = [[self.GP.predict(self.PG.index2state(pts).reshape(1, -1), return_std=True) for pts in traj] for traj in sampleTs]
-        destinations = [self.PG.index2state(traj[-1]) for traj in sampleTs] 
-        samplePreds = self.GP.predict(destinations, return_std=True)
-        samplePreds = zip(samplePreds[0], samplePreds[1])
-        print("sample preds: " + str(samplePreds))
+        self.trajectory.append(best_index)
+        ####
 
-        #scores = [sum([acquisition(*pred) for pred in preds]) for preds in samplePreds]
+        # TRAJECTORY SAMPLING 
+        # sampleTs = self.sampleTrajectories(current_index)
+        # print("sampled trajectories: " + str(sampleTs))
 
-        scores = [acquisition(*pred) for pred in samplePreds]        
-        # print("training labels: " + str(self.training_labels))
-        # means, stds = self.GP.predict(cand_pts, return_std=True)
-        # print("means: " + str(means))
+        # #samplePreds = [[self.GP.predict(self.PG.index2state(pts).reshape(1, -1), return_std=True) for pts in traj] for traj in sampleTs]
+        # destinations = [self.PG.index2state(traj[-1]) for traj in sampleTs] 
+        # samplePreds = self.GP.predict(destinations, return_std=True)
+        # samplePreds = zip(samplePreds[0], samplePreds[1])
+        # print("sample preds: " + str(samplePreds))
 
-        #scores = [acquisition(m, s) for (m, s) in zip(means, stds)]
-        print("scores: " + str(scores))
-        best_index = np.argmax(np.array(scores))
-        best_view = self.PG.index2state(sampleTs[best_index][-1])
+        # #scores = [sum([acquisition(*pred) for pred in preds]) for preds in samplePreds]
+
+        # scores = [acquisition(*pred) for pred in samplePreds]        
+        # # print("training labels: " + str(self.training_labels))
+        # # means, stds = self.GP.predict(cand_pts, return_std=True)
+        # # print("means: " + str(means))
+
+        # #scores = [acquisition(m, s) for (m, s) in zip(means, stds)]
+        # print("scores: " + str(scores))
+        # best_index = np.argmax(np.array(scores))
+        # best_view = self.PG.index2state(sampleTs[best_index][-1])
+
+        # self.trajectory.append(sampleTs[best_index][-1])
+        ####
         
         print("best view: " + str(self.PG.findClosestNode(best_view)))
         pp.planAndExecuteFromWaypoints(position, best_view, self.PG, self.group_name, max_dist = .5)
         self.views += 1
         print("num views: " + str(self.views))
-	self.trajectory.append(sampleTs[best_index][-1])
+	    
         self.update = False
         self.next_view = best_view
 
@@ -176,6 +188,19 @@ class ActivePlanner(object):
 
         return trajectories
 
+    def getMaxScore(self, node, depth=5, branch=5):
+        children = self.PG.getNodesWithinDist(node, 1)
+        to_expand = [children[random.randint(0, len(children) - 1)] for c in range(branch)]
+        preds = self.GP.predict([self.PG.index2state(t) for t in to_expand], return_std=True)
+        scores = [acquisition(*pred) for pred in zip(preds[0], preds[1])] 
+        
+        if depth == 1:
+            return max(scores), to_expand[np.argmax(np.array(scores))]
+            
+        scores = [scores[i] + getMaxScore(self, to_expand[i], depth - 1, max(1, branch - 1))[0] for i in range(0, len(scores))]
+        
+        return max(scores), to_expand[np.argmax(np.array(scores))]
+
     def callback(self, img, joint_state): # use eef
 	print("entering callback")
         cv_image = CvBridge().imgmsg_to_cv2(img, "bgr8")
@@ -193,7 +218,7 @@ class ActivePlanner(object):
             index = random.randint(0, len(self.training_pts) - 1)
             self.training_pts.pop(index)
             self.training_labels.pop(index)
-            
+
         print("training labels: {}".format(self.training_labels))
         self.position = position
 
