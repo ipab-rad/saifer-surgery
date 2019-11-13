@@ -55,7 +55,7 @@ class ActivePlanner(object):
         self.lock = threading.Lock()
 
         self.GP = GaussianProcessRegressor(kernel=None, alpha=0.001, optimizer='fmin_l_bfgs_b', n_restarts_optimizer=0, normalize_y=True, copy_X_train=True, random_state=None)
-
+        self.model = InceptionV3(include_top=False, weights='imagenet', input_tensor=None, input_shape=(480,640,3), pooling='avg', classes=1000)
         rospy.init_node('active_planner', anonymous=False)
         self.setInitialPose()
 
@@ -124,8 +124,9 @@ class ActivePlanner(object):
         print("sampled trajectories: " + str(sampleTs))
 
         #samplePreds = [[self.GP.predict(self.PG.index2state(pts).reshape(1, -1), return_std=True) for pts in traj] for traj in sampleTs]
-
-        samplePreds = [self.GP.predict(self.PG.index2state(traj[-1]).reshape(1, -1), return_std=True) for traj in sampleTs]
+        destinations = [self.PG.index2state(traj[-1]) for traj in sampleTs] 
+        samplePreds = self.GP.predict(destinations, return_std=True)
+        samplePreds = zip(samplePreds[0], samplePreds[1])
         print("sample preds: " + str(samplePreds))
 
         #scores = [sum([acquisition(*pred) for pred in preds]) for preds in samplePreds]
@@ -167,6 +168,7 @@ class ActivePlanner(object):
         return trajectories
 
     def callback(self, img, joint_state): # use eef
+	print("entering callback")
         cv_image = CvBridge().imgmsg_to_cv2(img, "bgr8")
 #        cv2.imshow(cv_image)
         #print("h,w: {}, {}".format(img.height, img.width))
@@ -193,9 +195,9 @@ class ActivePlanner(object):
     def toFeatureRepresentation(self, img, img_shape=(480,640,3)):
         img = np.expand_dims(img, axis=0)
 
-        model = InceptionV3(include_top=False, weights='imagenet', input_tensor=None, input_shape=(480,640,3), pooling='avg', classes=1000)
 
-        return np.array(model.predict(img)).flatten()
+
+        return np.array(self.model.predict(img)).flatten()
 
 
     def imageCompare(self, img):
