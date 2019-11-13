@@ -247,20 +247,20 @@ class ActivePlanner(object):
         rewards = [str(tl) for tl in self.rewards]
         print("rewards: {}, array: {}".format(",".join(rewards), self.rewards))
         with open(fname, "w+") as f:
-           f.write(",".join(rewards))
+           f.write(",".join(rewards) + "\n")
         #np.save(fname, np.array(self.training_labels))
 
     def reset(self, saveTrajectory=False):
-        with self.lock:
-            self.training_pts = []
-            self.training_labels = []
-            self.next_view = None 
-            self.views = 0
-            self.GP = GaussianProcessRegressor(kernel=None, alpha=0.001, optimizer='fmin_l_bfgs_b', n_restarts_optimizer=0, normalize_y=True, copy_X_train=True, random_state=None)
-            self.saveRewards("rewards_{}.csv".format(self.target_name))
-            if saveTrajectory == True:
-                np.save("trajectory_{}.npy".format(self.target_name), self.training_pts)
-            self.rewards = []
+        #with self.lock:
+        self.training_pts = []
+        self.training_labels = []
+        self.next_view = None 
+        self.views = 0
+        self.GP = GaussianProcessRegressor(kernel=None, alpha=0.001, optimizer='fmin_l_bfgs_b', n_restarts_optimizer=0, normalize_y=True, copy_X_train=True, random_state=None)
+        self.saveRewards("rewards_{}.csv".format(self.target_name))
+        if saveTrajectory == True:
+            np.save("trajectory_{}.npy".format(self.target_name), self.training_pts)
+        self.rewards = []
 
     # def setNewTarget(self, target_file, target_name):
     #     self.reset()
