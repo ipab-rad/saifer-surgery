@@ -101,8 +101,9 @@ class ActivePlanner(object):
         synched_sub = message_filters.ApproximateTimeSynchronizer([im_sub, joints_sub], queue_size=1, slop=0.05)
         synched_sub.registerCallback(self.callback)
 
-        rospy.Rate(10) # 10hz
-            
+        rate = rospy.Rate(10) # 10hz
+                    
+        print("test: " + str(self.toFeatureRepresentation(self.target_img, (480, 640, 3))))
         while not rospy.is_shutdown() and self.views < num_views:
 
             if self.update is True:
@@ -131,7 +132,7 @@ class ActivePlanner(object):
         
 
         # SAMPLE MPC
-        best_score, best_index = self.getMaxScore(self, current_index)
+        best_score, best_index = self.getMaxScore(current_index, depth=5)
         best_view = self.PG.index2state(best_index)
 
         self.trajectory.append(best_index)
@@ -188,8 +189,9 @@ class ActivePlanner(object):
 
         return trajectories
 
-    def getMaxScore(self, node, depth=5, branch=5):
+    def getMaxScore(self, node, depth=5, branch=10):
         children = self.PG.getNodesWithinDist(node, 1)
+        print("children of {}: {}".format(node, children))
         to_expand = [children[random.randint(0, len(children) - 1)] for c in range(branch)]
         preds = self.GP.predict([self.PG.index2state(t) for t in to_expand], return_std=True)
         scores = [acquisition(*pred) for pred in zip(preds[0], preds[1])] 
@@ -197,16 +199,19 @@ class ActivePlanner(object):
         if depth == 1:
             return max(scores), to_expand[np.argmax(np.array(scores))]
             
-        scores = [scores[i] + getMaxScore(self, to_expand[i], depth - 1, max(1, branch - 1))[0] for i in range(0, len(scores))]
+        scores = [scores[i] + self.getMaxScore(to_expand[i], depth - 1, max(1, int(branch/2)))[0] for i in range(0, len(scores))]
         
         return max(scores), to_expand[np.argmax(np.array(scores))]
+
 
     def callback(self, img, joint_state): # use eef
 	print("entering callback")
         cv_image = CvBridge().imgmsg_to_cv2(img, "bgr8")
-#        cv2.imshow(cv_image)
-        #print("h,w: {}, {}".format(img.height, img.width))
-        reward = self.imageCompare(self.toFeatureRepresentation(cv_image, (img.height, img.width, 3)))
+        #cv2.imshow('im', cv_image)
+        print(self.toFeatureRepresentation(self.target_img, (img.height, img.width, 3)))
+        print(self.toFeatureRepresentation(cv_image, (img.height, img.width, 3)))
+        print("h,w: {}, {}".format(img.height, img.width))
+        reward = self.imageCompare(self.toFeatureRepresentation(cv_image, (img.height, img.width, 3))) - .5
         print("reward: " + str(reward))
         position = joint_state.position
         #print("position: {}, index: {}".format(position, self.PG.findClosestNode(position)))
@@ -234,6 +239,7 @@ class ActivePlanner(object):
 
     def toFeatureRepresentation(self, img, img_shape=(480,640,3)):
         img = np.expand_dims(img, axis=0)
+        print(np.shape(img))
         return np.array(self.model.predict(img)).flatten()
 
 
@@ -246,7 +252,7 @@ class ActivePlanner(object):
         print("saving rewards in: " + str(fname))
         rewards = [str(tl) for tl in self.rewards]
         print("rewards: {}, array: {}".format(",".join(rewards), self.rewards))
-        with open(fname, "w+") as f:
+        with open(fname, "ab") as f:
            f.write(",".join(rewards) + "\n")
         #np.save(fname, np.array(self.training_labels))
 
@@ -277,11 +283,11 @@ if __name__ == "__main__":
     parser.add_argument("--robot_name", default="ur10", help="Name of robot")
     args, unknown_args = parser.parse_known_args()
 
-    targets = ['pink_ball.jpg', 'left0000.jpg']
-    target_names = ['pink_ball', 'torso']
+    targets = ['pink_ball.jpg'] #, 'left0000.jpg']
+    target_names = ['pink_ball_'] #, 'torso']
 
-    num_views = 10
-    num_trials = 1
+    num_views = 30
+    num_trials = 5
 
     for t, n in zip(targets, target_names):
         print("t, n: {}, {}".format(t, n))
@@ -293,6 +299,7 @@ if __name__ == "__main__":
         ap = ActivePlanner(target_im, args.vfile, args.efile, args.robot_name, n)
 
         for i in range(0, num_trials):
+            print("trial: " + str(i))
             ap.run(num_views)
             ap.reset()
 

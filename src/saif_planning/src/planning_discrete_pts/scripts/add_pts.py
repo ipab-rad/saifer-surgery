@@ -122,6 +122,7 @@ class PlanningGraph(object):
 
     def findClosestNode(self, state):
         if len(self.nodes) == 0:
+            print("no stored nodes")
             return None, None 
             
         dists = [self.dist(state, n) for n in self.nodes]
