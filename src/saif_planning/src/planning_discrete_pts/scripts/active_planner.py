@@ -100,9 +100,13 @@ class ActivePlanner(object):
 
         synched_sub = message_filters.ApproximateTimeSynchronizer([im_sub, joints_sub], queue_size=1, slop=0.05)
         synched_sub.registerCallback(self.callback)
-        rospy.spin()
 
+	rospy.Rate(10) # 10hz
+        while not rospy.is_shutdown():
+
+            rate.sleep()
         #if self.views >= num_views:
+
         #    break
 
     def chooseNextView(self):
