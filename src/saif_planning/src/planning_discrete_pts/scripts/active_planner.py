@@ -52,7 +52,7 @@ class ActivePlanner(object):
             exit() 
 
         self.update = False
-        self.lock = threading.Lock()
+        #self.lock = threading.Lock()
 
         self.GP = GaussianProcessRegressor(kernel=None, alpha=0.001, optimizer='fmin_l_bfgs_b', n_restarts_optimizer=0, normalize_y=True, copy_X_train=True, random_state=None)
         self.model = InceptionV3(include_top=False, weights='imagenet', input_tensor=None, input_shape=(480,640,3), pooling='avg', classes=1000)
@@ -101,8 +101,13 @@ class ActivePlanner(object):
         synched_sub = message_filters.ApproximateTimeSynchronizer([im_sub, joints_sub], queue_size=1, slop=0.05)
         synched_sub.registerCallback(self.callback)
 
-	rospy.Rate(10) # 10hz
-        while not rospy.is_shutdown():
+        rospy.Rate(10) # 10hz
+            
+        while not rospy.is_shutdown() and self.views < num_views:
+
+            if self.update is True:
+                self.chooseNextView()
+
 
             rate.sleep()
         #if self.views >= num_views:
@@ -180,27 +185,30 @@ class ActivePlanner(object):
         print("reward: " + str(reward))
         position = joint_state.position
         #print("position: {}, index: {}".format(position, self.PG.findClosestNode(position)))
-        with self.lock:
-            self.training_pts.append(position)
-            self.training_labels.append(reward)
-            print("training labels: {}".format(self.training_labels))
-            self.position = position
+        #with self.lock:
+        self.training_pts.append(position)
+        self.training_labels.append(reward)
+
+        if len(self.training_pts) > 1000:
+            index = random.randint(0, len(self.training_pts) - 1)
+            self.training_pts.pop(index)
+            self.training_labels.pop(index)
+            
+        print("training labels: {}".format(self.training_labels))
+        self.position = position
 
 
 
-            if self.next_view is None or np.linalg.norm(np.array(position) - np.array(self.next_view)) < .1:
-                self.rewards.append(reward)
-                self.update = True
-                print("rewards: {}".format(self.rewards))
-                print("trajectory: {}".format(self.trajectory))
+        if self.next_view is None or np.linalg.norm(np.array(position) - np.array(self.next_view)) < .1:
+            self.rewards.append(reward)
+            self.update = True
+            print("rewards: {}".format(self.rewards))
+            print("trajectory: {}".format(self.trajectory))
             #self.next_view = self.chooseNextView(position)
             #self.views += 1
 
     def toFeatureRepresentation(self, img, img_shape=(480,640,3)):
         img = np.expand_dims(img, axis=0)
-
-
-
         return np.array(self.model.predict(img)).flatten()
 
 
@@ -258,16 +266,9 @@ if __name__ == "__main__":
         #print(target_im)
         cv2.imshow('target', target_im)
         ap = ActivePlanner(target_im, args.vfile, args.efile, args.robot_name, n)
-        sub_thread = threading.Thread(target=ap.run, args=())
-        sub_thread.setDaemon(True)
-        sub_thread.start()
-
 
         for i in range(0, num_trials):
-            while ap.views < num_views:
-                if ap.update is True:
-                    ap.chooseNextView()
-
+            ap.run(num_views)
             ap.reset()
 
         #sub_thread.exit()
