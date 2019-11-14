@@ -31,7 +31,7 @@
       <depend>moveit_ros_planning_interface</depend>
       <depend>robotiq_3f_gripper_articulated_msgs</depend>
       <depend>geometry_msgs</depend>
-
+      <depend>eigen</depend>
 
   <!-- The *depend tags are used to specify dependencies -->
   <!-- Dependencies can be catkin packages or system dependencies -->
