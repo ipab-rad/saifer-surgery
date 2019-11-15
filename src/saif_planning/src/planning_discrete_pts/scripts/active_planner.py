@@ -29,7 +29,7 @@ def acquisition(m, s, scale=.3):
 
 class ActivePlanner(object):
 
-    def __init__(self, target_img, vfile, efile, robot, target_name, search_dist=1):
+    def __init__(self, target_img, vfile, efile, robot, target_name, search_dist=1, init_pose=None):
         self.target_img = target_img
         self.training_pts = []
         self.training_labels = []
@@ -59,11 +59,11 @@ class ActivePlanner(object):
         self.GP = GaussianProcessRegressor(kernel=None, alpha=0.001, optimizer='fmin_l_bfgs_b', n_restarts_optimizer=0, normalize_y=True, copy_X_train=True, random_state=None)
         self.model = InceptionV3(include_top=False, weights='imagenet', input_tensor=None, input_shape=(480,640,3), pooling='avg', classes=1000)
         rospy.init_node('active_planner', anonymous=False)
-        self.setInitialPose()
+        self.setInitialPose(init_pose)
 
         self.graph = tf.get_default_graph()
 
-    def setInitialPose(self):
+    def setInitialPose(self, init_index=None):
         group = moveit_commander.MoveGroupCommander(self.group_name)
 
         wpose = group.get_current_pose().pose
@@ -81,9 +81,11 @@ class ActivePlanner(object):
         #print("min dist to graph: " + str(min_dist))    
 
         #print("start at: " + str(current) + " index: " + str(cur_index))
-
-        index = random.randint(1, len(nodes) - 1)
-        #print("initial index: " + str(index))
+        if init_index == None:
+            index = random.randint(1, len(nodes) - 1)
+        else:
+            index = init_index
+        print("initial index: " + str(index))
         pp.planAndExecuteFromWaypoints(current, nodes[index], self.PG, self.group_name, max_dist = .5)
 
     def run(self, num_views=20):
@@ -124,11 +126,13 @@ class ActivePlanner(object):
         position = self.position
 
         current_node, _ = self.PG.findClosestNode(position)
+        print("at node: " + str(current_node))
 
         self.next_view = self.PG.index2state((current_node + 1) % len(self.PG.getNodes()))
 
         pp.planAndExecuteFromWaypoints(position, self.next_view, self.PG, self.group_name, max_dist = .5)
         self.views += 1
+        self.update = False
         print("num views: " + str(self.views))
 
     def chooseNextView(self):
@@ -235,7 +239,7 @@ class ActivePlanner(object):
             print(self.toFeatureRepresentation(self.target_img, (img.height, img.width, 3)))
             print(self.toFeatureRepresentation(cv_image, (img.height, img.width, 3)))
             #print("h,w: {}, {}".format(img.height, img.width))
-            reward = self.imageCompare(self.toFeatureRepresentation(cv_image, (img.height, img.width, 3))) - .5
+            reward = self.imageCompare(self.toFeatureRepresentation(cv_image, (img.height, img.width, 3)))
             print("reward: " + str(reward))
         
 
@@ -316,10 +320,14 @@ if __name__ == "__main__":
     parser.add_argument("--robot_name", default="ur10", help="Name of robot")
     args, unknown_args = parser.parse_known_args()
 
-    targets = ['pink_ball.jpg'] #, 'liquid.jpg'] #, 'left0000.jpg']
-    target_names = ['pink_ball_'] #, 'liquid'] #, 'torso']
+    #targets = ['pink_ball.jpg'] 
+    #targets = ['liquid.jpg'] #, 
+    targets = ['left0000.jpg']
+    #target_names = ['pink_ball_'] #, 
+    #target_names = ['liquid'] #, 
+    target_names = ['torso']
 
-    num_views = 10
+    num_views = 92
     num_trials = 1
 
     for t, n in zip(targets, target_names):
@@ -329,7 +337,7 @@ if __name__ == "__main__":
         #print(np.shape(np.array(target_im)))
         #print(target_im)
         cv2.imshow('target', target_im)
-        ap = ActivePlanner(target_im, args.vfile, args.efile, args.robot_name, n)
+        ap = ActivePlanner(target_im, args.vfile, args.efile, args.robot_name, n, init_pose=1)
 
         for i in range(0, num_trials):
             print("trial: " + str(i))
