@@ -2,6 +2,7 @@
 from cv_bridge import CvBridge, CvBridgeError
 from sklearn.gaussian_process import GaussianProcessRegressor 
 from keras.applications.inception_v3 import InceptionV3
+import tensorflow as tf
 import sys
 sys.path.remove('/opt/ros/kinetic/lib/python2.7/dist-packages') # in order to import cv2 under python3
 import cv2
@@ -17,6 +18,7 @@ import numpy as np
 import moveit_commander
 import random
 import threading 
+import matplotlib.pyplot as plt
 #from pr2_controllers_msgs.msg import JointTrajectoryControllerState
 
 def kernel(dist):
@@ -58,6 +60,8 @@ class ActivePlanner(object):
         self.model = InceptionV3(include_top=False, weights='imagenet', input_tensor=None, input_shape=(480,640,3), pooling='avg', classes=1000)
         rospy.init_node('active_planner', anonymous=False)
         self.setInitialPose()
+
+        self.graph = tf.get_default_graph()
 
     def setInitialPose(self):
         group = moveit_commander.MoveGroupCommander(self.group_name)
@@ -101,9 +105,9 @@ class ActivePlanner(object):
         synched_sub = message_filters.ApproximateTimeSynchronizer([im_sub, joints_sub], queue_size=1, slop=0.05)
         synched_sub.registerCallback(self.callback)
 
-        rate = rospy.Rate(10) # 10hz    
-
-        print("test: " + str(self.toFeatureRepresentation(self.target_img, (480, 640, 3))))
+        rate = rospy.Rate(10) # 10hz
+                    
+        #print("test: " + str(self.toFeatureRepresentation(self.target_img, (480, 640, 3))))
         while not rospy.is_shutdown() and self.views < num_views:
 
             if self.update is True:
@@ -148,6 +152,12 @@ class ActivePlanner(object):
         best_view = self.PG.index2state(best_index)
 
         self.trajectory.append(best_index)
+
+        print("gp preds: " + str(self.GP.predict(self.PG.getNodes())))
+        print("num nodes: " + str(len(self.PG.getNodes())))
+        pl.plot(range(len(self.PG.getNodes())), self.GP.predict(self.PG.getNodes()))
+        display.clear_output(wait=True)
+        display.display(pl.gcf())
         ####
 
         # TRAJECTORY SAMPLING 
@@ -178,7 +188,7 @@ class ActivePlanner(object):
         print("best view: " + str(self.PG.findClosestNode(best_view)))
         pp.planAndExecuteFromWaypoints(position, best_view, self.PG, self.group_name, max_dist = .5)
         self.views += 1
-        print("num views: " + str(self.views))
+        print("view: " + str(self.views))
 	    
         self.update = False
         self.next_view = best_view
@@ -203,7 +213,7 @@ class ActivePlanner(object):
 
     def getMaxScore(self, node, depth=5, branch=10):
         children = self.PG.getNodesWithinDist(node, 1)
-        print("children of {}: {}".format(node, children))
+        #print("children of {}: {}".format(node, children))
         to_expand = [children[random.randint(0, len(children) - 1)] for c in range(branch)]
         preds = self.GP.predict([self.PG.index2state(t) for t in to_expand], return_std=True)
         scores = [acquisition(*pred) for pred in zip(preds[0], preds[1])] 
@@ -218,29 +228,38 @@ class ActivePlanner(object):
     def callback(self, img, joint_state): # use eef
 	print("entering callback")
         cv_image = CvBridge().imgmsg_to_cv2(img, "bgr8")
-
-        print(self.toFeatureRepresentation(self.target_img, (img.height, img.width, 3)))
-        print(self.toFeatureRepresentation(cv_image, (img.height, img.width, 3)))
-        print("h,w: {}, {}".format(img.height, img.width))
-        reward = self.imageCompare(self.toFeatureRepresentation(cv_image, (img.height, img.width, 3))) - .5
-        print("reward: " + str(reward))
+        #cv2.imshow('im', cv_image)
+        
         position = joint_state.position
-        #print("position: {}, index: {}".format(position, self.PG.findClosestNode(position)))
-        #with self.lock:
-        self.training_pts.append(position)
-        self.training_labels.append(reward)
+        try:
+            print(self.toFeatureRepresentation(self.target_img, (img.height, img.width, 3)))
+            print(self.toFeatureRepresentation(cv_image, (img.height, img.width, 3)))
+            #print("h,w: {}, {}".format(img.height, img.width))
+            reward = self.imageCompare(self.toFeatureRepresentation(cv_image, (img.height, img.width, 3))) - .5
+            print("reward: " + str(reward))
+        
+
+            #print("position: {}, index: {}".format(position, self.PG.findClosestNode(position)))
+            #with self.lock:
+            self.training_pts.append(position)
+            self.training_labels.append(reward)
+       
+        except ValueError:
+            print("something isn't working right")
+            reward = None
+            print(self.toFeatureRepresentation(self.target_img, (img.height, img.width, 3)))
+        #finally:
+
 
         if len(self.training_pts) > 1000:
             index = random.randint(0, len(self.training_pts) - 1)
             self.training_pts.pop(index)
             self.training_labels.pop(index)
 
-        print("training labels: {}".format(self.training_labels))
+        #print("training labels: {}".format(self.training_labels))
         self.position = position
 
-
-
-        if self.next_view is None or np.linalg.norm(np.array(position) - np.array(self.next_view)) < .1:
+        if reward is not None and (self.next_view is None or np.linalg.norm(np.array(position) - np.array(self.next_view)) < .1):
             self.rewards.append(reward)
             self.update = True
             print("rewards: {}".format(self.rewards))
@@ -250,7 +269,9 @@ class ActivePlanner(object):
 
     def toFeatureRepresentation(self, img, img_shape=(480,640,3)):
         img = np.expand_dims(img, axis=0)
-        return np.array(self.model.predict(img)).flatten()
+        print(np.shape(img))
+        with self.graph.as_default():
+            return np.array(self.model.predict(img)).flatten()
 
 
     def imageCompare(self, img):
@@ -262,8 +283,10 @@ class ActivePlanner(object):
         print("saving rewards in: " + str(fname))
         rewards = [str(tl) for tl in self.rewards]
         print("rewards: {}, array: {}".format(",".join(rewards), self.rewards))
-        with open(fname, "ab") as f:
+        with open(self.target_name + "_rewards.csv", "ab") as f:
            f.write(",".join(rewards) + "\n")
+        with open(self.target_name + "_trajectory.csv", "ab") as f:
+           f.write(",".join(str(self.trajectory)) + "\n")
         #np.save(fname, np.array(self.training_labels))
 
     def reset(self, saveTrajectory=False):
@@ -293,8 +316,8 @@ if __name__ == "__main__":
     parser.add_argument("--robot_name", default="ur10", help="Name of robot")
     args, unknown_args = parser.parse_known_args()
 
-    targets = ['pink_ball.jpg'] #, 'left0000.jpg']
-    target_names = ['pink_ball_'] #, 'torso']
+    targets = ['pink_ball.jpg'] #, 'liquid.jpg'] #, 'left0000.jpg']
+    target_names = ['pink_ball_'] #, 'liquid'] #, 'torso']
 
     num_views = 10
     num_trials = 1

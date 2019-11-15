@@ -30,10 +30,10 @@ def planAndExecuteFromWaypoints(start, stop, graph, move_group, max_dist = .5):
         return
 
     waypoints = graph.findShortestPath(start_node, stop_node)
-    print("waypoints: " + str(waypoints))
+    #print("waypoints: " + str(waypoints))
 
     for w in waypoints:
-	print("moving to waypoint: " + str(w))
+	#print("moving to waypoint: " + str(w))
         w = graph.index2state(w)
         
         group.go(w, wait=True)

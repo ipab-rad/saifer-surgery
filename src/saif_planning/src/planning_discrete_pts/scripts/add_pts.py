@@ -69,7 +69,7 @@ class PlanningGraph(object):
         if dist == 1:
             return children
 
-        return list(set(children + reduce(lambda x, y: x + y, [getNodesWithinDist(c, dist - 1) for c in children])))
+        return list(set(children + reduce(lambda x, y: x + y, [self.getNodesWithinDist(c, dist - 1) for c in children])))
 
     def findShortestPath(self, node_index1, node_index2):
 
