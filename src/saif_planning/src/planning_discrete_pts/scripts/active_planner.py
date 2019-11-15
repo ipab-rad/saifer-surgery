@@ -101,19 +101,31 @@ class ActivePlanner(object):
         synched_sub = message_filters.ApproximateTimeSynchronizer([im_sub, joints_sub], queue_size=1, slop=0.05)
         synched_sub.registerCallback(self.callback)
 
-        rate = rospy.Rate(10) # 10hz
-                    
+        rate = rospy.Rate(10) # 10hz    
+
         print("test: " + str(self.toFeatureRepresentation(self.target_img, (480, 640, 3))))
         while not rospy.is_shutdown() and self.views < num_views:
 
             if self.update is True:
-                self.chooseNextView()
+                #self.chooseNextView()
+                self.cycleViews()
 
 
             rate.sleep()
         #if self.views >= num_views:
 
         #    break
+
+    def cycleViews(self):
+        position = self.position
+
+        current_node, _ = self.PG.findClosestNode(position)
+
+        self.next_view = self.PG.index2state((current_node + 1) % len(self.PG.getNodes()))
+
+        pp.planAndExecuteFromWaypoints(position, self.next_view, self.PG, self.group_name, max_dist = .5)
+        self.views += 1
+        print("num views: " + str(self.views))
 
     def chooseNextView(self):
         # get candidate set using graph, train gp
@@ -203,11 +215,10 @@ class ActivePlanner(object):
         
         return max(scores), to_expand[np.argmax(np.array(scores))]
 
-
     def callback(self, img, joint_state): # use eef
 	print("entering callback")
         cv_image = CvBridge().imgmsg_to_cv2(img, "bgr8")
-        #cv2.imshow('im', cv_image)
+
         print(self.toFeatureRepresentation(self.target_img, (img.height, img.width, 3)))
         print(self.toFeatureRepresentation(cv_image, (img.height, img.width, 3)))
         print("h,w: {}, {}".format(img.height, img.width))
@@ -239,7 +250,6 @@ class ActivePlanner(object):
 
     def toFeatureRepresentation(self, img, img_shape=(480,640,3)):
         img = np.expand_dims(img, axis=0)
-        print(np.shape(img))
         return np.array(self.model.predict(img)).flatten()
 
 
@@ -286,8 +296,8 @@ if __name__ == "__main__":
     targets = ['pink_ball.jpg'] #, 'left0000.jpg']
     target_names = ['pink_ball_'] #, 'torso']
 
-    num_views = 30
-    num_trials = 5
+    num_views = 10
+    num_trials = 1
 
     for t, n in zip(targets, target_names):
         print("t, n: {}, {}".format(t, n))
