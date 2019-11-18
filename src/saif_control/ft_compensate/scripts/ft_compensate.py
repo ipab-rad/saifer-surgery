@@ -5,48 +5,58 @@ from geometry_msgs.msg import WrenchStamped
 import moveit_commander
 import numpy as np
 from scipy.spatial.transform import Rotation as R
-from sklearn.tree import DecisionTreeRegressor
+#from sklearn.tree import DecisionTreeRegressor
+from sklearn.neighbors import KNeighborsRegressor
+import time
 
-class FT_COMP:
+class FT_COMP():
 
     def __init__(self):
         rospy.init_node('ft_compensator', anonymous=True)
 
-        rospy.Subscriber("/red/robotiq_ft_wrench", WrenchStamped, self.callback)
-        pub = rospy.Publisher("/red/robotiq_ft_wrench_compensated",WrenchStamped,queue_size=10)
+        rospy.Subscriber("/red/robotiq_ft_wrench", WrenchStamped, self.callback,queue_size=1)
+        self.pub = rospy.Publisher("/red/robotiq_ft_wrench_compensated",WrenchStamped,queue_size=1)
 
         self.robot = moveit_commander.RobotCommander()
         group_name = rospy.get_param("ft_group_name","red_arm")
         self.group = moveit_commander.MoveGroupCommander(group_name)
 
         data_path = rospy.get_param("ft_compensate_path","./data/")
+	
+        F = np.genfromtxt(data_path+'F_'+group_name+'.txt')
+        T = np.genfromtxt(data_path+'T_'+group_name+'.txt')
+        theta = np.genfromtxt(data_path+'theta_'+group_name+'.txt')
 
-        F = np.genfromtxt(data_path+'F.txt')
-        T = np.genfromtxt(data_path+'T.txt')
-        theta = np.genfromtxt(data_path+'theta.txt')
 
-        self.Freg = DecisionTreeRegressor(max_depth=15).fit(theta,F)
-        self.Treg = DecisionTreeRegressor(max_depth=15).fit(theta,T)
+        self.Freg = KNeighborsRegressor(n_neighbors=1).fit(theta,F)
+#DecisionTreeRegressor(max_depth=20).fit(theta,F)
+        self.Treg = KNeighborsRegressor(n_neighbors=1).fit(theta,T)#DecisionTreeRegressor(max_depth=20).fit(theta,T)
 
-        rospy.spin()
+
+    def run(self):
+	rospy.spin()
 
     def callback(self,msg):
+
         pose = self.group.get_current_pose().pose
-        theta = R.from_quat(np.array((pose.orientation.x,pose.orientation.y,pose.orientation.z,pose.orientation.w)))
-        F = self.Freg.predict(theta.as_euler('zyx'))
-        T = self.Treg.predict(theta.as_euler('zyx'))
+       	theta = R.from_quat(np.array((pose.orientation.x,pose.orientation.y,pose.orientation.z,pose.orientation.w)))
+        self.F = self.Freg.predict(theta.as_euler('zyx').reshape(1,-1))
+        self.T = self.Treg.predict(theta.as_euler('zyx').reshape(1,-1))
 
-        msg_new = msg
-        msg.Wrench.Force.x = msg.Wrench.Force.x - F[0]
-        msg.Wrench.Force.x = msg.Wrench.Force.y - F[1]
-        msg.Wrench.Force.x = msg.Wrench.Force.z - F[2]
+	msg_new = msg	
+        msg_new.wrench.force.x = msg.wrench.force.x - self.F[0,0]
+       	msg_new.wrench.force.y = msg.wrench.force.y - self.F[0,1]
+        msg_new.wrench.force.z = msg.wrench.force.z - self.F[0,2]
 
-        msg.Wrench.Force.x = msg.Wrench.Torque.x - T[0]
-        msg.Wrench.Force.x = msg.Wrench.Torque.y - T[1]
-        msg.Wrench.Force.x = msg.Wrench.Torque.z - T[2]
+       	msg_new.wrench.torque.x = msg.wrench.torque.x - self.T[0,0]
+        msg_new.wrench.torque.y = msg.wrench.torque.y - self.T[0,1]
+       	msg_new.wrench.torque.z = msg.wrench.torque.z - self.T[0,2]
 
-        pub.publish(msg)
+	f_diff = np.sqrt(msg_new.wrench.force.x**2 + msg_new.wrench.force.y**2 + msg_new.wrench.force.z**2)
+	print(f_diff)
+        self.pub.publish(msg_new)
 
 
 if __name__ == '__main__':
-    FT_COMP()
+    ft = FT_COMP()
+    ft.run()
