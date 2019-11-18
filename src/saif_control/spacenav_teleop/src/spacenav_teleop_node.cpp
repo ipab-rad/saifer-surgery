@@ -7,7 +7,8 @@
 #include <moveit/robot_model_loader/robot_model_loader.h>
 #include <moveit/robot_model/robot_model.h>
 #include <moveit/robot_state/robot_state.h>
-
+#include <Eigen/Eigen>
+#include <Eigen/QR>
 #include <robotiq_3f_gripper_articulated_msgs/Robotiq3FGripperRobotOutput.h>
 
 class IDyn {
