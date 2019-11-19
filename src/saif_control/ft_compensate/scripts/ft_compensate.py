@@ -5,7 +5,7 @@ from geometry_msgs.msg import WrenchStamped
 import moveit_commander
 import numpy as np
 from scipy.spatial.transform import Rotation as R
-#from sklearn.tree import DecisionTreeRegressor
+from sklearn.tree import DecisionTreeRegressor
 from sklearn.neighbors import KNeighborsRegressor
 import time
 
@@ -28,8 +28,8 @@ class FT_COMP():
         theta = np.genfromtxt(data_path+'theta_'+group_name+'.txt')
 
 
-        self.Freg = KNeighborsRegressor(n_neighbors=1).fit(theta,F)
-#DecisionTreeRegressor(max_depth=20).fit(theta,F)
+#        self.Freg = KNeighborsRegressor(n_neighbors=1).fit(theta,F)
+	self.Freg = DecisionTreeRegressor(max_depth=20).fit(theta,F)
         self.Treg = KNeighborsRegressor(n_neighbors=1).fit(theta,T)#DecisionTreeRegressor(max_depth=20).fit(theta,T)
 
 
