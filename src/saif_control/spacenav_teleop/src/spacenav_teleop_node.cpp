@@ -89,45 +89,58 @@ void IDyn::joy_callback(const sensor_msgs::Joy& msg)
 		Eigen::MatrixXd ft(6,1);
 		ft << msg.axes[0], msg.axes[1], msg.axes[2], msg.axes[3],msg.axes[4],msg.axes[5];
 
-		Eigen::MatrixXd K = Eigen::MatrixXd::Zero(6,6);
-		for (int i = 0; i < 6; i++)
+		if (ft.squaredNorm() > 0)
 		{
-			if (i < 3)
-			{
-				K(i,i) = 0.25;
-			}
-			else
-			{
-				K(i,i) = 0.5;
-			}
-		}
-	
-		Eigen::MatrixXd twist = K*(ft);
-		Eigen::MatrixXd joint_vel = Jinv*twist; 
 
-		trajectory_msgs::JointTrajectory jt;
-		jt.header = msg.header;
-		jt.joint_names =  joint_names;
-		trajectory_msgs::JointTrajectoryPoint point;
-		point.time_from_start = ros::Duration(1.0);
-		point.positions = joint_angles;
+			Eigen::MatrixXd K = Eigen::MatrixXd::Zero(6,6);
+			for (int i = 0; i < 6; i++)
+			{
+				if (i < 3)
+				{
+					K(i,i) = 0.25;
+				}
+				else
+				{
+					K(i,i) = 0.5;
+				}
+			}
 	
-		for (int i = 0; i < int(joint_vel.rows()); i++)
-		{
-			point.positions[i] = point.positions[i] + 0.1*joint_vel(i,0);
-			point.velocities.push_back(joint_vel(i,0));
-		}
-		jt.points.push_back(point);	
-		for (int i = 0; i < int(joint_vel.rows()); i++)
-		{
-			point.velocities[i] = 0.0;
-		}
-		point.time_from_start = ros::Duration(2.0);	
-		jt.points.push_back(point);	
-		pub.publish(jt);
-		ros::Duration(0.05).sleep();
+			Eigen::MatrixXd twist = K*(ft);
+			Eigen::MatrixXd joint_vel = Jinv*twist; 
+
+			trajectory_msgs::JointTrajectory jt;
+			jt.header = msg.header;
+			jt.joint_names =  joint_names;
+			trajectory_msgs::JointTrajectoryPoint point;
+			point.time_from_start = ros::Duration(1.0);
+			point.positions = joint_angles;
+	
+			for (int i = 0; i < int(joint_vel.rows()); i++)
+			{
+				if (joint_vel(i,0) > 0.5)
+				{
+					joint_vel(i,0) = 0.5;
+				}
+				if (joint_vel(i,0) < -0.5)
+				{
+					joint_vel(i,0) = -0.5;
+				}
+				
+				point.positions[i] = point.positions[i] + 0.1*joint_vel(i,0);
+				point.velocities.push_back(joint_vel(i,0));
+			}
+			jt.points.push_back(point);	
+			for (int i = 0; i < int(joint_vel.rows()); i++)
+			{
+				point.velocities[i] = 0.0;
+			}	
+			point.time_from_start = ros::Duration(2.0);	
+			jt.points.push_back(point);	
+			pub.publish(jt);
+			ros::Duration(0.05).sleep();
  
-		return;
+			return;
+		}
 	}
 }
 
