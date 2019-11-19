@@ -236,10 +236,25 @@ class ActivePlanner(object):
         
         position = joint_state.position
         try:
-            print(self.toFeatureRepresentation(self.target_img, (img.height, img.width, 3)))
-            print(self.toFeatureRepresentation(cv_image, (img.height, img.width, 3)))
-            #print("h,w: {}, {}".format(img.height, img.width))
-            reward = self.imageCompare(self.toFeatureRepresentation(cv_image, (img.height, img.width, 3)))
+            # print(self.toFeatureRepresentation(self.target_img, (img.height, img.width, 3)))
+            # print(self.toFeatureRepresentation(cv_image, (img.height, img.width, 3)))
+            # #print("h,w: {}, {}".format(img.height, img.width))
+            
+            ########### ORIGINAL REWARD ########################
+            #reward = self.imageCompare(self.toFeatureRepresentation(cv_image, (img.height, img.width, 3)))
+
+            ############ REWARD PLACEHOLDER #############
+            hits = []
+            partial_hits = []
+            current_index, _ = self.PG.findClosestNode(position)
+            if current_index in hits:
+                reward = 1
+            elif current_index in partial_hits:
+                reward = 0
+            else:
+                reward = -1
+            ###################
+
             print("reward: " + str(reward))
         
 
