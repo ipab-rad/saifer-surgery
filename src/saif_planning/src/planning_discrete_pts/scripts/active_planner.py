@@ -113,8 +113,8 @@ class ActivePlanner(object):
         while not rospy.is_shutdown() and self.views < num_views:
 
             if self.update is True:
-                #self.chooseNextView()
-                self.cycleViews()
+                self.chooseNextView()
+                #self.cycleViews()
 
 
             rate.sleep()
@@ -159,9 +159,9 @@ class ActivePlanner(object):
 
         print("gp preds: " + str(self.GP.predict(self.PG.getNodes())))
         print("num nodes: " + str(len(self.PG.getNodes())))
-        pl.plot(range(len(self.PG.getNodes())), self.GP.predict(self.PG.getNodes()))
-        display.clear_output(wait=True)
-        display.display(pl.gcf())
+        #pl.plot(range(len(self.PG.getNodes())), self.GP.predict(self.PG.getNodes()))
+        #display.clear_output(wait=True)
+        #display.display(pl.gcf())
         ####
 
         # TRAJECTORY SAMPLING 
@@ -216,7 +216,7 @@ class ActivePlanner(object):
         return trajectories
 
     def getMaxScore(self, node, depth=5, branch=10):
-        children = self.PG.getNodesWithinDist(node, 1)
+        children = self.PG.getNodesWithinDist(node, 1) 
         #print("children of {}: {}".format(node, children))
         to_expand = [children[random.randint(0, len(children) - 1)] for c in range(branch)]
         preds = self.GP.predict([self.PG.index2state(t) for t in to_expand], return_std=True)
@@ -295,7 +295,7 @@ class ActivePlanner(object):
 
     def imageCompare(self, img):
         target = self.toFeatureRepresentation(self.target_img)
-
+	#return 1/np.linalg.norm(target - img)
         return np.dot(target, img)/(np.linalg.norm(target) * np.linalg.norm(img))
 
     def saveRewards(self, fname):
@@ -337,13 +337,13 @@ if __name__ == "__main__":
 
     #targets = ['pink_ball.jpg'] 
     #targets = ['liquid.jpg'] #, 
-    targets = ['left0000.jpg']
+    targets = ['cupcup.jpg']
     #target_names = ['pink_ball_'] #, 
     #target_names = ['liquid'] #, 
-    target_names = ['torso']
+    target_names = ['cup_test']
 
-    num_views = 92
-    num_trials = 1
+    #num_views = 92
+    num_trials = 10
 
     for t, n in zip(targets, target_names):
         print("t, n: {}, {}".format(t, n))
@@ -352,8 +352,9 @@ if __name__ == "__main__":
         #print(np.shape(np.array(target_im)))
         #print(target_im)
         cv2.imshow('target', target_im)
-        ap = ActivePlanner(target_im, args.vfile, args.efile, args.robot_name, n, init_pose=1)
-
+        ap = ActivePlanner(target_im, args.vfile, args.efile, args.robot_name, n, init_pose=None)
+        #num_views = len(ap.PG.getNodes()) - 1
+        num_views = 10
         for i in range(0, num_trials):
             print("trial: " + str(i))
             ap.run(num_views)

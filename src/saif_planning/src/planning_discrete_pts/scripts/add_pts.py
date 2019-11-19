@@ -66,8 +66,10 @@ class PlanningGraph(object):
         #print("children: " + str(children))
         #children = [c for c in children if c not in visited]
         
-        if dist == 1:
-            return children
+        if dist == 0:
+            return [position]
+        #if dist == 1:
+        #    return children
 
         return list(set(children + reduce(lambda x, y: x + y, [self.getNodesWithinDist(c, dist - 1) for c in children])))
 
@@ -211,8 +213,8 @@ class PlanningGraph(object):
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--vfile", default="test_graph_pts.npy", help="File path for saving vertices")
-    parser.add_argument("--efile", default="test_graph_edges.npy", help="File path for saving edges")
+    parser.add_argument("--vfile", default="cup_graph_pts.npy", help="File path for saving vertices")
+    parser.add_argument("--efile", default="cup_graph_edges.npy", help="File path for saving edges")
     parser.add_argument("--robot_name", default="ur10", help="Name of robot")
     args, unknown_args = parser.parse_known_args()
 
