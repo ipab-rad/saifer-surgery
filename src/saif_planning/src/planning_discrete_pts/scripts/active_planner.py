@@ -19,6 +19,7 @@ import moveit_commander
 import random
 import threading 
 import matplotlib.pyplot as plt
+from keras.applications.inception_v3 import preprocess_input
 #from pr2_controllers_msgs.msg import JointTrajectoryControllerState
 
 def kernel(dist):
@@ -155,7 +156,7 @@ class ActivePlanner(object):
         best_score, best_index = self.getMaxScore(current_index, depth=5)
         best_view = self.PG.index2state(best_index)
 
-        self.trajectory.append(best_index)
+        self.trajectory.append(current_index)
 
         print("gp preds: " + str(self.GP.predict(self.PG.getNodes())))
         print("num nodes: " + str(len(self.PG.getNodes())))
@@ -241,18 +242,18 @@ class ActivePlanner(object):
             # #print("h,w: {}, {}".format(img.height, img.width))
             
             ########### ORIGINAL REWARD ########################
-            #reward = self.imageCompare(self.toFeatureRepresentation(cv_image, (img.height, img.width, 3)))
+            reward = self.imageCompare(self.toFeatureRepresentation(cv_image, (img.height, img.width, 3)))
 
             ############ REWARD PLACEHOLDER #############
-            hits = []
-            partial_hits = []
-            current_index, _ = self.PG.findClosestNode(position)
-            if current_index in hits:
-                reward = 1
-            elif current_index in partial_hits:
-                reward = 0
-            else:
-                reward = -1
+            #hits = []
+            #partial_hits = []
+            #current_index, _ = self.PG.findClosestNode(position)
+            #if current_index in hits:
+            #    reward = 1
+            #elif current_index in partial_hits:
+            #    reward = 0
+            #else:
+            #    reward = -1
             ###################
 
             print("reward: " + str(reward))
@@ -289,6 +290,7 @@ class ActivePlanner(object):
     def toFeatureRepresentation(self, img, img_shape=(480,640,3)):
         img = np.expand_dims(img, axis=0)
         print(np.shape(img))
+        img = preprocess_input(img)
         with self.graph.as_default():
             return np.array(self.model.predict(img)).flatten()
 
@@ -301,23 +303,25 @@ class ActivePlanner(object):
     def saveRewards(self, fname):
         print("saving rewards in: " + str(fname))
         rewards = [str(tl) for tl in self.rewards]
+        traj = [str(pt) for pt in self.trajectory
         print("rewards: {}, array: {}".format(",".join(rewards), self.rewards))
         with open(self.target_name + "_rewards.csv", "ab") as f:
            f.write(",".join(rewards) + "\n")
         with open(self.target_name + "_trajectory.csv", "ab") as f:
-           f.write(",".join(str(self.trajectory)) + "\n")
+           f.write(",".join(traj) + "\n")
         #np.save(fname, np.array(self.training_labels))
 
-    def reset(self, saveTrajectory=False):
+    def reset(self, saveTrajectory=True):
         #with self.lock:
         self.training_pts = []
         self.training_labels = []
+        self.trajectory = []
         self.next_view = None 
         self.views = 0
         self.GP = GaussianProcessRegressor(kernel=None, alpha=0.001, optimizer='fmin_l_bfgs_b', n_restarts_optimizer=0, normalize_y=True, copy_X_train=True, random_state=None)
         self.saveRewards("rewards_{}.csv".format(self.target_name))
         if saveTrajectory == True:
-            np.save("trajectory_{}.npy".format(self.target_name), self.training_pts)
+            np.save("trajectory_{}.npy".format(self.target_name), self.trajectory)
         self.rewards = []
 
     # def setNewTarget(self, target_file, target_name):
@@ -336,11 +340,11 @@ if __name__ == "__main__":
     args, unknown_args = parser.parse_known_args()
 
     #targets = ['pink_ball.jpg'] 
-    #targets = ['liquid.jpg'] #, 
-    targets = ['cupcup.jpg']
+    targets = ['liquid.jpg'] #, 
+    #targets = ['cupcup.jpg']
     #target_names = ['pink_ball_'] #, 
-    #target_names = ['liquid'] #, 
-    target_names = ['cup_test']
+    target_names = ['liquid'] #, 
+    #target_names = ['cup_test']
 
     #num_views = 92
     num_trials = 10
