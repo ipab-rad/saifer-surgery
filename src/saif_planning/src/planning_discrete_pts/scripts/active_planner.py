@@ -20,6 +20,7 @@ import random
 import threading 
 import matplotlib.pyplot as plt
 from keras.applications.inception_v3 import preprocess_input
+from sklearn.gaussian_process.kernels import RBF
 #from pr2_controllers_msgs.msg import JointTrajectoryControllerState
 
 def kernel(dist):
@@ -57,7 +58,7 @@ class ActivePlanner(object):
         self.update = False
         #self.lock = threading.Lock()
 
-        self.GP = GaussianProcessRegressor(kernel=None, alpha=0.001, optimizer='fmin_l_bfgs_b', n_restarts_optimizer=0, normalize_y=True, copy_X_train=True, random_state=None)
+        self.GP = GaussianProcessRegressor(kernel=RBF(0.1), alpha=0.001, optimizer='fmin_l_bfgs_b', n_restarts_optimizer=0, normalize_y=True, copy_X_train=True, random_state=None)
         self.model = InceptionV3(include_top=False, weights='imagenet', input_tensor=None, input_shape=(480,640,3), pooling='avg', classes=1000)
         rospy.init_node('active_planner', anonymous=False)
         self.setInitialPose(init_pose)
@@ -153,7 +154,7 @@ class ActivePlanner(object):
         
 
         # SAMPLE MPC
-        best_score, best_index = self.getMaxScore(current_index, depth=5)
+        best_score, best_index = self.getMaxScore(current_index, depth=10)
         best_view = self.PG.index2state(best_index)
 
         self.trajectory.append(current_index)
@@ -216,17 +217,22 @@ class ActivePlanner(object):
 
         return trajectories
 
-    def getMaxScore(self, node, depth=5, branch=10):
+    def getMaxScore(self, node, depth=5, branch=10, fullFirstLayer=True):
         children = self.PG.getNodesWithinDist(node, 1) 
         #print("children of {}: {}".format(node, children))
-        to_expand = [children[random.randint(0, len(children) - 1)] for c in range(branch)]
+        #to_expand = [children[random.randint(0, len(children) - 1)] for c in range(branch)]
+        if fullFirstLayer == True:
+            to_expand = [children[random.randint(0, len(children) - 1)] for c in range(branch)]
+        else:
+            to_expand = children
+
         preds = self.GP.predict([self.PG.index2state(t) for t in to_expand], return_std=True)
         scores = [acquisition(*pred) for pred in zip(preds[0], preds[1])] 
         
         if depth == 1:
             return max(scores), to_expand[np.argmax(np.array(scores))]
             
-        scores = [scores[i] + self.getMaxScore(to_expand[i], depth - 1, max(1, int(branch/2)))[0] for i in range(0, len(scores))]
+        scores = [scores[i] + self.getMaxScore(to_expand[i], depth - 1, max(1, int(branch/2)), False)[0] for i in range(0, len(scores))]
         
         return max(scores), to_expand[np.argmax(np.array(scores))]
 
@@ -303,7 +309,7 @@ class ActivePlanner(object):
     def saveRewards(self, fname):
         print("saving rewards in: " + str(fname))
         rewards = [str(tl) for tl in self.rewards]
-        traj = [str(pt) for pt in self.trajectory
+        traj = [str(pt) for pt in self.trajectory]
         print("rewards: {}, array: {}".format(",".join(rewards), self.rewards))
         with open(self.target_name + "_rewards.csv", "ab") as f:
            f.write(",".join(rewards) + "\n")
@@ -315,15 +321,16 @@ class ActivePlanner(object):
         #with self.lock:
         self.training_pts = []
         self.training_labels = []
-        self.trajectory = []
+
         self.next_view = None 
         self.views = 0
         self.GP = GaussianProcessRegressor(kernel=None, alpha=0.001, optimizer='fmin_l_bfgs_b', n_restarts_optimizer=0, normalize_y=True, copy_X_train=True, random_state=None)
         self.saveRewards("rewards_{}.csv".format(self.target_name))
-        if saveTrajectory == True:
-            np.save("trajectory_{}.npy".format(self.target_name), self.trajectory)
+        #if saveTrajectory == True:
+        #    np.save("trajectory_{}.npy".format(self.target_name), self.trajectory)
         self.rewards = []
 
+        self.trajectory = []
     # def setNewTarget(self, target_file, target_name):
     #     self.reset()
     #     self.target_img = cv2.imread(target_file, target_name)
@@ -343,7 +350,7 @@ if __name__ == "__main__":
     targets = ['liquid.jpg'] #, 
     #targets = ['cupcup.jpg']
     #target_names = ['pink_ball_'] #, 
-    target_names = ['liquid'] #, 
+    target_names = ['liquidliquid'] #, 
     #target_names = ['cup_test']
 
     #num_views = 92
@@ -358,7 +365,7 @@ if __name__ == "__main__":
         cv2.imshow('target', target_im)
         ap = ActivePlanner(target_im, args.vfile, args.efile, args.robot_name, n, init_pose=None)
         #num_views = len(ap.PG.getNodes()) - 1
-        num_views = 10
+        num_views = 20
         for i in range(0, num_trials):
             print("trial: " + str(i))
             ap.run(num_views)
