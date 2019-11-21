@@ -42,6 +42,8 @@ class ActivePlanner(object):
         self.target_name = target_name
         self.views = 0
         self.position = None
+        self.all_imgs = []
+        self.trial_imgs = []
 
         self.next_view = None
         #self.image_topic = image_topic
@@ -110,6 +112,7 @@ class ActivePlanner(object):
         synched_sub.registerCallback(self.callback)
 
         rate = rospy.Rate(10) # 10hz
+        print("view: " + str(self.views))
                     
         #print("test: " + str(self.toFeatureRepresentation(self.target_img, (480, 640, 3))))
         while not rospy.is_shutdown() and self.views < num_views:
@@ -117,6 +120,8 @@ class ActivePlanner(object):
             if self.update is True:
                 self.chooseNextView()
                 #self.cycleViews()
+                if self.views == num_views:
+                    np.save(self.all_imgs)
 
 
             rate.sleep()
@@ -137,10 +142,10 @@ class ActivePlanner(object):
         self.update = False
         print("num views: " + str(self.views))
 
-    def chooseNextView(self):
+    def chooseNextView(self, visualize=False):
         # get candidate set using graph, train gp
 
-	print("current position: " + str(self.PG.findClosestNode(self.position)))
+        print("current position: " + str(self.PG.findClosestNode(self.position)))
         # cand_pts = self.PG.getNodesWithinDist(self.PG.state2index(self.position), self.search_dist)
         # print("cand pts: " + str(cand_pts))
         # cand_pts = [self.PG.index2state(c) for c in list(cand_pts)]
@@ -190,16 +195,31 @@ class ActivePlanner(object):
 
         # self.trajectory.append(sampleTs[best_index][-1])
         ####
+        #### ALL WITHIN DIST
+#         cand_pts = self.PG.getNodesWithinDist(current_index, 20)
+#         preds = self.GP.predict([self.PG.index2state(n) for n in cand_pts], return_std=True)
+#         scores = [acquisition(*pred) for pred in zip(preds[0], preds[1])] 
+#         print("scores: " + str(scores))
+#         best_index = cand_pts[np.argmax(np.array(scores))]
+#         best_view = self.PG.index2state(best_index)
+        ####
         
+        if visualize == True:
+            means, stds = self.GP.predict(self.PG.getNodes(), return_std=True)
+            pl.plot(range(len(self.PG.getNodes())), [acquisition(*pred) for pred in zip(means, stds)] )
+            #pl.plot(range(len(self.PG.getNodes())), stds)
+            display.clear_output(wait=True)
+            display.display(pl.gcf())
+
         print("best view: " + str(self.PG.findClosestNode(best_view)))
         pp.planAndExecuteFromWaypoints(position, best_view, self.PG, self.group_name, max_dist = .5)
         self.views += 1
-        print("view: " + str(self.views))
+        #print("view: " + str(self.views))
 	    
         self.update = False
         self.next_view = best_view
 
-    def sampleTrajectories(self, node, num_t=10, depth=5):
+    def sampleTrajectories(self, node, num_t=10, depth=20):
         
 
         children = self.PG.getNodesWithinDist(node, 1)
@@ -237,7 +257,7 @@ class ActivePlanner(object):
         return max(scores), to_expand[np.argmax(np.array(scores))]
 
     def callback(self, img, joint_state): # use eef
-	print("entering callback")
+        print("entering callback")
         cv_image = CvBridge().imgmsg_to_cv2(img, "bgr8")
         #cv2.imshow('im', cv_image)
         
@@ -287,6 +307,7 @@ class ActivePlanner(object):
 
         if reward is not None and (self.next_view is None or np.linalg.norm(np.array(position) - np.array(self.next_view)) < .1):
             self.rewards.append(reward)
+            self.trial_imgs.append(cv_image)
             self.update = True
             print("rewards: {}".format(self.rewards))
             print("trajectory: {}".format(self.trajectory))
@@ -321,6 +342,9 @@ class ActivePlanner(object):
         #with self.lock:
         self.training_pts = []
         self.training_labels = []
+
+        self.all_imgs.append(self.trial_imgs)
+        self.trial_imgs = []
 
         self.next_view = None 
         self.views = 0
