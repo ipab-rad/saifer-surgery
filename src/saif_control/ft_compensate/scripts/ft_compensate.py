@@ -26,9 +26,9 @@ class FT_COMP():
         T = np.genfromtxt(data_path+'T_'+group_name+'.txt')
         theta = np.genfromtxt(data_path+'theta_'+group_name+'.txt')
 
-        self.Freg = KNeighborsRegressor(n_neighbors=15).fit(theta,F)
+        self.Freg = KNeighborsRegressor(n_neighbors=5).fit(theta,F)
 #	self.Freg = DecisionTreeRegressor(max_depth=20).fit(theta,F)
-        self.Treg = KNeighborsRegressor(n_neighbors=15).fit(theta,T)#DecisionTreeRegressor(max_depth=20).fit(theta,T)
+        self.Treg = KNeighborsRegressor(n_neighbors=5).fit(theta,T)#DecisionTreeRegressor(max_depth=20).fit(theta,T)
 
 
 
