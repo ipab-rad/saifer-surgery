@@ -1,0 +1,13 @@
+<launch>
+
+        <include file="$(find spacenav_node)/launch/classic.launch"/>
+
+        <node name="spacenav_teleop" pkg="spacenav_teleop" type="spacenav_teleop_node"> 
+                <remap from="/red/vel_test" to="/red/trajectory"/>
+        </node>
+
+	<node name="ft_compliance" pkg="ft_compliance" type="ft_compliance_admit_node">
+		<remap from="/red/vel_test" to="/red/vel_based_pos_traj_controller/command"/>
+	</node>
+
+</launch>
