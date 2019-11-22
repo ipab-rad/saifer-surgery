@@ -44,6 +44,7 @@ class ActivePlanner(object):
         self.position = None
         self.all_imgs = []
         self.trial_imgs = []
+        self.trial_num = 1
 
         self.next_view = None
         #self.image_topic = image_topic
@@ -120,8 +121,8 @@ class ActivePlanner(object):
             if self.update is True:
                 self.chooseNextView()
                 #self.cycleViews()
-                if self.views == num_views:
-                    np.save(self.all_imgs)
+                # if self.views == num_views:
+                #     np.save(self.all_imgs)
 
 
             rate.sleep()
@@ -307,7 +308,8 @@ class ActivePlanner(object):
 
         if reward is not None and (self.next_view is None or np.linalg.norm(np.array(position) - np.array(self.next_view)) < .1):
             self.rewards.append(reward)
-            self.trial_imgs.append(cv_image)
+            #self.trial_imgs.append(cv_image)
+            cv2.imwrite("{}_t{}_ep{}.jpg".format(self.target_name, self.trial_num, self.views))
             self.update = True
             print("rewards: {}".format(self.rewards))
             print("trajectory: {}".format(self.trajectory))
@@ -316,7 +318,7 @@ class ActivePlanner(object):
 
     def toFeatureRepresentation(self, img, img_shape=(480,640,3)):
         img = np.expand_dims(img, axis=0)
-        print(np.shape(img))
+        #print(np.shape(img))
         img = preprocess_input(img)
         with self.graph.as_default():
             return np.array(self.model.predict(img)).flatten()
@@ -324,7 +326,6 @@ class ActivePlanner(object):
 
     def imageCompare(self, img):
         target = self.toFeatureRepresentation(self.target_img)
-	#return 1/np.linalg.norm(target - img)
         return np.dot(target, img)/(np.linalg.norm(target) * np.linalg.norm(img))
 
     def saveRewards(self, fname):
@@ -343,9 +344,9 @@ class ActivePlanner(object):
         self.training_pts = []
         self.training_labels = []
 
-        self.all_imgs.append(self.trial_imgs)
-        self.trial_imgs = []
-
+        #self.all_imgs.append(self.trial_imgs)
+        #self.trial_imgs = []
+        self.trial_num += 1
         self.next_view = None 
         self.views = 0
         self.GP = GaussianProcessRegressor(kernel=None, alpha=0.001, optimizer='fmin_l_bfgs_b', n_restarts_optimizer=0, normalize_y=True, copy_X_train=True, random_state=None)
@@ -390,8 +391,8 @@ if __name__ == "__main__":
         ap = ActivePlanner(target_im, args.vfile, args.efile, args.robot_name, n, init_pose=None)
         #num_views = len(ap.PG.getNodes()) - 1
         num_views = 20
-        for i in range(0, num_trials):
-            print("trial: " + str(i))
+        while ap.trial_num <= num_trials:
+            print("trial: " + str(ap.trial_num))
             ap.run(num_views)
             ap.reset()
 
