@@ -19,6 +19,8 @@ import moveit_commander
 import random
 import threading 
 import matplotlib.pyplot as plt
+import pylab as pl
+from IPython import display
 from keras.applications.inception_v3 import preprocess_input
 from sklearn.gaussian_process.kernels import RBF
 #from pr2_controllers_msgs.msg import JointTrajectoryControllerState
@@ -27,11 +29,13 @@ def kernel(dist):
     return np.exp(dist**2 / -2)
 
 def acquisition(m, s, scale=.3):
-    return m + scale * s 
+    #print("s is " + str(s))
+    #return m + scale * s 
+    return m + s
 
 class ActivePlanner(object):
 
-    def __init__(self, target_img, vfile, efile, robot, target_name, search_dist=1, init_pose=None):
+    def __init__(self, target_img, vfile, efile, robot, target_name, search_dist=1, init_pose=None, visualize=False):
         self.target_img = target_img
         self.training_pts = []
         self.training_labels = []
@@ -45,6 +49,7 @@ class ActivePlanner(object):
         self.all_imgs = []
         self.trial_imgs = []
         self.trial_num = 1
+	self.visualize = visualize
 
         self.next_view = None
         #self.image_topic = image_topic
@@ -93,7 +98,7 @@ class ActivePlanner(object):
         print("initial index: " + str(index))
         pp.planAndExecuteFromWaypoints(current, nodes[index], self.PG, self.group_name, max_dist = .5)
 
-    def run(self, num_views=20):
+    def run(self, num_views=20, cycle=True):
 
 
 
@@ -119,8 +124,10 @@ class ActivePlanner(object):
 
             print("view: " + str(self.views))
             if self.update is True:
-                self.chooseNextView()
-                #self.cycleViews()
+		if cycle == False:
+               	    self.chooseNextView()
+                else:
+ 		    self.cycleViews()
             if self.views == num_views - 1:
                 print("saving imgs " + str(self.all_imgs))
 
@@ -142,13 +149,13 @@ class ActivePlanner(object):
         self.next_view = self.PG.index2state((current_node + 1) % len(self.PG.getNodes()))
 
         pp.planAndExecuteFromWaypoints(position, self.next_view, self.PG, self.group_name, max_dist = .5)
-        self.next_view = current_node + 1
-        np.save(ap.target_name + "images_cycle", ap.all_imgs)
+
+        np.save(self.target_name + "images_cycle", self.all_imgs)
         self.views += 1
         self.update = False
         print("num views: " + str(self.views))
 
-    def chooseNextView(self, visualize=False):
+    def chooseNextView(self):
         # get candidate set using graph, train gp
 
         print("current position: " + str(self.PG.findClosestNode(self.position)))
@@ -169,41 +176,41 @@ class ActivePlanner(object):
         
 
         # SAMPLE MPC
-        best_score, best_index = self.getMaxScore(current_index, depth=10)
-        best_view = self.PG.index2state(best_index)
+        #best_score, best_index = self.getMaxScore(current_index, depth=10)
+        #best_view = self.PG.index2state(best_index)
 
-        self.trajectory.append(current_index)
+        #self.trajectory.append(current_index)
 
-        print("gp preds: " + str(self.GP.predict(self.PG.getNodes())))
-        print("num nodes: " + str(len(self.PG.getNodes())))
-        #pl.plot(range(len(self.PG.getNodes())), self.GP.predict(self.PG.getNodes()))
-        #display.clear_output(wait=True)
-        #display.display(pl.gcf())
+        #print("gp preds: " + str(self.GP.predict(self.PG.getNodes())))
+        #print("num nodes: " + str(len(self.PG.getNodes())))
+        ##pl.plot(range(len(self.PG.getNodes())), self.GP.predict(self.PG.getNodes()))
+        ##display.clear_output(wait=True)
+        ##display.display(pl.gcf())
         ####
 
         # TRAJECTORY SAMPLING 
-        # sampleTs = self.sampleTrajectories(current_index)
-        # print("sampled trajectories: " + str(sampleTs))
+        sampleTs = self.sampleTrajectories(current_index)
+        print("sampled trajectories: " + str(sampleTs))
 
-        # #samplePreds = [[self.GP.predict(self.PG.index2state(pts).reshape(1, -1), return_std=True) for pts in traj] for traj in sampleTs]
-        # destinations = [self.PG.index2state(traj[-1]) for traj in sampleTs] 
-        # samplePreds = self.GP.predict(destinations, return_std=True)
-        # samplePreds = zip(samplePreds[0], samplePreds[1])
-        # print("sample preds: " + str(samplePreds))
+        #samplePreds = [[self.GP.predict(self.PG.index2state(pts).reshape(1, -1), return_std=True) for pts in traj] for traj in sampleTs]
+        destinations = [self.PG.index2state(traj[-1]) for traj in sampleTs] 
+        samplePreds = self.GP.predict(destinations, return_std=True)
+        samplePreds = zip(samplePreds[0], samplePreds[1])
+        print("sample preds: " + str(samplePreds))
 
-        # #scores = [sum([acquisition(*pred) for pred in preds]) for preds in samplePreds]
+         #scores = [sum([acquisition(*pred) for pred in preds]) for preds in samplePreds]
 
-        # scores = [acquisition(*pred) for pred in samplePreds]        
+        scores = [acquisition(*pred) for pred in samplePreds]        
         # # print("training labels: " + str(self.training_labels))
         # # means, stds = self.GP.predict(cand_pts, return_std=True)
         # # print("means: " + str(means))
 
         # #scores = [acquisition(m, s) for (m, s) in zip(means, stds)]
-        # print("scores: " + str(scores))
-        # best_index = np.argmax(np.array(scores))
-        # best_view = self.PG.index2state(sampleTs[best_index][-1])
+        print("scores: " + str(scores))
+        best_index = np.argmax(np.array(scores))
+        best_view = self.PG.index2state(sampleTs[best_index][-1])
 
-        # self.trajectory.append(sampleTs[best_index][-1])
+        self.trajectory.append(sampleTs[best_index][-1])
         ####
         #### ALL WITHIN DIST
 #         cand_pts = self.PG.getNodesWithinDist(current_index, 20)
@@ -214,10 +221,17 @@ class ActivePlanner(object):
 #         best_view = self.PG.index2state(best_index)
         ####
         
-        if visualize == True:
+        if self.visualize == True:
+            pl.clf()
             means, stds = self.GP.predict(self.PG.getNodes(), return_std=True)
+	    x = range(len(self.PG.getNodes()))
             pl.plot(range(len(self.PG.getNodes())), [acquisition(*pred) for pred in zip(means, stds)] )
+	    pl.fill(np.concatenate([x, x[::-1]]),
+         np.concatenate([means - 1.9600 * stds,
+                        (means + 1.9600 * stds)[::-1]]),
+         alpha=.5, fc='b', ec='None', label='95% confidence interval')
             #pl.plot(range(len(self.PG.getNodes())), stds)
+            
             display.clear_output(wait=True)
             display.display(pl.gcf())
 
@@ -315,11 +329,13 @@ class ActivePlanner(object):
         #print("training labels: {}".format(self.training_labels))
         self.position = position
 
-        #if reward is not None and (self.next_view is None or np.linalg.norm(np.array(position) - np.array(self.next_view)) < .1):
-        if True:
+        print("current {}, next {}".format(position, self.next_view))
+
+        if reward is not None and (self.next_view is None or np.linalg.norm(np.array(position) - np.array(self.next_view)) < .1):
+        #if True:
             self.rewards.append(reward)
             #self.trial_imgs.append(cv_image)
-            cv2.imwrite("{}_t{}_ep{}.jpg".format(self.target_name, self.trial_num, self.views), cv_image)
+            cv2.imwrite("{}_t{}_v{}.jpg".format(self.target_name, self.trial_num, self.views), cv_image)
             self.update = True
             print("rewards: {}".format(self.rewards))
             print("trajectory: {}".format(self.trajectory))
@@ -387,11 +403,11 @@ if __name__ == "__main__":
     targets = ['liquid.jpg'] #, 
     #targets = ['cupcup.jpg']
     #target_names = ['pink_ball_'] #, 
-    target_names = ['liquidliquid'] #, 
+    target_names = ['liquid_1'] #, 
     #target_names = ['cup_test']
 
     #num_views = 92
-    num_trials = 1
+    num_trials = 10
 
     for t, n in zip(targets, target_names):
         print("t, n: {}, {}".format(t, n))
