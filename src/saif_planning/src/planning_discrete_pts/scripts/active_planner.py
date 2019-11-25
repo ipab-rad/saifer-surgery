@@ -113,7 +113,6 @@ class ActivePlanner(object):
         synched_sub.registerCallback(self.callback)
 
         rate = rospy.Rate(10) # 10hz
-
                     
         #print("test: " + str(self.toFeatureRepresentation(self.target_img, (480, 640, 3))))
         while not rospy.is_shutdown() and self.views < num_views:
@@ -403,7 +402,7 @@ if __name__ == "__main__":
         cv2.imshow('target', target_im)
         ap = ActivePlanner(target_im, args.vfile, args.efile, args.robot_name, n, init_pose=1)
         #num_views = len(ap.PG.getNodes()) - 1
-        num_views = 15
+        num_views = 20
         while ap.trial_num <= num_trials:
             print("trial: " + str(ap.trial_num))
             ap.run(num_views)
