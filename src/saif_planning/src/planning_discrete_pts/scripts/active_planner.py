@@ -331,7 +331,7 @@ class ActivePlanner(object):
 
         print("current {}, next {}".format(position, self.next_view))
 
-        if reward is not None and (self.next_view is None or np.linalg.norm(np.array(position) - np.array(self.next_view)) < .1):
+        if reward is not None and (self.next_view is None or np.linalg.norm(np.array(position) - np.array(self.next_view)) < .1) and self.update is False:
         #if True:
             self.rewards.append(reward)
             #self.trial_imgs.append(cv_image)
