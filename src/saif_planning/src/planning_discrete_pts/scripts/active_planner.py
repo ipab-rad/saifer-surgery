@@ -89,6 +89,8 @@ class ActivePlanner(object):
         print("initial index: " + str(index))
         pp.planAndExecuteFromWaypoints(current, nodes[index], self.PG, self.group_name, max_dist = .5)
 
+        self.done = False
+
     def run(self, num_views=20, cycle=True):
 
         if self.robot == "pr2":
@@ -106,6 +108,8 @@ class ActivePlanner(object):
 
         rate = rospy.Rate(10) # 10hz
 
+        if rospy.is_shutdown():
+            print("rospy shutdown")
         while not rospy.is_shutdown() and self.views < num_views:
 
             print("view: " + str(self.views))
@@ -278,7 +282,7 @@ class ActivePlanner(object):
         if reward is not None and (self.next_view is None or np.linalg.norm(np.array(position) - np.array(self.next_view)) < .1) and self.update is False and self.done is False:
             print("appending reward: {}, trial {}, view {}".format(reward, self.trial_num, self.views))
             self.rewards.append(reward)
-            self.trajectory.append(position)
+            self.trajectory.append(self.PG.findClosestNode(position)[0])
             print("writing image: " + "data/{}_t{}_v{}.jpg".format(self.target_name, self.trial_num, self.views))
             cv2.imwrite("data/{}_t{}_v{}.jpg".format(self.target_name, self.trial_num, self.views), cv_image)
             self.update = True
@@ -337,11 +341,11 @@ if __name__ == "__main__":
     targets = ['liquid.jpg'] #, 
     #targets = ['cupcup.jpg']
     #target_names = ['pink_ball_'] #, 
-    target_names = ['test_liquid'] #, 
+    target_names = ['liquid'] #, 
     #target_names = ['cup_test']
 
     #num_views = 92
-    num_trials = 3
+    num_trials = 10
 
     for t, n in zip(targets, target_names):
         print("t, n: {}, {}".format(t, n))
@@ -352,7 +356,7 @@ if __name__ == "__main__":
         cv2.imshow('target', target_im)
         ap = ActivePlanner(target_im, args.vfile, args.efile, args.robot_name, n, init_pose=None)
         #num_views = len(ap.PG.getNodes()) - 1
-        num_views = 5
+        num_views = 15
         while ap.trial_num <= num_trials:
             print("trial: " + str(ap.trial_num))
             ap.run(num_views)
