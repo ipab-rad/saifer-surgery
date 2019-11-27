@@ -147,6 +147,7 @@ class ActivePlanner(object):
             self.GP.fit(points, labels)
         except ValueError:
             print("gp fit error")
+            self.update = False
             return
         current_index, _ = self.PG.findClosestNode(position)
         
