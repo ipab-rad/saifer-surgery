@@ -30,8 +30,8 @@ def kernel(dist):
 
 def acquisition(m, s, scale=.3):
     #print("s is " + str(s))
-    #return m + scale * s 
-    return m + s
+    return m + scale * s 
+    #return m + s
 
 class ActivePlanner(object):
 
@@ -335,7 +335,7 @@ class ActivePlanner(object):
         #if True:
             self.rewards.append(reward)
             #self.trial_imgs.append(cv_image)
-            cv2.imwrite("{}_t{}_v{}.jpg".format(self.target_name, self.trial_num, self.views), cv_image)
+            cv2.imwrite("data/{}_t{}_v{}.jpg".format(self.target_name, self.trial_num, self.views), cv_image)
             self.update = True
             print("rewards: {}".format(self.rewards))
             print("trajectory: {}".format(self.trajectory))
@@ -354,14 +354,14 @@ class ActivePlanner(object):
         target = self.toFeatureRepresentation(self.target_img)
         return np.dot(target, img)/(np.linalg.norm(target) * np.linalg.norm(img))
 
-    def saveRewards(self, fname):
-        print("saving rewards in: " + str(fname))
+    def saveRewards(self, fname, dirname="data"):
+        #print("saving rewards in: " + str(fname))
         rewards = [str(tl) for tl in self.rewards]
         traj = [str(pt) for pt in self.trajectory]
         print("rewards: {}, array: {}".format(",".join(rewards), self.rewards))
-        with open(self.target_name + "_rewards.csv", "ab") as f:
+        with open(dirname + "/" + self.target_name + "_rewards.csv", "ab") as f:
            f.write(",".join(rewards) + "\n")
-        with open(self.target_name + "_trajectory.csv", "ab") as f:
+        with open(dirname + "/" + self.target_name + "_trajectory.csv", "ab") as f:
            f.write(",".join(traj) + "\n")
         #np.save(fname, np.array(self.training_labels))
 
@@ -403,11 +403,11 @@ if __name__ == "__main__":
     targets = ['liquid.jpg'] #, 
     #targets = ['cupcup.jpg']
     #target_names = ['pink_ball_'] #, 
-    target_names = ['liquid_1'] #, 
+    target_names = ['test_liquid'] #, 
     #target_names = ['cup_test']
 
     #num_views = 92
-    num_trials = 10
+    num_trials = 3
 
     for t, n in zip(targets, target_names):
         print("t, n: {}, {}".format(t, n))
@@ -418,14 +418,14 @@ if __name__ == "__main__":
         cv2.imshow('target', target_im)
         ap = ActivePlanner(target_im, args.vfile, args.efile, args.robot_name, n, init_pose=1)
         #num_views = len(ap.PG.getNodes()) - 1
-        num_views = 20
+        num_views = 5
         while ap.trial_num <= num_trials:
             print("trial: " + str(ap.trial_num))
             ap.run(num_views)
             ap.reset()
 
         
-        np.save(ap.target_name + "images_cycle_" + str(num_views), ap.all_imgs)
+        #np.save(ap.target_name + "images_cycle_" + str(num_views), ap.all_imgs)
 
 
         #sub_thread.exit()
