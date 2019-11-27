@@ -29,9 +29,7 @@ def kernel(dist):
     return np.exp(dist**2 / -2)
 
 def acquisition(m, s, scale=.3):
-    #print("s is " + str(s))
     return m + scale * s 
-    #return m + s
 
 class ActivePlanner(object):
 
@@ -49,10 +47,10 @@ class ActivePlanner(object):
         self.all_imgs = []
         self.trial_imgs = []
         self.trial_num = 1
+        self.done = False
 	self.visualize = visualize
 
         self.next_view = None
-        #self.image_topic = image_topic
         self.robot = robot
 
         if self.robot == "pr2":
@@ -64,7 +62,6 @@ class ActivePlanner(object):
             exit() 
 
         self.update = False
-        #self.lock = threading.Lock()
 
         self.GP = GaussianProcessRegressor(kernel=RBF(0.1), alpha=0.001, optimizer='fmin_l_bfgs_b', n_restarts_optimizer=0, normalize_y=True, copy_X_train=True, random_state=None)
         self.model = InceptionV3(include_top=False, weights='imagenet', input_tensor=None, input_shape=(480,640,3), pooling='avg', classes=1000)
@@ -77,18 +74,12 @@ class ActivePlanner(object):
         group = moveit_commander.MoveGroupCommander(self.group_name)
 
         wpose = group.get_current_pose().pose
-        #print("wpose: " + str(wpose))
-        #print(wpose.position)
         joint_vals = group.get_current_joint_values()
 
-        #print("current joint vals" + str(joint_vals))
         nodes = self.PG.getNodes()
 
-        #print("nodes" + str(nodes))
-        #print("edges: " + str(self.PG.connections))
         cur_index, min_dist = self.PG.findClosestNode(joint_vals)
         current = self.PG.index2state(cur_index)
-        #print("min dist to graph: " + str(min_dist))    
 
         #print("start at: " + str(current) + " index: " + str(cur_index))
         if init_index == None:
@@ -100,8 +91,6 @@ class ActivePlanner(object):
 
     def run(self, num_views=20, cycle=True):
 
-
-
         if self.robot == "pr2":
             im_sub = message_filters.Subscriber("/l_forearm_cam/image_color", Image, queue_size=1)
             joints_sub = message_filters.Subscriber("/l_arm_controller/state", JointTrajectoryControllerState, queue_size=1) 
@@ -111,15 +100,12 @@ class ActivePlanner(object):
         else:
             print("robot name not valid")
             exit() 
-        
-        # message_filters.Subscriber("/kinect2/sd/image_depth_rect",Image)
 
         synched_sub = message_filters.ApproximateTimeSynchronizer([im_sub, joints_sub], queue_size=1, slop=0.05)
         synched_sub.registerCallback(self.callback)
 
         rate = rospy.Rate(10) # 10hz
-                    
-        #print("test: " + str(self.toFeatureRepresentation(self.target_img, (480, 640, 3))))
+
         while not rospy.is_shutdown() and self.views < num_views:
 
             print("view: " + str(self.views))
@@ -128,17 +114,8 @@ class ActivePlanner(object):
                	    self.chooseNextView()
                 else:
  		    self.cycleViews()
-            if self.views == num_views - 1:
-                print("saving imgs " + str(self.all_imgs))
-
-                self.all_imgs.append(self.trial_imgs)
-
-
 
             rate.sleep()
-        #if self.views >= num_views:
-
-        #    break
 
     def cycleViews(self):
         position = self.position
@@ -150,18 +127,13 @@ class ActivePlanner(object):
 
         pp.planAndExecuteFromWaypoints(position, self.next_view, self.PG, self.group_name, max_dist = .5)
 
-        np.save(self.target_name + "images_cycle", self.all_imgs)
         self.views += 1
         self.update = False
         print("num views: " + str(self.views))
 
     def chooseNextView(self):
-        # get candidate set using graph, train gp
-
+  
         print("current position: " + str(self.PG.findClosestNode(self.position)))
-        # cand_pts = self.PG.getNodesWithinDist(self.PG.state2index(self.position), self.search_dist)
-        # print("cand pts: " + str(cand_pts))
-        # cand_pts = [self.PG.index2state(c) for c in list(cand_pts)]
 
         points = self.training_pts
         labels = self.training_labels
@@ -190,27 +162,21 @@ class ActivePlanner(object):
 
         # TRAJECTORY SAMPLING 
         sampleTs = self.sampleTrajectories(current_index)
-        print("sampled trajectories: " + str(sampleTs))
+        #print("sampled trajectories: " + str(sampleTs))
 
         #samplePreds = [[self.GP.predict(self.PG.index2state(pts).reshape(1, -1), return_std=True) for pts in traj] for traj in sampleTs]
         destinations = [self.PG.index2state(traj[-1]) for traj in sampleTs] 
         samplePreds = self.GP.predict(destinations, return_std=True)
         samplePreds = zip(samplePreds[0], samplePreds[1])
-        print("sample preds: " + str(samplePreds))
-
-         #scores = [sum([acquisition(*pred) for pred in preds]) for preds in samplePreds]
+        #print("sample preds: " + str(samplePreds))
 
         scores = [acquisition(*pred) for pred in samplePreds]        
-        # # print("training labels: " + str(self.training_labels))
-        # # means, stds = self.GP.predict(cand_pts, return_std=True)
-        # # print("means: " + str(means))
 
-        # #scores = [acquisition(m, s) for (m, s) in zip(means, stds)]
-        print("scores: " + str(scores))
+        #print("scores: " + str(scores))
         best_index = np.argmax(np.array(scores))
         best_view = self.PG.index2state(sampleTs[best_index][-1])
 
-        self.trajectory.append(sampleTs[best_index][-1])
+        #self.trajectory.append(sampleTs[best_index][-1])
         ####
         #### ALL WITHIN DIST
 #         cand_pts = self.PG.getNodesWithinDist(current_index, 20)
@@ -283,34 +249,12 @@ class ActivePlanner(object):
     def callback(self, img, joint_state): # use eef
         print("entering callback")
         cv_image = CvBridge().imgmsg_to_cv2(img, "bgr8")
-        #cv2.imshow('im', cv_image)
         
         position = joint_state.position
         try:
-            # print(self.toFeatureRepresentation(self.target_img, (img.height, img.width, 3)))
-            # print(self.toFeatureRepresentation(cv_image, (img.height, img.width, 3)))
-            # #print("h,w: {}, {}".format(img.height, img.width))
-            
-            ########### ORIGINAL REWARD ########################
             reward = self.imageCompare(self.toFeatureRepresentation(cv_image, (img.height, img.width, 3)))
 
-            ############ REWARD PLACEHOLDER #############
-            #hits = []
-            #partial_hits = []
-            #current_index, _ = self.PG.findClosestNode(position)
-            #if current_index in hits:
-            #    reward = 1
-            #elif current_index in partial_hits:
-            #    reward = 0
-            #else:
-            #    reward = -1
-            ###################
-
             print("reward: " + str(reward))
-        
-
-            #print("position: {}, index: {}".format(position, self.PG.findClosestNode(position)))
-            #with self.lock:
             self.training_pts.append(position)
             self.training_labels.append(reward)
        
@@ -331,20 +275,18 @@ class ActivePlanner(object):
 
         print("current {}, next {}".format(position, self.next_view))
 
-        if reward is not None and (self.next_view is None or np.linalg.norm(np.array(position) - np.array(self.next_view)) < .1) and self.update is False:
-        #if True:
+        if reward is not None and (self.next_view is None or np.linalg.norm(np.array(position) - np.array(self.next_view)) < .1) and self.update is False and self.done is False:
+            print("appending reward: {}, trial {}, view {}".format(reward, self.trial_num, self.views))
             self.rewards.append(reward)
-            #self.trial_imgs.append(cv_image)
+            self.trajectory.append(position)
+            print("writing image: " + "data/{}_t{}_v{}.jpg".format(self.target_name, self.trial_num, self.views))
             cv2.imwrite("data/{}_t{}_v{}.jpg".format(self.target_name, self.trial_num, self.views), cv_image)
             self.update = True
             print("rewards: {}".format(self.rewards))
             print("trajectory: {}".format(self.trajectory))
-            #self.next_view = self.chooseNextView(position)
-            #self.views += 1
 
     def toFeatureRepresentation(self, img, img_shape=(480,640,3)):
         img = np.expand_dims(img, axis=0)
-        #print(np.shape(img))
         img = preprocess_input(img)
         with self.graph.as_default():
             return np.array(self.model.predict(img)).flatten()
@@ -354,8 +296,7 @@ class ActivePlanner(object):
         target = self.toFeatureRepresentation(self.target_img)
         return np.dot(target, img)/(np.linalg.norm(target) * np.linalg.norm(img))
 
-    def saveRewards(self, fname, dirname="data"):
-        #print("saving rewards in: " + str(fname))
+    def saveRewards(self, dirname="data"):
         rewards = [str(tl) for tl in self.rewards]
         traj = [str(pt) for pt in self.trajectory]
         print("rewards: {}, array: {}".format(",".join(rewards), self.rewards))
@@ -363,30 +304,23 @@ class ActivePlanner(object):
            f.write(",".join(rewards) + "\n")
         with open(dirname + "/" + self.target_name + "_trajectory.csv", "ab") as f:
            f.write(",".join(traj) + "\n")
-        #np.save(fname, np.array(self.training_labels))
 
     def reset(self, saveTrajectory=True):
-        #with self.lock:
+        self.done = True
         self.training_pts = []
         self.training_labels = []
-
-        self.trial_imgs = []
-
-        #self.all_imgs.append(self.trial_imgs)
-        #self.trial_imgs = []
-        self.trial_num += 1
+        
         self.next_view = None 
         self.views = 0
         self.GP = GaussianProcessRegressor(kernel=None, alpha=0.001, optimizer='fmin_l_bfgs_b', n_restarts_optimizer=0, normalize_y=True, copy_X_train=True, random_state=None)
-        self.saveRewards("rewards_{}.csv".format(self.target_name))
-        #if saveTrajectory == True:
-        #    np.save("trajectory_{}.npy".format(self.target_name), self.trajectory)
-        self.rewards = []
+        self.saveRewards()
 
+        self.rewards = []
         self.trajectory = []
-    # def setNewTarget(self, target_file, target_name):
-    #     self.reset()
-    #     self.target_img = cv2.imread(target_file, target_name)
+        self.trial_num += 1
+
+        self.setInitialPose()
+
         
         
 
@@ -416,7 +350,7 @@ if __name__ == "__main__":
         #print(np.shape(np.array(target_im)))
         #print(target_im)
         cv2.imshow('target', target_im)
-        ap = ActivePlanner(target_im, args.vfile, args.efile, args.robot_name, n, init_pose=1)
+        ap = ActivePlanner(target_im, args.vfile, args.efile, args.robot_name, n, init_pose=None)
         #num_views = len(ap.PG.getNodes()) - 1
         num_views = 5
         while ap.trial_num <= num_trials:
