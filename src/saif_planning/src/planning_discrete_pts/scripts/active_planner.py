@@ -91,7 +91,7 @@ class ActivePlanner(object):
 
         self.done = False
 
-    def run(self, num_views=20, cycle=True):
+    def run(self, num_views=20, cycle=False):
 
         if self.robot == "pr2":
             im_sub = message_filters.Subscriber("/l_forearm_cam/image_color", Image, queue_size=1)
