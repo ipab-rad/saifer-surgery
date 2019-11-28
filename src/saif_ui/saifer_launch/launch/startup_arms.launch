@@ -1,8 +1,9 @@
 <?xml version="1.0"?>
 <launch>
-	
-	<include file="$(find dual_arm_description)/launch/dual_upload.launch"/>
+	<!-- arms, grippers and ft sensor launch-->
+    <include file="$(find saifer_launch)/launch/startup_blue.launch"/>
 
+<<<<<<< HEAD
 	<node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"/>
 
 	<include file="$(find dual_moveit)/launch/move_group.launch"/>
@@ -67,5 +68,9 @@
 	<include file="$(find kinect2_multi)/launch/kinect_multi_tf.launch"/>
 
 	<node pkg="tf" type="static_transform_publisher" name="map_to_ceiling" args="0 0 1.4 0 3.14159 0 map ceiling 100" />	
+=======
+    <!-- arms, grippers and ft sensor launch-->
+    <include file="$(find saifer_launch)/launch/startup_red.launch"/>
+>>>>>>> 1c07adf8d26228b3e6926f46fb81103cfe96b213
 
 </launch>

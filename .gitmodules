@@ -19,3 +19,6 @@
 [submodule "src/saif_sensors/src/iai_kinect2"]
 	path = src/saif_sensors/src/iai_kinect2
 	url = https://github.com/code-iai/iai_kinect2.git
+[submodule "src/saif_learning/ltl_diff"]
+	path = src/saif_learning/ltl_diff
+	url = https://github.com/craigiedon/ltl_diff.git

@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<launch>
+  <include file="$(find saifer_launch)/launch/ur10_ros_control_blue.launch"/>
+
+  <arg name="comport" default="/dev/gripper_2f"/>
+  <arg name="baud" default="115200"/>
+ 
+  <node pkg="robotiq_85_driver" type="robotiq_85_driver" name="robotiq_85_driver" respawn="true" output="screen" ns = "blue">
+	<param name="num_grippers" value="1"/>
+	<param name="comport" value="$(arg comport)" />
+	<param name="baud" value="$(arg baud)" />
+  </node>
+
+  <node name="blue_ft_sensor" pkg="robotiq_ft_sensor" type="rq_sensor" output="screen" ns="blue">
+	<param name="serial_id" value="/ft_blue"/>
+        <param name="frame_id" value="blue_robotiq_ft_frame_id"/>
+  </node>
+
+</launch>

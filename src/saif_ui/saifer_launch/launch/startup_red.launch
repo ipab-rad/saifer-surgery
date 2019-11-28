@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="ip_gripper" default="192.168.1.11"/>
+  <include file="$(find saifer_launch)/launch/ur10_ros_control_red.launch"/>
+
+  <node name="red_ft_sensor" pkg="robotiq_ft_sensor" type="rq_sensor" output="screen" ns="red">
+	<param name="serial_id" value="/ft_red"/>
+        <param name="frame_id" value="red_robotiq_ft_frame_id"/>
+  </node>
+  
+    <node name="robotiq_3f_js_pub" pkg="robotiq_3f_gripper_joint_state_publisher" type="robotiq_3f_gripper_joint_states">
+    	<remap from="joint_states" to="gripper3/joint_states"/>
+   </node>
+
+   <node name="robotiq_3f_controller" pkg="robotiq_3f_gripper_control" type="Robotiq3FGripperTcpNode.py" args="$(arg ip_gripper)"/>
+
+</launch>

@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>ft_compliance</name>
+  <name>spacenav_teleop</name>
   <version>0.0.0</version>
-  <description>Force torque compliance</description>
+  <description>The spacenav_teleop package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
   <!-- Example:  -->

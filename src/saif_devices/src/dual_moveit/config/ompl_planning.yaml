@@ -121,7 +121,7 @@ planner_configs:
     dense_delta_fraction: 0.001  # delta fraction for interface detection. default: 0.001
     max_failures: 5000  # maximum consecutive failure limit. default: 5000
 blue_arm:
-  default_planner_config: None
+  default_planner_config: RRTConnect
   planner_configs:
     - SBL
     - EST
@@ -147,7 +147,7 @@ blue_arm:
     - SPARS
     - SPARStwo
 red_arm:
-  default_planner_config: None
+  default_planner_config: RRTConnect
   planner_configs:
     - SBL
     - EST
@@ -225,7 +225,7 @@ red_gripper:
     - SPARS
     - SPARStwo
 dual:
-  default_planner_config: None
+  default_planner_config: ""
   planner_configs:
     - SBL
     - EST
