@@ -19,6 +19,7 @@ ___
 ## Current functionality 
 ### (Warning: this is semi-functional research code under active development):
 
+___
 ### Motion planning and control
 
 <img align="right" alt="" src="https://github.com/ipab-rad/saifer-surgery/blob/master/docs/images/arms.gif" width="150" /> Launch arms, plan and execute using MoveIt!
