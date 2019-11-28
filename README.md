@@ -16,7 +16,8 @@ catkin_make
 source devel/setup.bash
 ```
 ___
-## Current functionality (Warning: this is semi-functional research code under active development):
+## Current functionality 
+### (Warning: this is semi-functional research code under active development):
 
 ### Motion planning and control
 
