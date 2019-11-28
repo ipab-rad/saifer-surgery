@@ -14,15 +14,15 @@
 
 	<xacro:robotiq-3f-gripper_articulated prefix=""/>
 
-        <xacro:robotiq_ft300 parent="red_tool0" prefix="red_">
-                <origin xyz="0 0 0" rpy="0 0 0"/>
-        </xacro:robotiq_ft300>
+	<xacro:robotiq_ft300 parent="red_tool0" prefix="red_">
+		<origin xyz="0 0 0" rpy="0 0 -1.57079632679"/>
+	</xacro:robotiq_ft300>
 	
 
 	<joint name="red_palm_arm" type="fixed">
 		<parent link="red_robotiq_ft_frame_id"/>
 		<child link="palm"/>
-		<origin xyz="0 0 0.05" rpy="1.57079632679 0 0.78539"/>
+		<origin xyz="0 0 0.05" rpy="1.57079632679 0 2.35619449019"/><!--2.35619449019"/-->
 	</joint>
 
 	<link name='red_cable_1'>
