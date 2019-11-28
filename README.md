@@ -11,6 +11,7 @@ Ubuntu 16.04, ROS Kinetic or Ubuntu 18.04, ROS Melodic
 - Install the [required packages](https://github.com/ipab-rad/saifer-surgery/wiki/Required-packages), clone this repository, and
 ```
 cd saifer-surgery
+git submodule update --init --recursive
 catkin_make
 source devel/setup.bash
 ```
