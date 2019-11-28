@@ -15,19 +15,30 @@ git submodule update --init --recursive
 catkin_make
 source devel/setup.bash
 ```
-
+___
 ## Current functionality (Warning: this is semi-functional research code under active development):
 
 ### Motion planning and control
 
-<img align="right" alt="" src="https://github.com/ipab-rad/saifer-surgery/blob/master/docs/images/arms.gif" width="200" /> Launch arms, plan and execute using MoveIt!
+<img align="right" alt="" src="https://github.com/ipab-rad/saifer-surgery/blob/master/docs/images/arms.gif" width="150" /> Launch arms, plan and execute using MoveIt!
 ```
 roslaunch saifer_launch dual.launch
 ```
 
+___
+
+### 3D mouse control with spacenav
+
+<img align="right" alt="" src="http://wiki.ros.org/spacenav_node?action=AttachFile&do=get&target=spacenav.png" width="120" /> Inverse dynamics on the red arm, with gripper opening and closing.
+```
+roslaunch saifer_launch dual.launch
+roslaunch spacenav_teleop teleop.launch
+```
+
+___
 ### User defined contour following
 
-<img align="right" alt="" src="https://github.com/ipab-rad/saifer-surgery/blob/master/src/saif_ui/contour_launch/ims/surface.gif" width="200" /> Select a pointcloud region in Rviz and follow this surface using MoveIt! Cartesian waypoint following and position control. This requires calibrated offsets depending on the tool used for contour following. See the [contour launch](./src/saif_ui/contour_launch) node for more detail.
+<img align="right" alt="" src="https://github.com/ipab-rad/saifer-surgery/blob/master/src/saif_ui/contour_launch/ims/surface.gif" width="150" /> Select a pointcloud region in Rviz and follow this surface using MoveIt! Cartesian waypoint following and position control. This requires calibrated offsets depending on the tool used for contour following. See the [contour launch](./src/saif_ui/contour_launch) node for more detail.
 ```
 roslaunch contour_launch contour.launch
 ```
