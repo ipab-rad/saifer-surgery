@@ -57,13 +57,17 @@ if __name__ == "__main__":
     parser.add_argument("--robot_name", default="ur10", help="Name of robot")
     args, unknown_args = parser.parse_known_args()
 
-    group_name = args.group_name
+    if args.robot_name == "ur10":
+        group_name = "blue_arm"
+    elif args.robot_name == "pr2":
+        group_name = "left_arm"
+
 
     rospy.init_node('path_plan', anonymous=True)
 
     gb = PlanningGraph(args.vfile, args.efile, args.robot_name)
 
-    group = moveit_commander.MoveGroupCommander("blue_arm")
+    group = moveit_commander.MoveGroupCommander(group_name)
 
     wpose = group.get_current_pose().pose
     print("wpose: " + str(wpose))

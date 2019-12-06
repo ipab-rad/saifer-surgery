@@ -138,7 +138,12 @@ class PlanningGraph(object):
         return self.nodes[index]
 
     def storeNode(self, data):
-        position = np.array(data.position)[0:6]
+        if self.robot == "ur10":
+            position = np.array(data.position)[0:6]
+        elif self.robot == "pr2":
+            position = np.array(data.actual.positions)
+
+     
         thresh = .05
         add_thresh = .2
         dist_list = [self.dist(node, position) for node in self.nodes]
