@@ -33,7 +33,7 @@ def planAndExecuteFromWaypoints(start, stop, graph, move_group, max_dist = .5):
     #print("waypoints: " + str(waypoints))
 
     for w in waypoints:
-	#print("moving to waypoint: " + str(w))
+	print("moving to waypoint: " + str(w))
         w = graph.index2state(w)
         
         group.go(w, wait=True)
