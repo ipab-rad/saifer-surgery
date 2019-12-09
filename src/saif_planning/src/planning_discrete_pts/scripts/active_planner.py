@@ -48,10 +48,14 @@ class ActivePlanner(object):
         self.trial_imgs = []
         self.trial_num = 1
         self.done = False
+        self.completion_criterion = 0
 	self.visualize = visualize
 
         self.next_view = None
         self.robot = robot
+        self.poses = []
+        self.feature_reps = []
+        self.views_to_completion = []
 
         if self.robot == "pr2":
             self.group_name = "left_arm"
@@ -61,6 +65,8 @@ class ActivePlanner(object):
             print("robot name not valid")
             exit() 
 
+        self.group = moveit_commander.MoveGroupCommander(self.group_name)
+
         self.update = False
 
         self.GP = GaussianProcessRegressor(kernel=RBF(0.1), alpha=0.001, optimizer='fmin_l_bfgs_b', n_restarts_optimizer=0, normalize_y=True, copy_X_train=True, random_state=None)
@@ -69,6 +75,10 @@ class ActivePlanner(object):
         self.setInitialPose(init_pose)
 
         self.graph = tf.get_default_graph()
+
+    def getStateIndex(self):
+        cur_index, _ = self.PG.findClosestNode(self.position)
+        return cur_index
 
     def setInitialPose(self, init_index=None):
         group = moveit_commander.MoveGroupCommander(self.group_name)
@@ -91,6 +101,10 @@ class ActivePlanner(object):
 
         self.done = False
 
+    def savePoses(self):
+        np.save("data/{}_poses.npy".format(self.target_name), self.poses)
+        np.save("data/{}_feature_reps.npy".format(self.target_name), self.feature_reps)
+
     def run(self, num_views=20, cycle=False):
 
         if self.robot == "pr2":
@@ -110,7 +124,7 @@ class ActivePlanner(object):
 
         if rospy.is_shutdown():
             print("rospy shutdown")
-        while not rospy.is_shutdown() and self.views < num_views:
+        while not rospy.is_shutdown() and self.done == False:
 
             print("view: " + str(self.views))
             if self.update is True:
@@ -118,6 +132,9 @@ class ActivePlanner(object):
                	    self.chooseNextView()
                 else:
  		    self.cycleViews()
+
+            if (num_views is None and self.completion_criterion > 3) or (num_views is not None and self.views == num_views):
+                self.done = True
 
             rate.sleep()
 
@@ -257,7 +274,8 @@ class ActivePlanner(object):
         
         position = joint_state.position
         try:
-            reward = self.imageCompare(self.toFeatureRepresentation(cv_image, (img.height, img.width, 3)))
+            feature_rep = self.toFeatureRepresentation(cv_image, (img.height, img.width, 3))
+            reward = self.imageCompare(feature_rep)
 
             print("reward: " + str(reward))
             self.training_pts.append(position)
@@ -277,13 +295,23 @@ class ActivePlanner(object):
 
         #print("training labels: {}".format(self.training_labels))
         self.position = position
+        pose = self.group.get_current_pose().pose
+        processed_pose = [pose.position.x, pose.position.y, pose.position.z, pose.orientation.x, pose.orientation.y,pose.orientation.z,pose.orientation.w]
 
         print("current {}, next {}".format(position, self.next_view))
 
         if reward is not None and (self.next_view is None or np.linalg.norm(np.array(position) - np.array(self.next_view)) < .1) and self.update is False and self.done is False:
             print("appending reward: {}, trial {}, view {}".format(reward, self.trial_num, self.views))
+
+            if reward > .875:
+                self.completion_criterion += 1
+            else:
+                self.completion_criterion = 0
+
             self.rewards.append(reward)
             self.trajectory.append(self.PG.findClosestNode(position)[0])
+            self.poses.append()
+            self.feature_reps.append(feature_rep)
             print("writing image: " + "data/{}_t{}_v{}.jpg".format(self.target_name, self.trial_num, self.views))
             cv2.imwrite("data/{}_t{}_v{}.jpg".format(self.target_name, self.trial_num, self.views), cv_image)
             self.update = True
@@ -309,16 +337,28 @@ class ActivePlanner(object):
            f.write(",".join(rewards) + "\n")
         with open(dirname + "/" + self.target_name + "_trajectory.csv", "ab") as f:
            f.write(",".join(traj) + "\n")
+        with open(dirname + "/" + self.target_name + "_num_views.csv", "ab") as f:
+           f.write("{},".format(self.views))   
 
     def reset(self, saveTrajectory=True):
         self.done = True
+
+        if self.visualize == True:
+        #     plt.plot(x,y,z,’o’,markersize=uncertainty_scaler)
+            pose_file = ""
+            feature_file = ""
+            _, uncertainty = gp.predict(self.PG.getNodes(), return_std=True)
+            try:
+                pp.plotSimilarities(self.getStateIndex(), pose_file, feature_file, uncertainty)
+
         self.training_pts = []
         self.training_labels = []
-        
+        #self.views_to_completion.append(self.views)
         self.next_view = None 
         self.views = 0
         self.GP = GaussianProcessRegressor(kernel=None, alpha=0.001, optimizer='fmin_l_bfgs_b', n_restarts_optimizer=0, normalize_y=True, copy_X_train=True, random_state=None)
         self.saveRewards()
+        self.savePoses()
 
         self.rewards = []
         self.trajectory = []
