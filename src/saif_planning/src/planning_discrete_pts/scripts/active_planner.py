@@ -124,7 +124,8 @@ class ActivePlanner(object):
 
         if rospy.is_shutdown():
             print("rospy shutdown")
-        while not rospy.is_shutdown() and self.done == False:
+        #while not rospy.is_shutdown() and self.done == False:
+        while not rospy.is_shutdown() and self.views < num_views:
 
             print("view: " + str(self.views))
             if self.update is True:
@@ -133,8 +134,8 @@ class ActivePlanner(object):
                 else:
  		    self.cycleViews()
 
-            if (num_views is None and self.completion_criterion > 3) or (num_views is not None and self.views == num_views):
-                self.done = True
+            # if (num_views is None and self.completion_criterion > 3) or (num_views is not None and self.views == num_views):
+            #     self.done = True
 
             rate.sleep()
 
