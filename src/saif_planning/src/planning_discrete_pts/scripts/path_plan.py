@@ -3,6 +3,7 @@ from add_pts import PlanningGraph
 import rospy
 import moveit_commander
 import argparse
+from scipy.spatial.transform import Rotation as Rot
 
 def planJointWaypoints(start, stop, graph, max_dist = .5):
 
@@ -45,6 +46,76 @@ def planAndExecuteFromWaypoints(start, stop, graph, move_group, max_dist = .5):
     #                               0.0)
 
     #group.execute(plan, wait=True)
+
+
+def recordData(group_name, gb):
+    group = moveit_commander.MoveGroupCommander(group_name)
+    joint_vals = group.get_current_joint_values()
+
+    print("current joint vals" + str(joint_vals))
+    nodes = gb.getNodes()
+
+    print("nodes" + str(nodes))
+    print("edges: " + str(gb.connections))
+    cur_index, min_dist = gb.findClosestNode(joint_vals)
+    current = gb.index2state(cur_index)
+
+    planAndExecuteFromWaypoints(current, nodes[int(args.index)], gb, group_name, max_dist = .5)
+
+    if self.robot == "pr2":
+        im_sub = message_filters.Subscriber("/l_forearm_cam/image_color", Image, queue_size=1)
+        joints_sub = message_filters.Subscriber("/l_arm_controller/state", JointTrajectoryControllerState, queue_size=1) 
+    elif self.robot == "ur10":
+        im_sub = message_filters.Subscriber("/camera/color/image_raw", Image, queue_size=1)
+        joints_sub = message_filters.Subscriber("/blue/joint_states", JointState, queue_size=1)
+    else:
+        print("robot name not valid")
+        exit() 
+
+    synched_sub = message_filters.ApproximateTimeSynchronizer([im_sub, joints_sub], queue_size=1, slop=0.05)
+    synched_sub.registerCallback(self.callback)
+    rate = rospy.Rate(10) # 10hz
+
+    done = False
+
+    while not rospy.is_shutdown() and not done:
+        current_node, _ = self.PG.findClosestNode(position)
+        print("at node: " + str(current_node))
+
+        self.next_view = self.PG.index2state((current_node + 1) % len(self.PG.getNodes()))
+
+        pp.planAndExecuteFromWaypoints(position, self.next_view, self.PG, self.group_name, max_dist = .5)
+
+def plotSimilarities(state_index, pose_file, feature_file, uncertainties):
+    pf = np.load(pose_file)
+    ff = np.load(feature_file)
+
+    X = pf[:, 0]
+    Y = pf[:, 1]
+    Z = pf[:, 2]
+
+    normals = []
+
+    for i in range(np.size(X)):
+        quat = [pf[i, 3], pf[i, 4], pf[i, 5], pf[i, 6]]
+        rot_mat = Rot.from_quat(quat).as_dcm()
+        normal = np.matmul(rot_mat, np.array(0, 0, 1))
+        normals.append(normal)
+
+    normals = np.array(normals)
+
+    U = normals[:, 0]
+    V = normals[:, 1]
+    W = normals[:, 2]
+     
+    C = [np.dot(ff[state_index], fr)/(np.linalg.norm(ff[state_index]) * np.linalg.norm(fr))]
+
+    from mpl_toolkits.mplot3d import Axes3D 
+    fig = plt.figure() 
+    ax = fig.add_subplot(111, projection='3d') 
+    ax.quiver(X, Y, Z, U, V, W, C)
+
+    plt.plot(X,Y,Z,’o’, markersize=uncertainties)
 
 
 if __name__ == "__main__":
