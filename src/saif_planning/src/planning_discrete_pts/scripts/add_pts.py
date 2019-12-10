@@ -7,7 +7,7 @@ from rospy.numpy_msg import numpy_msg
 import numpy as np 
 import os
 from sensor_msgs.msg import JointState
-from pr2_controllers_msgs.msg import JointTrajectoryControllerState
+#from pr2_controllers_msgs.msg import JointTrajectoryControllerState
 import argparse
 import Queue
 import copy

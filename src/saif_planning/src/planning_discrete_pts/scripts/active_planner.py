@@ -28,7 +28,7 @@ from sklearn.gaussian_process.kernels import RBF
 def kernel(dist):
     return np.exp(dist**2 / -2)
 
-def acquisition(m, s, scale=.3):
+def acquisition(m, s, scale=.5):
     return m + scale * s 
 
 class ActivePlanner(object):
@@ -65,7 +65,7 @@ class ActivePlanner(object):
             print("robot name not valid")
             exit() 
 
-        #self.group = moveit_commander.MoveGroupCommander(self.group_name)
+        self.group = moveit_commander.MoveGroupCommander(self.group_name)
 
         self.update = False
 
@@ -102,9 +102,7 @@ class ActivePlanner(object):
 
         self.done = False
 
-    def savePoses(self):
-        np.save("data/{}_poses.npy".format(self.target_name), self.poses)
-        np.save("data/{}_feature_reps.npy".format(self.target_name), self.feature_reps)
+    
 
     def run(self, num_views=20, cycle=False):
 
@@ -128,14 +126,18 @@ class ActivePlanner(object):
         while not rospy.is_shutdown() and self.done == False:
 
             print("view: " + str(self.views))
+            print("cc: " + str(self.completion_criterion))
             if self.update is True:
 		if cycle == False:
                	    self.chooseNextView()
+                    if (num_views is None and (self.completion_criterion > 3 or self.views > 50)) or (num_views is not None and self.views == num_views):
+                        self.done = True
                 else:
  		    self.cycleViews()
-
-            if (num_views is None and self.completion_criterion > 3) or (num_views is not None and self.views == num_views):
+            if self.views == 91:
                 self.done = True
+
+            
 
             rate.sleep()
 
@@ -154,6 +156,7 @@ class ActivePlanner(object):
         print("num views: " + str(self.views))
 
     def chooseNextView(self):
+        error = False
   
         print("current position: " + str(self.PG.findClosestNode(self.position)))
 
@@ -163,74 +166,90 @@ class ActivePlanner(object):
          
         try:
             self.GP.fit(points, labels)
+            current_index, _ = self.PG.findClosestNode(position)
+        
+
+            #### SAMPLE MPC
+            best_score, best_index = self.getMaxScore(current_index, depth=20)
+            best_view = self.PG.index2state(best_index)
+            
+            if current_index == best_index:
+                self.completion_criterion += 1
+            else:
+                self.completion_criterion = 0
+
+            #self.trajectory.append(current_index)
+
+            #print("gp preds: " + str(self.GP.predict(self.PG.getNodes())))
+            #print("num nodes: " + str(len(self.PG.getNodes())))
+            ##pl.plot(range(len(self.PG.getNodes())), self.GP.predict(self.PG.getNodes()))
+            ##display.clear_output(wait=True)
+            ##display.display(pl.gcf())
+            ####
+
+            # TRAJECTORY SAMPLING 
+#             sampleTs = self.sampleTrajectories(current_index)
+#             #print("sampled trajectories: " + str(sampleTs))
+
+#             #samplePreds = [[self.GP.predict(self.PG.index2state(pts).reshape(1, -1), return_std=True) for pts in traj] for traj in sampleTs]
+#             destinations = [self.PG.index2state(traj[-1]) for traj in sampleTs] 
+#             samplePreds = self.GP.predict(destinations, return_std=True)
+#             samplePreds = zip(samplePreds[0], samplePreds[1])
+#             #print("sample preds: " + str(samplePreds))
+
+#             scores = [acquisition(*pred) for pred in samplePreds]        
+
+#             #print("scores: " + str(scores))
+#             best_index = np.argmax(np.array(scores))
+#             best_view = self.PG.index2state(sampleTs[best_index][-1])
+
+#             #print("current: {}, best: {}".format(current_index, best_index))
+#             if current_index == sampleTs[best_index][-1]:
+#                 self.completion_criterion += 1
+#             else:
+#                 self.completion_criterion = 0
+
+            #self.trajectory.append(sampleTs[best_index][-1])
+            ####
+            #### ALL WITHIN DIST
+    #         cand_pts = self.PG.getNodesWithinDist(current_index, 20)
+    #         preds = self.GP.predict([self.PG.index2state(n) for n in cand_pts], return_std=True)
+    #         scores = [acquisition(*pred) for pred in zip(preds[0], preds[1])] 
+    #         print("scores: " + str(scores))
+    #         best_index = cand_pts[np.argmax(np.array(scores))]
+    #         best_view = self.PG.index2state(best_index)
+            ####
+
+            if self.visualize == True:
+                pl.clf()
+                means, stds = self.GP.predict(self.PG.getNodes(), return_std=True)
+                x = range(len(self.PG.getNodes()))
+                pl.plot(range(len(self.PG.getNodes())), [acquisition(*pred) for pred in zip(means, stds)] )
+                pl.fill(np.concatenate([x, x[::-1]]),
+                 np.concatenate([means - 1.9600 * stds,
+                            (means + 1.9600 * stds)[::-1]]),
+                 alpha=.5, fc='b', ec='None', label='95% confidence interval')
+                #pl.plot(range(len(self.PG.getNodes())), stds)
+
+                display.clear_output(wait=True)
+                display.display(pl.gcf())
+
+            print("best view: " + str(self.PG.findClosestNode(best_view)))
+            pp.planAndExecuteFromWaypoints(position, best_view, self.PG, self.group_name, max_dist = .5)
+            self.views += 1
+            #print("view: " + str(self.views))
+
+            self.update = False
+            self.next_view = best_view
+            
+            
         except ValueError:
             print("gp fit error")
             self.update = False
+            error = True
             return
-        current_index, _ = self.PG.findClosestNode(position)
         
-
-        # SAMPLE MPC
-        #best_score, best_index = self.getMaxScore(current_index, depth=10)
-        #best_view = self.PG.index2state(best_index)
-
-        #self.trajectory.append(current_index)
-
-        #print("gp preds: " + str(self.GP.predict(self.PG.getNodes())))
-        #print("num nodes: " + str(len(self.PG.getNodes())))
-        ##pl.plot(range(len(self.PG.getNodes())), self.GP.predict(self.PG.getNodes()))
-        ##display.clear_output(wait=True)
-        ##display.display(pl.gcf())
-        ####
-
-        # TRAJECTORY SAMPLING 
-        sampleTs = self.sampleTrajectories(current_index)
-        #print("sampled trajectories: " + str(sampleTs))
-
-        #samplePreds = [[self.GP.predict(self.PG.index2state(pts).reshape(1, -1), return_std=True) for pts in traj] for traj in sampleTs]
-        destinations = [self.PG.index2state(traj[-1]) for traj in sampleTs] 
-        samplePreds = self.GP.predict(destinations, return_std=True)
-        samplePreds = zip(samplePreds[0], samplePreds[1])
-        #print("sample preds: " + str(samplePreds))
-
-        scores = [acquisition(*pred) for pred in samplePreds]        
-
-        #print("scores: " + str(scores))
-        best_index = np.argmax(np.array(scores))
-        best_view = self.PG.index2state(sampleTs[best_index][-1])
-
-        #self.trajectory.append(sampleTs[best_index][-1])
-        ####
-        #### ALL WITHIN DIST
-#         cand_pts = self.PG.getNodesWithinDist(current_index, 20)
-#         preds = self.GP.predict([self.PG.index2state(n) for n in cand_pts], return_std=True)
-#         scores = [acquisition(*pred) for pred in zip(preds[0], preds[1])] 
-#         print("scores: " + str(scores))
-#         best_index = cand_pts[np.argmax(np.array(scores))]
-#         best_view = self.PG.index2state(best_index)
-        ####
         
-        if self.visualize == True:
-            pl.clf()
-            means, stds = self.GP.predict(self.PG.getNodes(), return_std=True)
-	    x = range(len(self.PG.getNodes()))
-            pl.plot(range(len(self.PG.getNodes())), [acquisition(*pred) for pred in zip(means, stds)] )
-	    pl.fill(np.concatenate([x, x[::-1]]),
-         np.concatenate([means - 1.9600 * stds,
-                        (means + 1.9600 * stds)[::-1]]),
-         alpha=.5, fc='b', ec='None', label='95% confidence interval')
-            #pl.plot(range(len(self.PG.getNodes())), stds)
-            
-            display.clear_output(wait=True)
-            display.display(pl.gcf())
-
-        print("best view: " + str(self.PG.findClosestNode(best_view)))
-        pp.planAndExecuteFromWaypoints(position, best_view, self.PG, self.group_name, max_dist = .5)
-        self.views += 1
-        #print("view: " + str(self.views))
-	    
-        self.update = False
-        self.next_view = best_view
 
     def sampleTrajectories(self, node, num_t=10, depth=20):
         
@@ -273,11 +292,10 @@ class ActivePlanner(object):
         print("entering callback")
         cv_image = CvBridge().imgmsg_to_cv2(img, "bgr8")
         
-        print("joint state: {}".format(joint_state))
         position = joint_state.position[0:6]
         try:
             feature_rep = self.toFeatureRepresentation(cv_image, (img.height, img.width, 3))
-            reward = self.imageCompare(feature_rep)
+            reward = self.imageCompare(feature_rep) 
 
             print("reward: " + str(reward))
             self.training_pts.append(position)
@@ -297,26 +315,22 @@ class ActivePlanner(object):
 
         #print("training labels: {}".format(self.training_labels))
         self.position = position
-        #pose = self.group.get_current_pose().pose
-        #processed_pose = [pose.position.x, pose.position.y, pose.position.z, pose.orientation.x, pose.orientation.y,pose.orientation.z,pose.orientation.w]
+        pose = self.group.get_current_pose().pose
+        processed_pose = [pose.position.x, pose.position.y, pose.position.z, pose.orientation.x, pose.orientation.y,pose.orientation.z,pose.orientation.w]
 
-        print("current {}, next {}".format(position, self.next_view))
-        #print(self.PG.state2index(self.next_view))
-        print(self.getStateIndex())
-        print(self.PG.index2state(self.getStateIndex()))
         
 
         if reward is not None and (self.next_view is None or np.linalg.norm(np.array(position) - np.array(self.next_view)) < .1) and self.update is False and self.done is False:
             print("appending reward: {}, trial {}, view {}".format(reward, self.trial_num, self.views))
 
-            if reward > .875:
-                self.completion_criterion += 1
-            else:
-                self.completion_criterion = 0
+#             if reward > .875:
+#                 self.completion_criterion += 1
+#             else:
+#                 self.completion_criterion = 0
 
             self.rewards.append(reward)
             self.trajectory.append(self.PG.findClosestNode(position)[0])
-            #self.poses.append(processed_pose)
+            self.poses.append(processed_pose)
             self.feature_reps.append(feature_rep)
             print("writing image: " + "data/{}_t{}_v{}.jpg".format(self.target_name, self.trial_num, self.views))
             cv2.imwrite("data/{}_t{}_v{}.jpg".format(self.target_name, self.trial_num, self.views), cv_image)
@@ -345,17 +359,25 @@ class ActivePlanner(object):
            f.write(",".join(traj) + "\n")
         with open(dirname + "/" + self.target_name + "_num_views.csv", "ab") as f:
            f.write("{},".format(self.views))   
+        
+    def savePoses(self):
+        np.save("data/{}_poses.npy".format(self.target_name), self.poses)
+        np.save("data/{}_feature_reps.npy".format(self.target_name), self.feature_reps)
 
     def reset(self, saveTrajectory=True):
         self.done = True
-
+        self.completion_criterion = 0
+        self.saveRewards()
+        self.savePoses()
+        
         if self.visualize == True:
         #     plt.plot(x,y,z,'o',markersize=uncertainty_scaler)
-            pose_file = ""
-            feature_file = ""
-            _, uncertainty = gp.predict(self.PG.getNodes(), return_std=True)
+            pose_file = "data/{}_poses.npy".format(self.target_name)
+            feature_file = "data/{}_feature_reps.npy".format(self.target_name)
+            _, uncertainty = self.GP.predict(self.PG.getNodes(), return_std=True)
+            np.save("data/{}_uncertainties.npy".format(self.target_name), uncertainty)
             #try:
-                #pp.plotSimilarities(self.getStateIndex(), pose_file, feature_file, uncertainty)
+            #pp.plotSimilarities(self.getStateIndex(), pose_file, feature_file, uncertainty)
 
         self.training_pts = []
         self.training_labels = []
@@ -363,8 +385,7 @@ class ActivePlanner(object):
         self.next_view = None 
         self.views = 0
         self.GP = GaussianProcessRegressor(kernel=None, alpha=0.001, optimizer='fmin_l_bfgs_b', n_restarts_optimizer=0, normalize_y=True, copy_X_train=True, random_state=None)
-        self.saveRewards()
-        #self.savePoses()
+        
 
         self.rewards = []
         self.trajectory = []
@@ -392,7 +413,7 @@ if __name__ == "__main__":
     #target_names = ['cup_test']
 
     #num_views = 92
-    num_trials = 10
+    num_trials = 2
 
     for t, n in zip(targets, target_names):
         print("t, n: {}, {}".format(t, n))
@@ -403,7 +424,7 @@ if __name__ == "__main__":
         #cv2.imshow('target', target_im)
         ap = ActivePlanner(target_im, args.vfile, args.efile, args.robot_name, n, init_pose=None)
         #num_views = len(ap.PG.getNodes()) - 1
-        num_views = 15
+        num_views = None
         while ap.trial_num <= num_trials:
             print("trial: " + str(ap.trial_num))
             ap.run(num_views)

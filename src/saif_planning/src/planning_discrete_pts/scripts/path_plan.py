@@ -4,6 +4,7 @@ import rospy
 import moveit_commander
 import argparse
 from scipy.spatial.transform import Rotation as Rot
+import numpy as np
 
 def planJointWaypoints(start, stop, graph, max_dist = .5):
 
@@ -86,9 +87,12 @@ def recordData(group_name, gb):
 
         pp.planAndExecuteFromWaypoints(position, self.next_view, self.PG, self.group_name, max_dist = .5)
 
-def plotSimilarities(state_index, pose_file, feature_file, uncertainties):
+def plotSimilarities(state_index, pose_file, feature_file, uncertainty_file):
     pf = np.load(pose_file)
     ff = np.load(feature_file)
+    uncertainties = np.load(uncertainty_file)[1:-1]
+    
+    print(uncertainties)
 
     X = pf[:, 0]
     Y = pf[:, 1]
@@ -96,26 +100,30 @@ def plotSimilarities(state_index, pose_file, feature_file, uncertainties):
 
     normals = []
 
-    for i in range(np.size(X)):
-        quat = [pf[i, 3], pf[i, 4], pf[i, 5], pf[i, 6]]
-        rot_mat = Rot.from_quat(quat).as_dcm()
-        normal = np.matmul(rot_mat, np.array(0, 0, 1))
-        normals.append(normal)
+    #for i in range(np.size(X)):
+        #quat = [pf[i, 3], pf[i, 4], pf[i, 5], pf[i, 6]]
+        #print(quat)
+        #rot_mat = Rot.from_quat(quat)#.as_dcm()
+        
+        #print(str(rot_mat))
+        #print(np.shape(np.array(rot_mat)))
+        #normal = np.matmul(np.array(rot_mat), np.array([0, 0, 1]))
+        #normals.append(normal)
 
-    normals = np.array(normals)
+    #normals = np.array(normals)
 
     U = normals[:, 0]
     V = normals[:, 1]
     W = normals[:, 2]
      
-    C = [np.dot(ff[state_index], fr)/(np.linalg.norm(ff[state_index]) * np.linalg.norm(fr))]
+    C = [np.dot(ff[state_index], fr)/(np.linalg.norm(ff[state_index]) * np.linalg.norm(fr)) for fr in ff]
 
     from mpl_toolkits.mplot3d import Axes3D 
     fig = plt.figure() 
     ax = fig.add_subplot(111, projection='3d') 
     ax.quiver(X, Y, Z, U, V, W, C)
 
-    plt.plot(X,Y,Z,’o’, markersize=uncertainties)
+    plt.plot(X,Y,Z,'o', markersize=uncertainties)
 
 
 if __name__ == "__main__":
