@@ -97,6 +97,7 @@ class ActivePlanner(object):
         else:
             index = init_index
         print("initial index: " + str(index))
+        print("initial state: " + str(nodes[index]))
         pp.planAndExecuteFromWaypoints(current, nodes[index], self.PG, self.group_name, max_dist = .5)
 
         self.done = False
@@ -112,7 +113,7 @@ class ActivePlanner(object):
             joints_sub = message_filters.Subscriber("/l_arm_controller/state", JointTrajectoryControllerState, queue_size=1) 
         elif self.robot == "ur10":
             im_sub = message_filters.Subscriber("/camera/color/image_raw", Image, queue_size=1)
-            joints_sub = message_filters.Subscriber("/blue/joint_states", JointState, queue_size=1)
+            joints_sub = message_filters.Subscriber("/joint_states", JointState, queue_size=1)
         else:
             print("robot name not valid")
             exit() 
@@ -124,8 +125,7 @@ class ActivePlanner(object):
 
         if rospy.is_shutdown():
             print("rospy shutdown")
-        #while not rospy.is_shutdown() and self.done == False:
-        while not rospy.is_shutdown() and self.views < num_views:
+        while not rospy.is_shutdown() and self.done == False:
 
             print("view: " + str(self.views))
             if self.update is True:
@@ -134,8 +134,8 @@ class ActivePlanner(object):
                 else:
  		    self.cycleViews()
 
-            # if (num_views is None and self.completion_criterion > 3) or (num_views is not None and self.views == num_views):
-            #     self.done = True
+            if (num_views is None and self.completion_criterion > 3) or (num_views is not None and self.views == num_views):
+                self.done = True
 
             rate.sleep()
 
@@ -274,7 +274,7 @@ class ActivePlanner(object):
         cv_image = CvBridge().imgmsg_to_cv2(img, "bgr8")
         
         print("joint state: {}".format(joint_state))
-        position = joint_state.position
+        position = joint_state.position[0:6]
         try:
             feature_rep = self.toFeatureRepresentation(cv_image, (img.height, img.width, 3))
             reward = self.imageCompare(feature_rep)
