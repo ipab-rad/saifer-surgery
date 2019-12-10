@@ -65,7 +65,7 @@ class ActivePlanner(object):
             print("robot name not valid")
             exit() 
 
-        self.group = moveit_commander.MoveGroupCommander(self.group_name)
+        #self.group = moveit_commander.MoveGroupCommander(self.group_name)
 
         self.update = False
 
@@ -272,6 +272,7 @@ class ActivePlanner(object):
         print("entering callback")
         cv_image = CvBridge().imgmsg_to_cv2(img, "bgr8")
         
+        print("joint state: {}".format(joint_state))
         position = joint_state.position
         try:
             feature_rep = self.toFeatureRepresentation(cv_image, (img.height, img.width, 3))
@@ -295,10 +296,14 @@ class ActivePlanner(object):
 
         #print("training labels: {}".format(self.training_labels))
         self.position = position
-        pose = self.group.get_current_pose().pose
-        processed_pose = [pose.position.x, pose.position.y, pose.position.z, pose.orientation.x, pose.orientation.y,pose.orientation.z,pose.orientation.w]
+        #pose = self.group.get_current_pose().pose
+        #processed_pose = [pose.position.x, pose.position.y, pose.position.z, pose.orientation.x, pose.orientation.y,pose.orientation.z,pose.orientation.w]
 
         print("current {}, next {}".format(position, self.next_view))
+        #print(self.PG.state2index(self.next_view))
+        print(self.getStateIndex())
+        print(self.PG.index2state(self.getStateIndex()))
+        
 
         if reward is not None and (self.next_view is None or np.linalg.norm(np.array(position) - np.array(self.next_view)) < .1) and self.update is False and self.done is False:
             print("appending reward: {}, trial {}, view {}".format(reward, self.trial_num, self.views))
@@ -310,7 +315,7 @@ class ActivePlanner(object):
 
             self.rewards.append(reward)
             self.trajectory.append(self.PG.findClosestNode(position)[0])
-            self.poses.append()
+            #self.poses.append(processed_pose)
             self.feature_reps.append(feature_rep)
             print("writing image: " + "data/{}_t{}_v{}.jpg".format(self.target_name, self.trial_num, self.views))
             cv2.imwrite("data/{}_t{}_v{}.jpg".format(self.target_name, self.trial_num, self.views), cv_image)
@@ -344,12 +349,12 @@ class ActivePlanner(object):
         self.done = True
 
         if self.visualize == True:
-        #     plt.plot(x,y,z,’o’,markersize=uncertainty_scaler)
+        #     plt.plot(x,y,z,'o',markersize=uncertainty_scaler)
             pose_file = ""
             feature_file = ""
             _, uncertainty = gp.predict(self.PG.getNodes(), return_std=True)
-            try:
-                pp.plotSimilarities(self.getStateIndex(), pose_file, feature_file, uncertainty)
+            #try:
+                #pp.plotSimilarities(self.getStateIndex(), pose_file, feature_file, uncertainty)
 
         self.training_pts = []
         self.training_labels = []
@@ -358,7 +363,7 @@ class ActivePlanner(object):
         self.views = 0
         self.GP = GaussianProcessRegressor(kernel=None, alpha=0.001, optimizer='fmin_l_bfgs_b', n_restarts_optimizer=0, normalize_y=True, copy_X_train=True, random_state=None)
         self.saveRewards()
-        self.savePoses()
+        #self.savePoses()
 
         self.rewards = []
         self.trajectory = []
@@ -382,7 +387,7 @@ if __name__ == "__main__":
     targets = ['liquid.jpg'] #, 
     #targets = ['cupcup.jpg']
     #target_names = ['pink_ball_'] #, 
-    target_names = ['liquid'] #, 
+    target_names = ['testliquid'] #, 
     #target_names = ['cup_test']
 
     #num_views = 92
@@ -394,7 +399,7 @@ if __name__ == "__main__":
         target_im = cv2.imread(t)
         #print(np.shape(np.array(target_im)))
         #print(target_im)
-        cv2.imshow('target', target_im)
+        #cv2.imshow('target', target_im)
         ap = ActivePlanner(target_im, args.vfile, args.efile, args.robot_name, n, init_pose=None)
         #num_views = len(ap.PG.getNodes()) - 1
         num_views = 15
