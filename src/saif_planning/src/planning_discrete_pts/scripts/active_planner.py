@@ -12,6 +12,7 @@ import message_filters
 import argparse
 from add_pts import PlanningGraph
 from sensor_msgs.msg import Image
+import std_msgs
 import path_plan as pp 
 from sensor_msgs.msg import JointState
 from geometry_msgs.msg import PoseArray, Pose 
@@ -143,6 +144,8 @@ class ActivePlanner(object):
         if rospy.is_shutdown():
             print("rospy shutdown")
         while not rospy.is_shutdown() and self.done == False:
+            h = std_msgs.msg.Header()
+            h.stamp = rospy.Time.now()
 
             print("view: " + str(self.views))
             print("cc: " + str(self.completion_criterion))
@@ -150,7 +153,7 @@ class ActivePlanner(object):
 		if cycle == False:
                	    self.chooseNextView()
 
-                    pub.publish(pose_list)
+                    pub.publish(h, pose_list)
                     pub_current.publish(self.group.get_current_pose().pose)
                     pub_next.publish(pose_list[self.PG.state2index(self.next_view)])
                     if (num_views is None and (self.completion_criterion > 3 or self.views > 50)) or (num_views is not None and self.views == num_views):
