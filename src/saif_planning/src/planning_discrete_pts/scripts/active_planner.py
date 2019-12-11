@@ -14,6 +14,7 @@ from add_pts import PlanningGraph
 from sensor_msgs.msg import Image
 import path_plan as pp 
 from sensor_msgs.msg import JointState
+from geometry_msgs.msg import PoseArray, Pose 
 import numpy as np
 import moveit_commander
 import random
@@ -119,6 +120,24 @@ class ActivePlanner(object):
         synched_sub = message_filters.ApproximateTimeSynchronizer([im_sub, joints_sub], queue_size=1, slop=0.05)
         synched_sub.registerCallback(self.callback)
 
+        # PUBLISH POSES
+        poses = np.load("cycle_test_poses.npy")
+        pub = rospy.Publisher('all_poses', PoseArray, queue_size=1)
+        pub_current = rospy.Publisher('current_pose', Pose, queue_size=1)
+        pub_next = rospy.Publisher('next_pose', Pose, queue_size=1)
+        pose = Pose()
+        pose_list = []
+        #for node in self.PG.getNodes():
+        for p in poses:
+            pose.position.x = p[0]
+            pose.position.y = p[1]
+            pose.position.z = p[2]
+            pose.orientation.x = p[3]
+            pose.orientation.y = p[4]
+            pose.orientation.z = p[5]
+            pose.orientation.w = p[6]
+            pose_list.append(pose)
+
         rate = rospy.Rate(10) # 10hz
 
         if rospy.is_shutdown():
@@ -130,6 +149,10 @@ class ActivePlanner(object):
             if self.update is True:
 		if cycle == False:
                	    self.chooseNextView()
+
+                    pub.publish(pose_list)
+                    pub_current.publish(self.group.get_current_pose().pose)
+                    pub_next.publish(pose_list[self.PG.state2index(self.next_view)])
                     if (num_views is None and (self.completion_criterion > 3 or self.views > 50)) or (num_views is not None and self.views == num_views):
                         self.done = True
                 else:
@@ -168,6 +191,17 @@ class ActivePlanner(object):
             self.GP.fit(points, labels)
             current_index, _ = self.PG.findClosestNode(position)
         
+            #### ALL 
+
+            cand_pts = self.PG.getNodes()
+            preds = self.GP.predict([self.PG.index2state(n) for n in cand_pts], return_std=True)
+            scores = [acquisition/(*pred) for pred in zip(preds[0], preds[1])] 
+            print("scores: " + str(scores))
+            best_index = cand_pts[np.argmax(np.array(scores))]
+            best_view = self.PG.index2state(best_index)
+
+
+            ########
 
             #### SAMPLE MPC
             best_score, best_index = self.getMaxScore(current_index, depth=20)
