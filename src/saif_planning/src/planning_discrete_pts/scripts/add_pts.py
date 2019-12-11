@@ -132,7 +132,8 @@ class PlanningGraph(object):
 
 
     def state2index(self, state):
-        return self.nodes.index(state)
+        res, _ = self.findClosestNode(state)
+        return res
 
     def index2state(self, index):
         return self.nodes[index]
@@ -144,8 +145,8 @@ class PlanningGraph(object):
             position = np.array(data.actual.positions)
 
      
-        thresh = .05
-        add_thresh = .2
+        thresh = .1 #.05
+        add_thresh = 1 #.2
         dist_list = [self.dist(node, position) for node in self.nodes]
 
         index, min_dist = self.findClosestNode(position)
