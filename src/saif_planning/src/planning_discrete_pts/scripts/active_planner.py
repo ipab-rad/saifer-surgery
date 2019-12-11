@@ -30,7 +30,7 @@ from sklearn.gaussian_process.kernels import RBF
 def kernel(dist):
     return np.exp(dist**2 / -2)
 
-def acquisition(m, s, scale=.5):
+def acquisition(m, s, scale=1):
     return m + scale * s 
 
 class ActivePlanner(object):
@@ -122,7 +122,7 @@ class ActivePlanner(object):
         synched_sub.registerCallback(self.callback)
 
         # PUBLISH POSES
-        poses = np.load("cycle_test_poses.npy")
+        poses = np.load("data/cycle_test_poses.npy")
         pub = rospy.Publisher('all_poses', PoseArray, queue_size=1)
         pub_current = rospy.Publisher('current_pose', Pose, queue_size=1)
         pub_next = rospy.Publisher('next_pose', Pose, queue_size=1)
@@ -196,32 +196,37 @@ class ActivePlanner(object):
         
             #### ALL 
 
-            cand_pts = self.PG.getNodes()
-            preds = self.GP.predict([self.PG.index2state(n) for n in cand_pts], return_std=True)
-            scores = [acquisition/(*pred) for pred in zip(preds[0], preds[1])] 
+            cand_pts = self.PG.getNodes()[1:]
+            preds = self.GP.predict(cand_pts, return_std=True)
+            scores = [acquisition(*pred) for pred in zip(preds[0], preds[1])] 
             print("scores: " + str(scores))
-            best_index = cand_pts[np.argmax(np.array(scores))]
+            best_index = min(np.argmax(np.array(scores)) + 1, 91)
             best_view = self.PG.index2state(best_index)
-
-
-            ########
-
-            #### SAMPLE MPC
-            best_score, best_index = self.getMaxScore(current_index, depth=20)
-            best_view = self.PG.index2state(best_index)
+            print("best view: " + str(best_index))
             
             if current_index == best_index:
                 self.completion_criterion += 1
             else:
                 self.completion_criterion = 0
 
-            #self.trajectory.append(current_index)
+            ########
 
-            #print("gp preds: " + str(self.GP.predict(self.PG.getNodes())))
-            #print("num nodes: " + str(len(self.PG.getNodes())))
-            ##pl.plot(range(len(self.PG.getNodes())), self.GP.predict(self.PG.getNodes()))
-            ##display.clear_output(wait=True)
-            ##display.display(pl.gcf())
+            #### SAMPLE MPC
+#             best_score, best_index = self.getMaxScore(current_index, depth=20)
+#             best_view = self.PG.index2state(best_index)
+            
+#             if current_index == best_index:
+#                 self.completion_criterion += 1
+#             else:
+#                 self.completion_criterion = 0
+
+#             #self.trajectory.append(current_index)
+
+#             #print("gp preds: " + str(self.GP.predict(self.PG.getNodes())))
+#             #print("num nodes: " + str(len(self.PG.getNodes())))
+#             ##pl.plot(range(len(self.PG.getNodes())), self.GP.predict(self.PG.getNodes()))
+#             ##display.clear_output(wait=True)
+#             ##display.display(pl.gcf())
             ####
 
             # TRAJECTORY SAMPLING 
@@ -261,7 +266,8 @@ class ActivePlanner(object):
                 pl.clf()
                 means, stds = self.GP.predict(self.PG.getNodes(), return_std=True)
                 x = range(len(self.PG.getNodes()))
-                pl.plot(range(len(self.PG.getNodes())), [acquisition(*pred) for pred in zip(means, stds)] )
+                #pl.plot(range(len(self.PG.getNodes())), [acquisition(*pred) for pred in zip(means, stds)] )
+                pl.plot(range(len(self.PG.getNodes())), means )
                 pl.fill(np.concatenate([x, x[::-1]]),
                  np.concatenate([means - 1.9600 * stds,
                             (means + 1.9600 * stds)[::-1]]),
@@ -271,7 +277,7 @@ class ActivePlanner(object):
                 display.clear_output(wait=True)
                 display.display(pl.gcf())
 
-            print("best view: " + str(self.PG.findClosestNode(best_view)))
+            #print("best view: " + str(self.PG.findClosestNode(best_view)))
             pp.planAndExecuteFromWaypoints(position, best_view, self.PG, self.group_name, max_dist = .5)
             self.views += 1
             #print("view: " + str(self.views))
