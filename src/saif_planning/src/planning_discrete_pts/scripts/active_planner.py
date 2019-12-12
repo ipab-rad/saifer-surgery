@@ -30,7 +30,7 @@ from sklearn.gaussian_process.kernels import RBF
 def kernel(dist):
     return np.exp(dist**2 / -2)
 
-def acquisition(m, s, scale=1):
+def acquisition(m, s, scale=.3):
     return m + scale * s 
 
 class ActivePlanner(object):
@@ -74,6 +74,7 @@ class ActivePlanner(object):
         self.GP = GaussianProcessRegressor(kernel=RBF(0.1), alpha=0.001, optimizer='fmin_l_bfgs_b', n_restarts_optimizer=0, normalize_y=True, copy_X_train=True, random_state=None)
         self.model = InceptionV3(include_top=False, weights='imagenet', input_tensor=None, input_shape=(480,640,3), pooling='avg', classes=1000)
         rospy.init_node('active_planner', anonymous=False)
+        self.init_pose = init_pose
         self.setInitialPose(init_pose)
 
         self.graph = tf.get_default_graph()
@@ -122,6 +123,7 @@ class ActivePlanner(object):
         synched_sub.registerCallback(self.callback)
 
         # PUBLISH POSES
+        msg = PoseArray()
         poses = np.load("data/cycle_test_poses.npy")
         pub = rospy.Publisher('all_poses', PoseArray, queue_size=1)
         pub_current = rospy.Publisher('current_pose', Pose, queue_size=1)
@@ -130,6 +132,7 @@ class ActivePlanner(object):
         pose_list = []
         #for node in self.PG.getNodes():
         for p in poses:
+            #geom_msg.Point(x=rt.tvec[0], y=rt.tvec[1], z=rt.tvec[2])
             pose.position.x = p[0]
             pose.position.y = p[1]
             pose.position.z = p[2]
@@ -138,6 +141,8 @@ class ActivePlanner(object):
             pose.orientation.z = p[5]
             pose.orientation.w = p[6]
             pose_list.append(pose)
+            
+        msg.poses = pose_list
 
         rate = rospy.Rate(10) # 10hz
 
@@ -146,16 +151,23 @@ class ActivePlanner(object):
         while not rospy.is_shutdown() and self.done == False:
             h = std_msgs.msg.Header()
             h.stamp = rospy.Time.now()
+            msg.header = h
 
             print("view: " + str(self.views))
             print("cc: " + str(self.completion_criterion))
+            pub.publish(msg)
+            current_pose = self.group.get_current_pose().pose
+            #print("current pose: " + str(current_pose))
+            pub_current.publish(current_pose)
+            if self.next_view is not None and self.PG.state2index(self.next_view) < 91:
+                    pub_next.publish(pose_list[self.PG.state2index(self.next_view)])
+                        
+            
             if self.update is True:
 		if cycle == False:
                	    self.chooseNextView()
 
-                    pub.publish(h, pose_list)
-                    pub_current.publish(self.group.get_current_pose().pose)
-                    pub_next.publish(pose_list[self.PG.state2index(self.next_view)])
+                    
                     if (num_views is None and (self.completion_criterion > 3 or self.views > 50)) or (num_views is not None and self.views == num_views):
                         self.done = True
                 else:
@@ -266,12 +278,16 @@ class ActivePlanner(object):
                 pl.clf()
                 means, stds = self.GP.predict(self.PG.getNodes(), return_std=True)
                 x = range(len(self.PG.getNodes()))
-                #pl.plot(range(len(self.PG.getNodes())), [acquisition(*pred) for pred in zip(means, stds)] )
-                pl.plot(range(len(self.PG.getNodes())), means )
+                pl.plot(range(len(self.PG.getNodes())), [acquisition(*pred) for pred in zip(means, stds)], c='r')
+                pl.plot(range(len(self.PG.getNodes())), means)
+#                 pl.fill(np.concatenate([x, x[::-1]]),
+#                  np.concatenate([means - 1.9600 * stds,
+#                             (means + 1.9600 * stds)[::-1]]),
+#                  alpha=.5, fc='b', ec='None', label='95% confidence interval')
                 pl.fill(np.concatenate([x, x[::-1]]),
-                 np.concatenate([means - 1.9600 * stds,
-                            (means + 1.9600 * stds)[::-1]]),
-                 alpha=.5, fc='b', ec='None', label='95% confidence interval')
+                 np.concatenate([means - stds,
+                            (means + stds)[::-1]]),
+                 alpha=.5, fc='b', ec='None', label='1 std')
                 #pl.plot(range(len(self.PG.getNodes())), stds)
 
                 display.clear_output(wait=True)
@@ -434,7 +450,7 @@ class ActivePlanner(object):
         self.trajectory = []
         self.trial_num += 1
 
-        self.setInitialPose()
+        self.setInitialPose(self.init_pose)
 
         
         
