@@ -34,9 +34,11 @@ def acquisition(m, s, scale=.3):
     return m + scale * s 
 
 class ActivePlanner(object):
+   
 
     def __init__(self, target_img, vfile, efile, robot, target_name, search_dist=1, init_pose=None, visualize=False):
         self.target_img = target_img
+        self.first_img = None
         self.training_pts = []
         self.training_labels = []
         self.trajectory = []
@@ -58,6 +60,8 @@ class ActivePlanner(object):
         self.poses = []
         self.feature_reps = []
         self.views_to_completion = []
+        self.stay = False
+        self.STAY_THRESH = .88
 
         if self.robot == "pr2":
             self.group_name = "left_arm"
@@ -71,7 +75,7 @@ class ActivePlanner(object):
 
         self.update = False
 
-        self.GP = GaussianProcessRegressor(kernel=RBF(0.1), alpha=0.001, optimizer='fmin_l_bfgs_b', n_restarts_optimizer=0, normalize_y=True, copy_X_train=True, random_state=None)
+        self.GP = GaussianProcessRegressor(kernel=RBF(0.3), alpha=0.01, optimizer='fmin_l_bfgs_b', n_restarts_optimizer=0, normalize_y=True, copy_X_train=True, random_state=None)
         self.model = InceptionV3(include_top=False, weights='imagenet', input_tensor=None, input_shape=(480,640,3), pooling='avg', classes=1000)
         rospy.init_node('active_planner', anonymous=False)
         self.init_pose = init_pose
@@ -102,12 +106,14 @@ class ActivePlanner(object):
         print("initial index: " + str(index))
         print("initial state: " + str(nodes[index]))
         pp.planAndExecuteFromWaypoints(current, nodes[index], self.PG, self.group_name, max_dist = .5)
+        
+        self.next_view = nodes[index]
 
         self.done = False
 
     
 
-    def run(self, num_views=20, cycle=False):
+    def run(self, num_views=20, mode="AVS"):
 
         if self.robot == "pr2":
             im_sub = message_filters.Subscriber("/l_forearm_cam/image_color", Image, queue_size=1)
@@ -164,15 +170,17 @@ class ActivePlanner(object):
                         
             
             if self.update is True:
-		if cycle == False:
+		if mode == "AVS" and self.stay is False:
                	    self.chooseNextView()
 
                     
                     if (num_views is None and (self.completion_criterion > 3 or self.views > 50)) or (num_views is not None and self.views == num_views):
                         self.done = True
-                else:
+                elif mode == "cycle":
  		    self.cycleViews()
-            if self.views == 91:
+                elif mode == "same":
+                    self.sameView()
+            if self.views == 54:
                 self.done = True
 
             
@@ -188,6 +196,19 @@ class ActivePlanner(object):
         self.next_view = self.PG.index2state((current_node + 1) % len(self.PG.getNodes()))
 
         pp.planAndExecuteFromWaypoints(position, self.next_view, self.PG, self.group_name, max_dist = .5)
+
+        self.views += 1
+        self.update = False
+        print("num views: " + str(self.views))
+        
+    def sameView(self):
+        position = self.position
+        print(position)
+
+        current_node, _ = self.PG.findClosestNode(position)
+        print("at node: " + str(current_node))
+
+        self.next_view = position
 
         self.views += 1
         self.update = False
@@ -289,7 +310,8 @@ class ActivePlanner(object):
                             (means + stds)[::-1]]),
                  alpha=.5, fc='b', ec='None', label='1 std')
                 #pl.plot(range(len(self.PG.getNodes())), stds)
-
+                pl.title("current index: {}, best index: {}, view: {}".format(current_index, best_index, self.views))
+                pl.savefig("gp_{}_t{}_v{}_c{}b{}".format(self.target_name, self.trial_num, self.views, current_index, best_index))
                 display.clear_output(wait=True)
                 display.display(pl.gcf())
 
@@ -351,10 +373,17 @@ class ActivePlanner(object):
         print("entering callback")
         cv_image = CvBridge().imgmsg_to_cv2(img, "bgr8")
         
+        if self.first_img is None:
+            self.first_img = cv_image
+        
         position = joint_state.position[0:6]
         try:
             feature_rep = self.toFeatureRepresentation(cv_image, (img.height, img.width, 3))
             reward = self.imageCompare(feature_rep) 
+            if reward >= self.STAY_THRESH:
+                self.stay = True
+            else:
+                self.stay = False
 
             print("reward: " + str(reward))
             self.training_pts.append(position)
@@ -405,7 +434,7 @@ class ActivePlanner(object):
 
 
     def imageCompare(self, img):
-        target = self.toFeatureRepresentation(self.target_img)
+        target = self.toFeatureRepresentation(self.first_img)
         return np.dot(target, img)/(np.linalg.norm(target) * np.linalg.norm(img))
 
     def saveRewards(self, dirname="data"):
@@ -449,6 +478,7 @@ class ActivePlanner(object):
         self.rewards = []
         self.trajectory = []
         self.trial_num += 1
+        self.first_img = None
 
         self.setInitialPose(self.init_pose)
 
