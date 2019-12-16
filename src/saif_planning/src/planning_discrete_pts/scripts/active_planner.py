@@ -2,6 +2,7 @@
 from cv_bridge import CvBridge, CvBridgeError
 from sklearn.gaussian_process import GaussianProcessRegressor 
 from keras.applications.inception_v3 import InceptionV3
+from keras.applications.inception_resnet_v2 import InceptionResNetV2
 import tensorflow as tf
 import sys
 sys.path.remove('/opt/ros/kinetic/lib/python2.7/dist-packages') # in order to import cv2 under python3
@@ -77,6 +78,7 @@ class ActivePlanner(object):
 
         self.GP = GaussianProcessRegressor(kernel=RBF(0.3), alpha=0.01, optimizer='fmin_l_bfgs_b', n_restarts_optimizer=0, normalize_y=True, copy_X_train=True, random_state=None)
         self.model = InceptionV3(include_top=False, weights='imagenet', input_tensor=None, input_shape=(480,640,3), pooling='avg', classes=1000)
+        #self.model = InceptionResNetV2(include_top=False, weights='imagenet', input_tensor=None, input_shape=(480,640,3), pooling='avg', classes=1000)
         rospy.init_node('active_planner', anonymous=False)
         self.init_pose = init_pose
         self.setInitialPose(init_pose)
@@ -231,7 +233,9 @@ class ActivePlanner(object):
 
             cand_pts = self.PG.getNodes()[1:]
             preds = self.GP.predict(cand_pts, return_std=True)
-            scores = [acquisition(*pred) for pred in zip(preds[0], preds[1])] 
+            gp_scores = [acquisition(*pred) for pred in zip(preds[0], preds[1])] 
+            dists = [self.PG.dist(position, pt) for pt in cand_pts]  #range(1, len(cand_pts) + 1)
+            scores = [s - .1 * d for (s, d) in zip(gp_scores, dists)]
             print("scores: " + str(scores))
             best_index = min(np.argmax(np.array(scores)) + 1, 91)
             best_view = self.PG.index2state(best_index)
