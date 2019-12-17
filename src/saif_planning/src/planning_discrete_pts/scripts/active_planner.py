@@ -135,7 +135,7 @@ class ActivePlanner(object):
         poses = np.load("data/cycle_test_poses.npy")
         pub = rospy.Publisher('all_poses', PoseArray, queue_size=1)
         pub_current = rospy.Publisher('current_pose', Pose, queue_size=1)
-        pub_next = rospy.Publisher('next_pose', Pose, queue_size=1)
+        pub_next = rospy.Publisher('next_pose', PoseStamped, queue_size=1)
         pose = Pose()
         pose_list = []
         #for node in self.PG.getNodes():
@@ -151,6 +151,7 @@ class ActivePlanner(object):
             pose_list.append(pose)
             
         msg.poses = pose_list
+        pose = self.group.get_current_pose()
 
         rate = rospy.Rate(10) # 10hz
 
@@ -167,8 +168,11 @@ class ActivePlanner(object):
             current_pose = self.group.get_current_pose().pose
             #print("current pose: " + str(current_pose))
             pub_current.publish(current_pose)
+
             if self.next_view is not None and self.PG.state2index(self.next_view) < 91:
-                    pub_next.publish(pose_list[self.PG.state2index(self.next_view)])
+                    pose.pose = pose_list[self.PG.state2index(self.next_view)]
+                    pose.header.stamp = rospy.Time.now()
+                    pub_next.publish(pose)
                         
             
             if self.update is True:
