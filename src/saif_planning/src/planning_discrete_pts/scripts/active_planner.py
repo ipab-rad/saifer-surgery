@@ -16,7 +16,7 @@ from sensor_msgs.msg import Image
 import std_msgs
 import path_plan as pp 
 from sensor_msgs.msg import JointState
-from geometry_msgs.msg import PoseArray, Pose 
+from geometry_msgs.msg import PoseArray, Pose, PoseStamped 
 import numpy as np
 import moveit_commander
 import random
@@ -76,9 +76,9 @@ class ActivePlanner(object):
 
         self.update = False
 
-        self.GP = GaussianProcessRegressor(kernel=RBF(0.3), alpha=0.01, optimizer='fmin_l_bfgs_b', n_restarts_optimizer=0, normalize_y=True, copy_X_train=True, random_state=None)
-        self.model = InceptionV3(include_top=False, weights='imagenet', input_tensor=None, input_shape=(480,640,3), pooling='avg', classes=1000)
-        #self.model = InceptionResNetV2(include_top=False, weights='imagenet', input_tensor=None, input_shape=(480,640,3), pooling='avg', classes=1000)
+        self.GP = GaussianProcessRegressor(kernel=RBF(0.1), alpha=0.1, optimizer='fmin_l_bfgs_b', n_restarts_optimizer=0, normalize_y=True, copy_X_train=True, random_state=None)
+        #self.model = InceptionV3(include_top=False, weights='imagenet', input_tensor=None, input_shape=(480,640,3), pooling='avg', classes=1000)
+        self.model = InceptionResNetV2(include_top=False, weights='imagenet', input_tensor=None, input_shape=(480,640,3), pooling='avg', classes=1000)
         rospy.init_node('active_planner', anonymous=False)
         self.init_pose = init_pose
         self.setInitialPose(init_pose)
@@ -184,10 +184,13 @@ class ActivePlanner(object):
                         self.done = True
                 elif mode == "cycle":
  		    self.cycleViews()
+                    if self.views == len(self.PG.getNodes()) - 2:
+                        self.done = True
                 elif mode == "same":
                     self.sameView()
-            if self.views == 54:
-                self.done = True
+                    if self.views == num_views:
+                        self.done = True
+            
 
             
 
