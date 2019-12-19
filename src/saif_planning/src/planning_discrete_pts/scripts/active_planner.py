@@ -3,6 +3,7 @@ from cv_bridge import CvBridge, CvBridgeError
 from sklearn.gaussian_process import GaussianProcessRegressor 
 from keras.applications.inception_v3 import InceptionV3
 from keras.applications.inception_resnet_v2 import InceptionResNetV2
+from keras.applications.resnet_v2 import ResNet152V2
 import tensorflow as tf
 import sys
 sys.path.remove('/opt/ros/kinetic/lib/python2.7/dist-packages') # in order to import cv2 under python3
@@ -25,6 +26,8 @@ import matplotlib.pyplot as plt
 import pylab as pl
 from IPython import display
 from keras.applications.inception_v3 import preprocess_input
+#from keras.applications.inception_resnet_v2 import preprocess_input
+#from keras.applications.resnet_v2 import preprocess_input
 from sklearn.gaussian_process.kernels import RBF
 #from pr2_controllers_msgs.msg import JointTrajectoryControllerState
 
@@ -63,6 +66,7 @@ class ActivePlanner(object):
         self.views_to_completion = []
         self.stay = False
         self.STAY_THRESH = .88
+        self.saves = 0
 
         if self.robot == "pr2":
             self.group_name = "left_arm"
@@ -76,9 +80,10 @@ class ActivePlanner(object):
 
         self.update = False
 
-        self.GP = GaussianProcessRegressor(kernel=RBF(0.1), alpha=0.1, optimizer='fmin_l_bfgs_b', n_restarts_optimizer=0, normalize_y=True, copy_X_train=True, random_state=None)
-        #self.model = InceptionV3(include_top=False, weights='imagenet', input_tensor=None, input_shape=(480,640,3), pooling='avg', classes=1000)
-        self.model = InceptionResNetV2(include_top=False, weights='imagenet', input_tensor=None, input_shape=(480,640,3), pooling='avg', classes=1000)
+        self.GP = GaussianProcessRegressor(kernel=RBF(0.1), alpha=0.01, optimizer='fmin_l_bfgs_b', n_restarts_optimizer=0, normalize_y=True, copy_X_train=True, random_state=None)
+        self.model = InceptionV3(include_top=False, weights='imagenet', input_tensor=None, input_shape=(480,640,3), pooling='avg', classes=1000)
+        #self.model = InceptionResNetV2(include_top=False, weights='imagenet', input_tensor=None, input_shape=(480,640,3), pooling='avg', classes=1000)
+        #self.model = ResNet152V2(include_top=False, weights='imagenet', input_tensor=None, input_shape=(480,640,3), pooling='avg', classes=1000)
         rospy.init_node('active_planner', anonymous=False)
         self.init_pose = init_pose
         self.setInitialPose(init_pose)
@@ -391,10 +396,12 @@ class ActivePlanner(object):
         try:
             feature_rep = self.toFeatureRepresentation(cv_image, (img.height, img.width, 3))
             reward = self.imageCompare(feature_rep) 
-            if reward >= self.STAY_THRESH:
+            if reward > self.STAY_THRESH:
+                print("stay here, good view, reward {}".format(reward))
                 self.stay = True
             else:
                 self.stay = False
+                print("move to a better view")
 
             print("reward: " + str(reward))
             self.training_pts.append(position)
@@ -418,24 +425,46 @@ class ActivePlanner(object):
         processed_pose = [pose.position.x, pose.position.y, pose.position.z, pose.orientation.x, pose.orientation.y,pose.orientation.z,pose.orientation.w]
 
         
-
-        if reward is not None and (self.next_view is None or np.linalg.norm(np.array(position) - np.array(self.next_view)) < .1) and self.update is False and self.done is False:
+        print("stay?: {}, update?: {}, done?: {}".format(self.stay, self.update, self.done))
+        if reward is not None and (self.next_view is None or np.linalg.norm(np.array(position) - np.array(self.next_view)) < .1) and (self.update is False or self.stay is True) and self.done is False:
             print("appending reward: {}, trial {}, view {}".format(reward, self.trial_num, self.views))
 
 #             if reward > .875:
 #                 self.completion_criterion += 1
 #             else:
 #                 self.completion_criterion = 0
-
+            
             self.rewards.append(reward)
             self.trajectory.append(self.PG.findClosestNode(position)[0])
             self.poses.append(processed_pose)
             self.feature_reps.append(feature_rep)
             print("writing image: " + "data/{}_t{}_v{}.jpg".format(self.target_name, self.trial_num, self.views))
-            cv2.imwrite("data/{}_t{}_v{}.jpg".format(self.target_name, self.trial_num, self.views), cv_image)
-            self.update = True
+            cv2.imwrite("data/{}_t{}_s{}.jpg".format(self.target_name, self.trial_num, self.saves), cv_image)
+            if self.stay is False:
+                self.update = True
             print("rewards: {}".format(self.rewards))
             print("trajectory: {}".format(self.trajectory))
+            self.saves += 1
+            
+            if self.visualize == True:
+                pl.clf()
+                means, stds = self.GP.predict(self.PG.getNodes(), return_std=True)
+                x = range(len(self.PG.getNodes()))
+                pl.plot(range(len(self.PG.getNodes())), [acquisition(*pred) for pred in zip(means, stds)], c='r')
+                pl.plot(range(len(self.PG.getNodes())), means)
+#                 pl.fill(np.concatenate([x, x[::-1]]),
+#                  np.concatenate([means - 1.9600 * stds,
+#                             (means + 1.9600 * stds)[::-1]]),
+#                  alpha=.5, fc='b', ec='None', label='95% confidence interval')
+                pl.fill(np.concatenate([x, x[::-1]]),
+                 np.concatenate([means - stds,
+                            (means + stds)[::-1]]),
+                 alpha=.5, fc='b', ec='None', label='1 std')
+                #pl.plot(range(len(self.PG.getNodes())), stds)
+                pl.title("current index: {}, best index: {}, view: {}".format(self.PG.findClosestNode(position)[0], self.PG.findClosestNode(self.next_view)[0], self.views))
+                #pl.savefig("gp_{}_t{}_v{}_c{}b{}".format(self.target_name, self.trial_num, self.views, current_index, best_index))
+                display.clear_output(wait=True)
+                display.display(pl.gcf())
 
     def toFeatureRepresentation(self, img, img_shape=(480,640,3)):
         img = np.expand_dims(img, axis=0)
@@ -490,6 +519,7 @@ class ActivePlanner(object):
         self.trajectory = []
         self.trial_num += 1
         self.first_img = None
+        #self.saves = 0
 
         self.setInitialPose(self.init_pose)
 
@@ -506,14 +536,14 @@ if __name__ == "__main__":
     args, unknown_args = parser.parse_known_args()
 
     #targets = ['pink_ball.jpg'] 
-    targets = ['liquid.jpg'] #, 
+    targets = ['stitch.jpg'] #, 
     #targets = ['cupcup.jpg']
     #target_names = ['pink_ball_'] #, 
-    target_names = ['testliquid'] #, 
+    target_names = ['test_stitch3'] #, 
     #target_names = ['cup_test']
 
     #num_views = 92
-    num_trials = 2
+    num_trials = 1
 
     for t, n in zip(targets, target_names):
         print("t, n: {}, {}".format(t, n))
@@ -522,9 +552,9 @@ if __name__ == "__main__":
         #print(np.shape(np.array(target_im)))
         #print(target_im)
         #cv2.imshow('target', target_im)
-        ap = ActivePlanner(target_im, args.vfile, args.efile, args.robot_name, n, init_pose=None)
+        ap = ActivePlanner(target_im, args.vfile, args.efile, args.robot_name, n, init_pose=1)
         #num_views = len(ap.PG.getNodes()) - 1
-        num_views = None
+        num_views = 15
         while ap.trial_num <= num_trials:
             print("trial: " + str(ap.trial_num))
             ap.run(num_views)
