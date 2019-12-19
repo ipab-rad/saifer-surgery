@@ -6,11 +6,16 @@ from keras.applications.inception_v3 import InceptionV3
 import tensorflow as tf
 
 import os
+import datetime
+from os import listdir
+from os.path import isfile, join
 import time
 import numpy as np
 import glob
+import random
 import matplotlib.pyplot as plt
 import PIL
+import cv2
 #import imageio
 
 #from IPython import display
@@ -28,75 +33,75 @@ import PIL
 # keras.applications.inception_resnet_v2.InceptionResNetV2(include_top=True, weights='imagenet', input_tensor=None, input_shape=None, pooling=None, classes=1000)
 
 
-class VAE(nn.Module):
-    def __init__(self, in_shape, n_latent):
-        super().__init__()
-        self.in_shape = in_shape
-        self.n_latent = n_latent
-        c,h,w = in_shape
-        self.z_dim = h//2**2 # receptive field downsampled 2 times
-        self.encoder = nn.Sequential(
-            nn.BatchNorm2d(c),
-            nn.Conv2d(c, 32, kernel_size=4, stride=2, padding=1),  # 32, 16, 16
-            nn.BatchNorm2d(32),
-            nn.LeakyReLU(),
-            nn.Conv2d(32, 64, kernel_size=4, stride=2, padding=1),  # 32, 8, 8
-            nn.BatchNorm2d(64),
-            nn.LeakyReLU(),
-        )
-        self.z_mean = nn.Linear(64 * self.z_dim**2, n_latent)
-        self.z_var = nn.Linear(64 * self.z_dim**2, n_latent)
-        self.z_develop = nn.Linear(n_latent, 64 * self.z_dim**2)
-        self.decoder = nn.Sequential(
-            nn.ConvTranspose2d(64, 32, kernel_size=3, stride=2, padding=0),
-            nn.BatchNorm2d(32),
-            nn.ReLU(),
-            nn.ConvTranspose2d(32, 1, kernel_size=3, stride=2, padding=1),
-            CenterCrop(h,w),
-            nn.Sigmoid()
-        )
+# class VAE(nn.Module):
+#     def __init__(self, in_shape, n_latent):
+#         super().__init__()
+#         self.in_shape = in_shape
+#         self.n_latent = n_latent
+#         c,h,w = in_shape
+#         self.z_dim = h//2**2 # receptive field downsampled 2 times
+#         self.encoder = nn.Sequential(
+#             nn.BatchNorm2d(c),
+#             nn.Conv2d(c, 32, kernel_size=4, stride=2, padding=1),  # 32, 16, 16
+#             nn.BatchNorm2d(32),
+#             nn.LeakyReLU(),
+#             nn.Conv2d(32, 64, kernel_size=4, stride=2, padding=1),  # 32, 8, 8
+#             nn.BatchNorm2d(64),
+#             nn.LeakyReLU(),
+#         )
+#         self.z_mean = nn.Linear(64 * self.z_dim**2, n_latent)
+#         self.z_var = nn.Linear(64 * self.z_dim**2, n_latent)
+#         self.z_develop = nn.Linear(n_latent, 64 * self.z_dim**2)
+#         self.decoder = nn.Sequential(
+#             nn.ConvTranspose2d(64, 32, kernel_size=3, stride=2, padding=0),
+#             nn.BatchNorm2d(32),
+#             nn.ReLU(),
+#             nn.ConvTranspose2d(32, 1, kernel_size=3, stride=2, padding=1),
+#             CenterCrop(h,w),
+#             nn.Sigmoid()
+#         )
 
-    def sample_z(self, mean, logvar):
-        stddev = torch.exp(0.5 * logvar)
-        noise = Variable(torch.randn(stddev.size()))
-        return (noise * stddev) + mean
+#     def sample_z(self, mean, logvar):
+#         stddev = torch.exp(0.5 * logvar)
+#         noise = Variable(torch.randn(stddev.size()))
+#         return (noise * stddev) + mean
 
-    def encode(self, x):
-        x = self.encoder(x)
-        x = x.view(x.size(0), -1)
-        mean = self.z_mean(x)
-        var = self.z_var(x)
-        return mean, var
+#     def encode(self, x):
+#         x = self.encoder(x)
+#         x = x.view(x.size(0), -1)
+#         mean = self.z_mean(x)
+#         var = self.z_var(x)
+#         return mean, var
 
-    def decode(self, z):
-        out = self.z_develop(z)
-        out = out.view(z.size(0), 64, self.z_dim, self.z_dim)
-        out = self.decoder(out)
-        return out
+#     def decode(self, z):
+#         out = self.z_develop(z)
+#         out = out.view(z.size(0), 64, self.z_dim, self.z_dim)
+#         out = self.decoder(out)
+#         return out
 
-    def forward(self, x):
-        mean, logvar = self.encode(x)
-        z = self.sample_z(mean, logvar)
-        out = self.decode(z)
-        return out, mean, logvar
+#     def forward(self, x):
+#         mean, logvar = self.encode(x)
+#         z = self.sample_z(mean, logvar)
+#         out = self.decode(z)
+#         return out, mean, logvar
 
-def train(model, loader, loss_func, optimizer):
-    model.train()
-    for inputs, _ in loader:
-        inputs = Variable(inputs)
+# def train(model, loader, loss_func, optimizer):
+#     model.train()
+#     for inputs, _ in loader:
+#         inputs = Variable(inputs)
 
-        output, mean, logvar = model(inputs)
-        loss = vae_loss(output, inputs, mean, logvar, loss_func)
+#         output, mean, logvar = model(inputs)
+#         loss = vae_loss(output, inputs, mean, logvar, loss_func)
 
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
+#         optimizer.zero_grad()
+#         loss.backward()
+#         optimizer.step()
         
-def vae_loss(output, input, mean, logvar, loss_func):
-    recon_loss = loss_func(output, input)
-    kl_loss = torch.mean(0.5 * torch.sum(
-        torch.exp(logvar) + mean**2 - 1. - logvar, 1))
-    return recon_loss + kl_loss
+# def vae_loss(output, input, mean, logvar, loss_func):
+#     recon_loss = loss_func(output, input)
+#     kl_loss = torch.mean(0.5 * torch.sum(
+#         torch.exp(logvar) + mean**2 - 1. - logvar, 1))
+#     return recon_loss + kl_loss
 
 
 class CVAE(tf.keras.Model):
@@ -105,7 +110,7 @@ class CVAE(tf.keras.Model):
     self.latent_dim = latent_dim
     self.inference_net = tf.keras.Sequential(
         [
-            tf.keras.layers.InputLayer(input_shape=(28, 28, 1)), #(480,640,3)
+            tf.keras.layers.InputLayer(input_shape=(480, 640, 3)), #(480,640,3)
             tf.keras.layers.Conv2D(
                 filters=32, kernel_size=3, strides=(2, 2), activation='relu'),
             tf.keras.layers.Conv2D(
@@ -119,8 +124,8 @@ class CVAE(tf.keras.Model):
     self.generative_net = tf.keras.Sequential(
         [
             tf.keras.layers.InputLayer(input_shape=(latent_dim,)),
-            tf.keras.layers.Dense(units=7*7*32, activation=tf.nn.relu),
-            tf.keras.layers.Reshape(target_shape=(7, 7, 32)),
+            tf.keras.layers.Dense(units=120*160*32, activation=tf.nn.relu),
+            tf.keras.layers.Reshape(target_shape=(120, 160, 32)),
             tf.keras.layers.Conv2DTranspose(
                 filters=64,
                 kernel_size=3,
@@ -135,7 +140,7 @@ class CVAE(tf.keras.Model):
                 activation='relu'),
             # No activation
             tf.keras.layers.Conv2DTranspose(
-                filters=1, kernel_size=3, strides=(1, 1), padding="SAME"),
+                filters=3, kernel_size=3, strides=(1, 1), padding="SAME"),
         ]
     )
 
@@ -189,94 +194,118 @@ def compute_apply_gradients(model, x, optimizer):
     optimizer.apply_gradients(zip(gradients, model.trainable_variables))
 
 
-def generate_and_save_images(model, epoch, test_input):
-    sess = tf.Session()
-    predictions = model.sample(test_input)  #.astype('float32')
+# def generate_and_save_images(model, epoch, test_input):
+#     sess = tf.Session()
+#     predictions = model.sample(test_input)  #.astype('float32')
     
-    tf.image.convert_image_dtype(
-        predictions,
-        'float',
-        saturate=False,
-        name=None
-    )
+#     tf.image.convert_image_dtype(
+#         predictions,
+#         'float',
+#         saturate=False,
+#         name=None
+#     )
 
-    print("preds: " + str(predictions[0, :, :, 0]))
-    fig = plt.figure(figsize=(4,4))
+#     print("preds: " + str(predictions[0, :, :, 0]))
+#     fig = plt.figure(figsize=(4,4))
 
-    for i in range(predictions.shape[0]):
-        plt.subplot(4, 4, i+1)
-        print(np.array(predictions[i, :, :, 0]))
-        with sess.as_default():
-            print("type: " + str(type(predictions[i, :, :, 0].eval())))
-        #plt.imshow(predictions[i, :, :, 0], cmap='gray')
+#     for i in range(predictions.shape[0]):
+#         plt.subplot(4, 4, i+1)
+#         print(np.array(predictions[i, :, :, 0]))
+#         with sess.as_default():
+#             print("type: " + str(type(predictions[i, :, :, 0].eval())))
+#         #plt.imshow(predictions[i, :, :, 0], cmap='gray')
         
-        plt.imshow(np.array(predictions[i, :, :, 0]))
-        plt.axis('off')
+#         plt.imshow(np.array(predictions[i, :, :, 0]))
+#         plt.axis('off')
 
-    # tight_layout minimizes the overlap between 2 sub-plots
-    plt.savefig('image_at_epoch_{:04d}.png'.format(epoch))
-    plt.show()
+#     # tight_layout minimizes the overlap between 2 sub-plots
+#     plt.savefig('image_at_epoch_{:04d}.png'.format(epoch))
+#     plt.show()
+
+def load_data(dir_path):
+  #uploaded = files.upload()
+    #print([str(f) for f in listdir(dir_path)])
+    img_files = [join(str(dir_path), f) for f in listdir(dir_path) if isfile(join(dir_path, f))]
+    #print(img_files)
+    random.shuffle(img_files)
+    size_test = int(len(img_files)/4)
+    test_files = img_files[0:size_test] 
+    train_files = img_files[size_test:]
+    test_set = []
+    train_set = []
+
+    for img in test_files:
+        im = cv2.imread(img)
+        test_set.append(im)
+
+    for img in train_files:
+        im = cv2.imread(img)
+        train_set.append(im)
+
+    return np.array(train_set), np.array(test_set)
 
 
 if __name__ == "__main__":
     
-    model = VAE((28, 28, 1), 1024)
-
-#     (train_images, _), (test_images, _) = tf.keras.datasets.mnist.load_data()
-
-#     train_images = train_images.reshape(train_images.shape[0], 28, 28, 1).astype('float32')
-#     test_images = test_images.reshape(test_images.shape[0], 28, 28, 1).astype('float32')
-
-#     # Normalizing the images to the range of [0., 1.]
-#     train_images /= 255.
-#     test_images /= 255.
-
-#     # Binarization
-#     train_images[train_images >= .5] = 1.
-#     train_images[train_images < .5] = 0.
-#     test_images[test_images >= .5] = 1.
-#     test_images[test_images < .5] = 0.
+    #model = VAE((28, 28, 1), 1024)
     
-#     train_dataset = train_images.astype('float32')
-#     test_dataset = test_images.astype('float32')
+    train_images, test_images = load_data("all_imgs/")
 
-#     TRAIN_BUF = 60000
-#     BATCH_SIZE = 100
+    #(train_images, _), (test_images, _) = tf.keras.datasets.mnist.load_data()
 
-#     TEST_BUF = 10000
+    train_images = train_images.reshape(train_images.shape[0], 480, 640, 3).astype('float32')
+    test_images = test_images.reshape(test_images.shape[0], 480, 640, 3).astype('float32')
 
-#     optimizer = tf.keras.optimizers.Adam(1e-4)
+    # Normalizing the images to the range of [0., 1.]
+    train_images /= 255.
+    test_images /= 255.
 
-#     epochs = 100
-#     latent_dim = 50
-#     num_examples_to_generate = 16
+    # Binarization
+    train_images[train_images >= .5] = 1.
+    train_images[train_images < .5] = 0.
+    test_images[test_images >= .5] = 1.
+    test_images[test_images < .5] = 0.
+    
+    train_dataset = train_images.astype('float32')
+    test_dataset = test_images.astype('float32')
 
-#     # keeping the random vector constant for generation (prediction) so
-#     # it will be easier to see the improvement.
-#     random_vector_for_generation = tf.random.normal(
-#         shape=[num_examples_to_generate, latent_dim])
-#     model = CVAE(latent_dim)
+    TRAIN_BUF = 60000
+    BATCH_SIZE = 100
+
+    TEST_BUF = 10000
+
+    optimizer = tf.keras.optimizers.Adam(1e-4)
+
+    epochs = 100
+    latent_dim = 50
+    num_examples_to_generate = 16
+
+    # keeping the random vector constant for generation (prediction) so
+    # it will be easier to see the improvement.
+    random_vector_for_generation = tf.random.normal(
+        shape=[num_examples_to_generate, latent_dim])
+    model = CVAE(latent_dim)
 
 
 
-#     generate_and_save_images(model, 0, random_vector_for_generation)
+    #generate_and_save_images(model, 0, random_vector_for_generation)
 
-#     for epoch in range(1, epochs + 1):
-#         start_time = time.time()
-#         #for train_x in train_images:
-#         compute_apply_gradients(model, train_images, optimizer)
-#         end_time = time.time()
+    for epoch in range(1, epochs + 1):
+        start_time = time.time()
+        #for train_x in train_images:
+        compute_apply_gradients(model, train_images, optimizer)
+        end_time = time.time()
 
-#         if epoch % 1 == 0:
-#             loss = tf.keras.metrics.Mean()
-#             for test_x in test_dataset:
-#                 loss(compute_loss(model, test_x))
-#             elbo = -loss.result()
-#             display.clear_output(wait=False)
-#             print('Epoch: {}, Test set ELBO: {}, '
-#                 'time elapse for current epoch {}'.format(epoch,
-#                                                             elbo,
-#                                                             end_time - start_time))
+        if epoch % 1 == 0:
+            loss = tf.keras.metrics.Mean()
+            for test_x in test_dataset:
+                loss(compute_loss(model, test_x))
+            elbo = -loss.result()
+            #display.clear_output(wait=False)
+            print('Epoch: {}, Test set ELBO: {}, '
+                'time elapse for current epoch {}'.format(epoch,
+                                                            elbo,
+                                                            end_time - start_time))
 #             generate_and_save_images(
 #                 model, epoch, random_vector_for_generation)
 
