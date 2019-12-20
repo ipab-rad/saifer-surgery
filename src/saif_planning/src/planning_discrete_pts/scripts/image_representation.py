@@ -250,6 +250,8 @@ if __name__ == "__main__":
     #model = VAE((28, 28, 1), 1024)
     
     train_images, test_images = load_data("all_imgs/")
+    
+    print(np.shape(train_images))
 
     #(train_images, _), (test_images, _) = tf.keras.datasets.mnist.load_data()
 
@@ -261,23 +263,23 @@ if __name__ == "__main__":
     test_images /= 255.
 
     # Binarization
-    train_images[train_images >= .5] = 1.
-    train_images[train_images < .5] = 0.
-    test_images[test_images >= .5] = 1.
-    test_images[test_images < .5] = 0.
+#     train_images[train_images >= .5] = 1.
+#     train_images[train_images < .5] = 0.
+#     test_images[test_images >= .5] = 1.
+#     test_images[test_images < .5] = 0.
     
     train_dataset = train_images.astype('float32')
     test_dataset = test_images.astype('float32')
 
-    TRAIN_BUF = 60000
-    BATCH_SIZE = 100
+    TRAIN_BUF = 600
+    BATCH_SIZE = 10
 
-    TEST_BUF = 10000
+    TEST_BUF = 100
 
     optimizer = tf.keras.optimizers.Adam(1e-4)
 
-    epochs = 100
-    latent_dim = 50
+    epochs = 50
+    latent_dim = 1000
     num_examples_to_generate = 16
 
     # keeping the random vector constant for generation (prediction) so
@@ -298,8 +300,8 @@ if __name__ == "__main__":
 
         if epoch % 1 == 0:
             loss = tf.keras.metrics.Mean()
-            for test_x in test_dataset:
-                loss(compute_loss(model, test_x))
+            #for test_x in test_dataset:
+            loss(compute_loss(model, test_dataset))
             elbo = -loss.result()
             #display.clear_output(wait=False)
             print('Epoch: {}, Test set ELBO: {}, '
@@ -308,4 +310,7 @@ if __name__ == "__main__":
                                                             end_time - start_time))
 #             generate_and_save_images(
 #                 model, epoch, random_vector_for_generation)
+
+    model.save("test_cvae.h5")
+    clear_session()
 
