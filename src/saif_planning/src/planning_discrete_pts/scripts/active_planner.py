@@ -137,7 +137,7 @@ class ActivePlanner(object):
 
         # PUBLISH POSES
         msg = PoseArray()
-        poses = np.load("data/cycle_test_poses.npy")
+        poses = np.load("data/cycle_stitch3_poses.npy")
         pub = rospy.Publisher('all_poses', PoseArray, queue_size=1)
         pub_current = rospy.Publisher('current_pose', Pose, queue_size=1)
         pub_next = rospy.Publisher('next_pose', PoseStamped, queue_size=1)
@@ -167,14 +167,13 @@ class ActivePlanner(object):
             h.stamp = rospy.Time.now()
             msg.header = h
 
-            print("view: " + str(self.views))
-            print("cc: " + str(self.completion_criterion))
+            #print("view: " + str(self.views))
             pub.publish(msg)
             current_pose = self.group.get_current_pose().pose
             #print("current pose: " + str(current_pose))
             pub_current.publish(current_pose)
 
-            if self.next_view is not None and self.PG.state2index(self.next_view) < 91:
+            if self.next_view is not None and self.PG.state2index(self.next_view) < 11:
                     pose.pose = pose_list[self.PG.state2index(self.next_view)]
                     pose.header.stamp = rospy.Time.now()
                     pub_next.publish(pose)
@@ -246,10 +245,13 @@ class ActivePlanner(object):
             cand_pts = self.PG.getNodes()[1:]
             preds = self.GP.predict(cand_pts, return_std=True)
             gp_scores = [acquisition(*pred) for pred in zip(preds[0], preds[1])] 
+            
+            ### TO PENALIZE DISTANCE
             dists = [self.PG.dist(position, pt) for pt in cand_pts]  #range(1, len(cand_pts) + 1)
-            scores = [s - .1 * d for (s, d) in zip(gp_scores, dists)]
-            print("scores: " + str(scores))
-            best_index = min(np.argmax(np.array(scores)) + 1, 91)
+            scores = [s - .05 * d for (s, d) in zip(gp_scores, dists)]
+            
+            print("scores: " + str(gp_scores))
+            best_index = min(np.argmax(np.array(scores)) + 1, 91)  ## PENALIZE DISTANCE
             best_view = self.PG.index2state(best_index)
             print("best view: " + str(best_index))
             
@@ -393,17 +395,29 @@ class ActivePlanner(object):
             self.first_img = cv_image
         
         position = joint_state.position[0:6]
+        current_index = self.PG.state2index(position)
         try:
             feature_rep = self.toFeatureRepresentation(cv_image, (img.height, img.width, 3))
             reward = self.imageCompare(feature_rep) 
             if reward > self.STAY_THRESH:
                 print("stay here, good view, reward {}".format(reward))
-                self.stay = True
+                #self.stay = True
+                self.stay = False # NO STAY THRESH
             else:
                 self.stay = False
                 print("move to a better view")
 
             print("reward: " + str(reward))
+            
+            ## REPLACE WITH MOST RECENT TRAINING POINT
+            training_indices = [self.PG.state2index(n) for n in self.training_pts]
+            if current_index in training_indices:
+                index = training_indices.index(current_index)
+                print(index)
+                self.training_pts.pop(index)
+                self.training_labels.pop(index)
+                print("training points: {}, {}".format(np.shape(self.training_pts), np.shape(self.training_labels)))
+                
             self.training_pts.append(position)
             self.training_labels.append(reward)
        
@@ -418,6 +432,8 @@ class ActivePlanner(object):
             index = random.randint(0, len(self.training_pts) - 1)
             self.training_pts.pop(index)
             self.training_labels.pop(index)
+           
+        
 
         #print("training labels: {}".format(self.training_labels))
         self.position = position
@@ -552,7 +568,7 @@ if __name__ == "__main__":
         #print(np.shape(np.array(target_im)))
         #print(target_im)
         #cv2.imshow('target', target_im)
-        ap = ActivePlanner(target_im, args.vfile, args.efile, args.robot_name, n, init_pose=1)
+        ap = ActivePlanner(target_im, args.vfile, args.efile, args.robot_name, n, init_pose=1, visualize=True)
         #num_views = len(ap.PG.getNodes()) - 1
         num_views = 15
         while ap.trial_num <= num_trials:
