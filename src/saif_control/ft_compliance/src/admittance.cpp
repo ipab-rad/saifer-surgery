@@ -87,7 +87,7 @@ void IDyn::ft_callback(const geometry_msgs::WrenchStamped& msg)
 	{
 
 		Eigen::MatrixXd ft(6,1);
-		ft << msg.wrench.force.y, -msg.wrench.force.x, msg.wrench.force.z, msg.wrench.torque.y,-msg.wrench.torque.x,msg.wrench.torque.z;
+		ft << -msg.wrench.force.x, -msg.wrench.force.y, msg.wrench.force.z, -msg.wrench.torque.x,-msg.wrench.torque.y,msg.wrench.torque.z;
 		ROS_INFO("FT: %2.2f. Threshold: %2.2f.",ft.squaredNorm(),FTHRESH);
 		//if ((Fbase-ft).squaredNorm() > 0)
 		if (ft.squaredNorm() < FTHRESH)
