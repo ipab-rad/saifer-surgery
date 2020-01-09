@@ -1,30 +1,17 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(ft_compliance)
+project(ultrasound_epiphan)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
-add_compile_options(-std=c++11)
+# add_compile_options(-std=c++11)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-
-find_package(Eigen3 REQUIRED)
-
-if(NOT EIGEN3_INCLUDE_DIRS)
-  set(EIGEN3_INCLUDE_DIRS ${EIGEN3_INCLUDE_DIR})
-endif()
-
-find_package(catkin REQUIRED 
-COMPONENTS 
-roscpp
-moveit_core
-moveit_ros_planning
-moveit_ros_planning_interface
-robotiq_3f_gripper_articulated_msgs
-)
+find_package(catkin REQUIRED)
 
 ## System dependencies are found with CMake's conventions
-find_package(Boost REQUIRED COMPONENTS system)
+# find_package(Boost REQUIRED COMPONENTS system)
+
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
@@ -112,15 +99,8 @@ find_package(Boost REQUIRED COMPONENTS system)
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
- INCLUDE_DIRS 
-  LIBRARIES ft_compliance
-  CATKIN_DEPENDS
-     moveit_core
-     moveit_ros_planning_interface
-     robotiq_3f_gripper_articulated_msgs
-  DEPENDS EIGEN3
 #  INCLUDE_DIRS include
-#  LIBRARIES spacenav_teleop
+#  LIBRARIES ultrasound_epiphan
 #  CATKIN_DEPENDS other_catkin_pkg
 #  DEPENDS system_lib
 )
@@ -132,12 +112,13 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
- ${catkin_INCLUDE_DIRS}
+# include
+# ${catkin_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/spacenav_teleop.cpp
+#   src/${PROJECT_NAME}/ultrasound_epiphan.cpp
 # )
 
 ## Add cmake target dependencies of the library
@@ -148,9 +129,7 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-add_executable(${PROJECT_NAME}_node src/inverse_dynamics.cpp)
-add_executable(${PROJECT_NAME}_ur_node src/inverse_dynamics_ur.cpp)
-add_executable(${PROJECT_NAME}_admit_node src/admittance.cpp)
+# add_executable(${PROJECT_NAME}_node src/ultrasound_epiphan_node.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -163,17 +142,9 @@ add_executable(${PROJECT_NAME}_admit_node src/admittance.cpp)
 # add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
- target_link_libraries(${PROJECT_NAME}_node
-   ${catkin_LIBRARIES}
- )
- target_link_libraries(${PROJECT_NAME}_ur_node
-   ${catkin_LIBRARIES}
- )
- target_link_libraries(${PROJECT_NAME}_admit_node
-   ${catkin_LIBRARIES}
- )
-
-
+# target_link_libraries(${PROJECT_NAME}_node
+#   ${catkin_LIBRARIES}
+# )
 
 #############
 ## Install ##
@@ -189,11 +160,18 @@ add_executable(${PROJECT_NAME}_admit_node src/admittance.cpp)
 #   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 # )
 
-## Mark executables and/or libraries for installation
-# install(TARGETS ${PROJECT_NAME} ${PROJECT_NAME}_node
+## Mark executables for installation
+## See http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_executables.html
+# install(TARGETS ${PROJECT_NAME}_node
+#   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+# )
+
+## Mark libraries for installation
+## See http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_libraries.html
+# install(TARGETS ${PROJECT_NAME}
 #   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-#   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+#   RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION}
 # )
 
 ## Mark cpp header files for installation
@@ -215,7 +193,7 @@ add_executable(${PROJECT_NAME}_admit_node src/admittance.cpp)
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_spacenav_teleop.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_ultrasound_epiphan.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()

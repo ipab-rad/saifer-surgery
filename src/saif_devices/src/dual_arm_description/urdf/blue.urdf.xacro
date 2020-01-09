@@ -9,8 +9,9 @@
 
 	<xacro:include filename="$(find robotiq_ft_sensor)/urdf/robotiq_ft300.urdf.xacro"/>
 
+
 	<xacro:robotiq_ft300 parent="blue_tool0" prefix="blue_">
-		<origin xyz="0 0 0" rpy="0 0 0"/>
+		<origin xyz="0 0 0" rpy="0 0 -1.57079632679"/>
 	</xacro:robotiq_ft300>
 
 	<link name='cable_1'>
@@ -72,8 +73,9 @@
 	<!-- arm -->
 	<xacro:ur10_robot prefix="blue_" joint_limited="false"/>
  	<xacro:robotiq_85_gripper prefix="" parent="blue_robotiq_ft_frame_id">
-		 <origin xyz="0.0 0.0 0.0" rpy="0 -1.57079632679 0"/>
+		 <origin xyz="0.0 0.0 0.0" rpy="0 -1.57079632679 1.57079632679"/>
 	</xacro:robotiq_85_gripper>
+
 
 	<xacro:sensor_d435 parent="gripper_base_link">
 		<origin xyz ="0.02 0 -0.1" rpy="0 3.14159 3.14159"/> 

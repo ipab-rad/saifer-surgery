@@ -1,0 +1,10 @@
+<launch>
+
+	<include file="$(find spacenav_node)/launch/classic.launch"/>
+	
+	<node name="spacenav_teleop" pkg="spacenav_teleop" type="spacenav_teleop_node">
+		<remap from="/red/vel_test" to="/red/vel_based_pos_traj_controller/command"/>
+
+	</node>
+
+</launch>

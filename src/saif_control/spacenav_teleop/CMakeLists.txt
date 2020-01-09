@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(ft_compliance)
+project(spacenav_teleop)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 add_compile_options(-std=c++11)
@@ -25,6 +25,7 @@ robotiq_3f_gripper_articulated_msgs
 
 ## System dependencies are found with CMake's conventions
 find_package(Boost REQUIRED COMPONENTS system)
+
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
@@ -113,7 +114,7 @@ find_package(Boost REQUIRED COMPONENTS system)
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
  INCLUDE_DIRS 
-  LIBRARIES ft_compliance
+  LIBRARIES spacenav_teleop
   CATKIN_DEPENDS
      moveit_core
      moveit_ros_planning_interface
@@ -148,9 +149,7 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-add_executable(${PROJECT_NAME}_node src/inverse_dynamics.cpp)
-add_executable(${PROJECT_NAME}_ur_node src/inverse_dynamics_ur.cpp)
-add_executable(${PROJECT_NAME}_admit_node src/admittance.cpp)
+add_executable(${PROJECT_NAME}_node src/spacenav_teleop_node.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -166,14 +165,6 @@ add_executable(${PROJECT_NAME}_admit_node src/admittance.cpp)
  target_link_libraries(${PROJECT_NAME}_node
    ${catkin_LIBRARIES}
  )
- target_link_libraries(${PROJECT_NAME}_ur_node
-   ${catkin_LIBRARIES}
- )
- target_link_libraries(${PROJECT_NAME}_admit_node
-   ${catkin_LIBRARIES}
- )
-
-
 
 #############
 ## Install ##
