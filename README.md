@@ -4,8 +4,7 @@
 
 ## Requirements:
 
-Ubuntu 16.04, ROS Kinetic or Ubuntu 18.04, ROS Melodic
-
+Ubuntu 16.04, ROS Kinetic
 ## Installation:
 
 - Install the [required packages](https://github.com/ipab-rad/saifer-surgery/wiki/Required-packages), clone this repository, and
