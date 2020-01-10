@@ -1,9 +1,14 @@
 #!/usr/bin/env python
 from __future__ import absolute_import, division, print_function, unicode_literals
-from keras.applications.inception_v3 import InceptionV3
+#from keras.applications.inception_v3 import InceptionV3
 
 
-import tensorflow as tf
+#import tensorflow as tf
+import torch
+import torch.nn as nn 
+import torch.optim as optim 
+import torchvision
+#import torchvision.transforms.CenterCrop as CenterCrop
 
 import os
 import datetime
@@ -254,6 +259,13 @@ if __name__ == "__main__":
     print(np.shape(train_images))
 
     #(train_images, _), (test_images, _) = tf.keras.datasets.mnist.load_data()
+    # x = torch.randn(1, 28, 28, 1)
+
+    # print(model(x))
+
+    # optimizer = optim.Adam(model.parameters(), lr=0.01)
+    # train(model, loader, nn.MSELoss, optimizer)
+#     (train_images, _), (test_images, _) = tf.keras.datasets.mnist.load_data()
 
     train_images = train_images.reshape(train_images.shape[0], 480, 640, 3).astype('float32')
     test_images = test_images.reshape(test_images.shape[0], 480, 640, 3).astype('float32')
