@@ -8,7 +8,7 @@
 #include <moveit/robot_model/robot_model.h>
 #include <moveit/robot_state/robot_state.h>
 
-#define FTHRESH 80.0
+#define FTHRESH 20.0
 
 class IDyn {
 	public:
@@ -48,7 +48,7 @@ class IDyn {
 IDyn::IDyn(void)
 {
 	//sub1 = n.subscribe("/red/robotiq_ft_wrench",1,&IDyn::ft_callback,this);		
-	sub1 = n.subscribe("/red/robotiq_ft_wrench_compensated",1,&IDyn::ft_callback,this);	
+	sub1 = n.subscribe("/red/robotiq_ft_wrench",1,&IDyn::ft_callback,this);	
 	sub2 = n.subscribe("/joint_states",1,&IDyn::jt_callback,this);	
 	sub_traj = n.subscribe("/red/trajectory",1,&IDyn::traj_callback,this);		
 	
@@ -87,7 +87,7 @@ void IDyn::ft_callback(const geometry_msgs::WrenchStamped& msg)
 	{
 
 		Eigen::MatrixXd ft(6,1);
-		ft << msg.wrench.force.y, -msg.wrench.force.x, msg.wrench.force.z, msg.wrench.torque.y,-msg.wrench.torque.x,msg.wrench.torque.z;
+		ft << -msg.wrench.force.x, -msg.wrench.force.y, msg.wrench.force.z, -msg.wrench.torque.x,-msg.wrench.torque.y,msg.wrench.torque.z;
 		ROS_INFO("FT: %2.2f. Threshold: %2.2f.",ft.squaredNorm(),FTHRESH);
 		//if ((Fbase-ft).squaredNorm() > 0)
 		if (ft.squaredNorm() < FTHRESH)
@@ -105,7 +105,7 @@ void IDyn::ft_callback(const geometry_msgs::WrenchStamped& msg)
 			}
 			else
 			{
-				K(i,i) = 0.05;
+				K(i,i) = 0.0;
 			}
 		}
 	
@@ -114,7 +114,8 @@ void IDyn::ft_callback(const geometry_msgs::WrenchStamped& msg)
 		Eigen::MatrixXd joint_vel = Jinv*twist; 
 		
 		if (base_traj.points.size() > 0)
-		{
+		{	
+
 			for (int j = 0; j < int(base_traj.points.size()); j++)
 			{
 				for (int i = 0; i < int(joint_vel.rows()); i++)
@@ -134,6 +135,7 @@ void IDyn::ft_callback(const geometry_msgs::WrenchStamped& msg)
 				 
 			}
 			pub.publish(base_traj);
+			base_traj.points.clear();
 		}
 		else
 		{

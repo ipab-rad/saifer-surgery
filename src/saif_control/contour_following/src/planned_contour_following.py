@@ -23,8 +23,8 @@ class ContourFollower():
         self.group = moveit_commander.MoveGroupCommander(group)
 
         self.listener = TransformListener()
-	self.vertical_offset = rospy.get_param('countour_offset', 0.25)
-	self.repositioning_offset = rospy.get_param('repositioning_offset', 0.4)
+	self.vertical_offset = rospy.get_param('countour_offset', 0.3)
+	self.repositioning_offset = rospy.get_param('repositioning_offset', 0.3)
 
         rospy.spin()
 
@@ -65,7 +65,7 @@ class ContourFollower():
             self.group.execute(plan,wait=True)
 
 	    p_pose = path.poses[-1]
-	    p_pose.pose.position.z = p_pose.pose.position.z - self.vertical_offset
+	    p_pose.pose.position.z = p_pose.pose.position.z
 	    self.group.set_pose_target(p_pose.pose)
 	    plan = self.group.go(wait=True)
 	    if not plan:
