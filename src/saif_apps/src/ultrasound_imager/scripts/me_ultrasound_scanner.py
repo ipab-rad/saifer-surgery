@@ -31,6 +31,7 @@ class image_processor:
 		group_name = "red_arm"
 		self.group = moveit_commander.MoveGroupCommander(group_name)
 		self.beta = beta 
+		self.logpath = pkg_path+'/results/max_ent/'
 		self.spin()
 
 	def spin(self):
@@ -80,8 +81,8 @@ class image_processor:
 			rate.sleep()
 			
 	def save(self,poses,rewards):
-		np.savetxt('./logs/poses.txt',np.array(poses))
-		np.savetxt('./logs/poses.txt',np.array(rewards))
+		np.savetxt(self.logpath+'poses.txt',np.array(poses))
+		np.savetxt(self.logpath+'rewards.txt',np.array(rewards))
 
 	def go_to_start(self):
 		start_pose = [1.870887041091919,-2.2503507773028772,1.8966856002807617,-1.222773853932516,1.6179306507110596,-0.34370404878725225]
