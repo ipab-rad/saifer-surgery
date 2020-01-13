@@ -323,10 +323,12 @@ class ActivePlanner(object):
 #                  np.concatenate([means - 1.9600 * stds,
 #                             (means + 1.9600 * stds)[::-1]]),
 #                  alpha=.5, fc='b', ec='None', label='95% confidence interval')
-                pl.fill(np.concatenate([x, x[::-1]]),
-                 np.concatenate([means - stds,
-                            (means + stds)[::-1]]),
-                 alpha=.5, fc='b', ec='None', label='1 std')
+
+                #### USE THIS VERSION
+#                 pl.fill(np.concatenate([x, x[::-1]]),
+#                  np.concatenate([means - stds,
+#                             (means + stds)[::-1]]),
+#                  alpha=.5, fc='b', ec='None', label='1 std')
                 #pl.plot(range(len(self.PG.getNodes())), stds)
                 pl.title("current index: {}, best index: {}, view: {}".format(current_index, best_index, self.views))
                 pl.savefig("gp_{}_t{}_v{}_c{}b{}".format(self.target_name, self.trial_num, self.views, current_index, best_index))
@@ -420,6 +422,7 @@ class ActivePlanner(object):
                 
             self.training_pts.append(position)
             self.training_labels.append(reward)
+            print("training points: {}, {}".format(np.shape(self.training_pts), np.shape(self.training_labels)))
        
         except ValueError:
             print("something isn't working right")

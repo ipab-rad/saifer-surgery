@@ -33,14 +33,14 @@ if __name__ == "__main__":
     group = moveit_commander.MoveGroupCommander("blue_arm")
     
     msg = PoseArray()
-    poses = np.load("data/cycle_test_poses.npy")
+    poses = np.load("data/cycle_stitch3_poses.npy")
     pub = rospy.Publisher('all_poses2', PoseArray, queue_size=1)
     pub_current = rospy.Publisher('current_pose2', PoseStamped, queue_size=1)
     pose = Pose()
     pose_list = []
     #for node in self.PG.getNodes():
     
-    print("poses: {}".format(poses))
+    #print("poses: {}".format(poses))
     for p in poses:
         pose = Pose()
         #geom_msg.Point(x=rt.tvec[0], y=rt.tvec[1], z=rt.tvec[2])
@@ -54,7 +54,7 @@ if __name__ == "__main__":
         pose_list.append(pose)
             
     msg.poses = pose_list
-    print(pose_list)
+    #print(pose_list)
     
     rate = rospy.Rate(10)
     
@@ -64,7 +64,7 @@ if __name__ == "__main__":
         h.frame_id = "ceiling"
         msg.header = h
         wpose = group.get_current_pose()
-        print(wpose)
+        #print(wpose)
         wpose.header.stamp = rospy.Time.now()
         pub_current.publish(wpose)
         pub.publish(msg)
