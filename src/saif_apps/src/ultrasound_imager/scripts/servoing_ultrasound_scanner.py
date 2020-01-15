@@ -13,7 +13,7 @@ import moveit_commander
 import numpy as np
 import copy
 
-from visual_irl.cosine_reward  import cosine_reward_model
+from visual_irl.cosine_sim_reward  import cosine_reward_model
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RBF
 
@@ -24,7 +24,6 @@ class image_processor:
 
 		pkg_path = rospkg.RosPack().get_path('visual_irl')
 		self.reward_model = cosine_reward_model(fol_path=pkg_path+'/scripts/data/*',vae_path=pkg_path+'/scripts/visual_irl/logs/')
-		self.reward_model.build_map_model(load=True)
 		self.bridge = CvBridge()
 		self.image_sub = rospy.Subscriber("/ultrasound_streamer/image_raw",Image,self.callback,queue_size=1)
 		self.latent = None
@@ -35,11 +34,14 @@ class image_processor:
 		self.beta = beta
 		self.spin()
 
+	def randargmax(self,b):
+		return np.argmax(np.random.random(b.shape) * (b==b.max()))
+		
 	def spin(self):
 		self.go_to_start()
-		x_pos_list = np.linspace(self.init_pose.pose.position.x-0.015,self.init_pose.pose.position.x+0.025,10)
-		y_pos_list = np.linspace(self.init_pose.pose.position.y-0.015,self.init_pose.pose.position.y+0.025,10)
-		z_pos_list = np.linspace(self.init_pose.pose.position.z,self.init_pose.pose.position.z+0.02,10)
+		x_pos_list = np.linspace(self.init_pose.pose.position.x-0.025,self.init_pose.pose.position.x+0.025,20)
+		y_pos_list = np.linspace(self.init_pose.pose.position.y-0.025,self.init_pose.pose.position.y+0.025,20)
+		z_pos_list = np.linspace(self.init_pose.pose.position.z,self.init_pose.pose.position.z+0.03,20)
 
 		xx,yy,zz = np.meshgrid(x_pos_list,y_pos_list,z_pos_list)
 		pos = np.vstack((xx.ravel(),yy.ravel(),zz.ravel())).T
@@ -47,7 +49,7 @@ class image_processor:
 		rate = rospy.Rate(0.5)
 		pos_list = []
 		reward_list = []
-		gp = GaussianProcessRegressor(kernel=RBF(length_scale_bounds=[0.00001, 0.0005]),alpha=0.05)
+		gp = GaussianProcessRegressor(kernel=RBF(length_scale_bounds=[0.00001, 0.01]),alpha=0.2)
 
 		next_bin = np.random.randint(pos.shape[0])
 		while not rospy.is_shutdown():
@@ -68,7 +70,7 @@ class image_processor:
 			self.group.stop()
 
 			if self.latent is not None:
-				reward_mu,reward_sig = self.reward_model.gp.predict(self.latent)
+				reward_mu = self.reward_model.cosine_sim(self.latent)
 				pos_list.append(p)
 				reward_list.append(reward_mu)
 				
@@ -77,7 +79,7 @@ class image_processor:
 				
 				aq = mu.ravel()+self.beta*sig.ravel()
 				print(aq.shape)
-				next_bin = np.argmax(aq)
+				next_bin = self.randargmax(aq)
 				
 				print('Current reward value: '+str(reward_mu))
 				self.save(pos_list,reward_list)

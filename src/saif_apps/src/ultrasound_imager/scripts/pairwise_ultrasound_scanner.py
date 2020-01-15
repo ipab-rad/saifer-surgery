@@ -23,7 +23,7 @@ class image_processor:
 	def __init__(self,beta=2.0):
 
 		pkg_path = rospkg.RosPack().get_path('visual_irl')
-		self.reward_model = pairwise_reward_model(fol_path=pkg_path+'/scripts/data/*',vae_path=pkg_path+'/scripts/visual_irl/logs/')
+		self.reward_model = pairwise_reward_model(vae_path=pkg_path+'/scripts/visual_irl/logs/')
 		self.reward_model.build_map_model(load=True)
 		self.bridge = CvBridge()
 		self.image_sub = rospy.Subscriber("/ultrasound_streamer/image_raw",Image,self.callback,queue_size=1)
@@ -34,12 +34,15 @@ class image_processor:
 		self.logpath = pkg_path+'/results/pairwise/'
 		self.beta = beta
 		self.spin()
+		
+	def randargmax(self,b):
+		return np.argmax(np.random.random(b.shape) * (b==b.max()))
 
 	def spin(self):
 		self.go_to_start()
-		x_pos_list = np.linspace(self.init_pose.pose.position.x-0.015,self.init_pose.pose.position.x+0.025,10)
-		y_pos_list = np.linspace(self.init_pose.pose.position.y-0.015,self.init_pose.pose.position.y+0.025,10)
-		z_pos_list = np.linspace(self.init_pose.pose.position.z,self.init_pose.pose.position.z+0.02,10)
+		x_pos_list = np.linspace(self.init_pose.pose.position.x-0.025,self.init_pose.pose.position.x+0.025,20)
+		y_pos_list = np.linspace(self.init_pose.pose.position.y-0.025,self.init_pose.pose.position.y+0.025,20)
+		z_pos_list = np.linspace(self.init_pose.pose.position.z,self.init_pose.pose.position.z+0.03,20)
 
 		xx,yy,zz = np.meshgrid(x_pos_list,y_pos_list,z_pos_list)
 		pos = np.vstack((xx.ravel(),yy.ravel(),zz.ravel())).T
@@ -47,12 +50,12 @@ class image_processor:
 		rate = rospy.Rate(0.5)
 		pos_list = []
 		reward_list = []
-		gp = GaussianProcessRegressor(kernel=RBF(length_scale_bounds=[0.00001, 0.0005]),alpha=0.05)
+		gp = GaussianProcessRegressor(kernel=RBF(length_scale_bounds=[0.00001, 0.01]),alpha=0.5)
 
 		next_bin = np.random.randint(pos.shape[0])
 		while not rospy.is_shutdown():
 	
-			p = pos[next_bin,:]
+			p = pos[next_bin,:] + 0.0005*np.random.randn(3)
 		
 			pose_goal = copy.deepcopy(self.init_pose.pose)
 			pose_goal.position.x = p[0]
@@ -68,7 +71,7 @@ class image_processor:
 			self.group.stop()
 
 			if self.latent is not None:
-				reward_mu,reward_sig = self.reward_model.gp.predict(self.latent)
+				reward_mu,reward_sig = self.reward_model.gp.predict(self.latent,return_std=True)
 				pos_list.append(p)
 				reward_list.append(reward_mu)
 				
@@ -76,8 +79,7 @@ class image_processor:
 				mu,sig = gp.predict(pos,return_std=True)
 				
 				aq = mu.ravel()+self.beta*sig.ravel()
-				print(aq.shape)
-				next_bin = np.argmax(aq)
+				next_bin = self.randargmax(aq)
 				
 				print('Current reward value: '+str(reward_mu))
 				self.save(pos_list,reward_list)
@@ -102,6 +104,7 @@ class image_processor:
 			w = self.reward_model.vae_model.w
 			h = self.reward_model.vae_model.h
 			im = np.mean(cv2.resize(image[180:700,500:1020,:],(w,h)),axis=-1)
+			
 			self.latent = self.reward_model.vae_model.encoder.predict(im.reshape(-1,w,h,1)/255.0)[0]    
 
 		except CvBridgeError as e:
