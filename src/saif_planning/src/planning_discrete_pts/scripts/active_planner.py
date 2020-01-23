@@ -12,10 +12,8 @@ sys.path.append('/opt/ros/kinetic/lib/python2.7/dist-packages') # append back in
 import rospy 
 import message_filters
 import argparse
-from add_pts import PlanningGraph
 from sensor_msgs.msg import Image
 import std_msgs
-import path_plan as pp 
 from sensor_msgs.msg import JointState
 from geometry_msgs.msg import PoseArray, Pose, PoseStamped 
 import numpy as np
@@ -30,6 +28,10 @@ from keras.applications.inception_v3 import preprocess_input
 #from keras.applications.resnet_v2 import preprocess_input
 from sklearn.gaussian_process.kernels import RBF
 #from pr2_controllers_msgs.msg import JointTrajectoryControllerState
+
+from add_pts import PlanningGraph
+import path_plan as pp 
+from kernel import RBF_sep
 
 def kernel(dist):
     return np.exp(dist**2 / -2)
@@ -67,6 +69,7 @@ class ActivePlanner(object):
         self.stay = False
         self.STAY_THRESH = .88
         self.saves = 0
+        self.time = 0
 
         if self.robot == "pr2":
             self.group_name = "left_arm"
@@ -80,7 +83,8 @@ class ActivePlanner(object):
 
         self.update = False
 
-        self.GP = GaussianProcessRegressor(kernel=RBF(0.1), alpha=0.01, optimizer='fmin_l_bfgs_b', n_restarts_optimizer=0, normalize_y=True, copy_X_train=True, random_state=None)
+        self.GP = GaussianProcessRegressor(kernel=RBF_sep(0.1), alpha=0.01, optimizer='fmin_l_bfgs_b', n_restarts_optimizer=0, normalize_y=True, copy_X_train=True, random_state=None)
+        #self.GP = GaussianProcessRegressor(kernel=RBF(0.1), alpha=0.01, optimizer='fmin_l_bfgs_b', n_restarts_optimizer=0, normalize_y=True, copy_X_train=True, random_state=None)
         self.model = InceptionV3(include_top=False, weights='imagenet', input_tensor=None, input_shape=(480,640,3), pooling='avg', classes=1000)
         #self.model = InceptionResNetV2(include_top=False, weights='imagenet', input_tensor=None, input_shape=(480,640,3), pooling='avg', classes=1000)
         #self.model = ResNet152V2(include_top=False, weights='imagenet', input_tensor=None, input_shape=(480,640,3), pooling='avg', classes=1000)
@@ -243,7 +247,11 @@ class ActivePlanner(object):
             #### ALL 
 
             cand_pts = self.PG.getNodes()[1:]
-            preds = self.GP.predict(cand_pts, return_std=True)
+            cand_states = np.zeros((np.shape(cand_pts)[0], np.shape(cand_pts)[1] + 1))
+            cand_states[:, :-1] = cand_pts
+            cand_states[:, -1] = np.full((np.shape(cand_pts)[0], 1), self.time + 1)
+            #preds = self.GP.predict(cand_pts, return_std=True)
+            preds = self.GP.predict(cand_states, return_std=True)
             gp_scores = [acquisition(*pred) for pred in zip(preds[0], preds[1])] 
             
             ### TO PENALIZE DISTANCE
@@ -389,6 +397,26 @@ class ActivePlanner(object):
         
         return max(scores), to_expand[np.argmax(np.array(scores))]
 
+    def getMaxScore_v2(self, node, depth=5, branch=10, fullFirstLayer=True, gp=self.GP, training_pairs=(self.training_pts, self.training_labels)):
+        children = self.PG.getNodesWithinDist(node, 1) 
+        #print("children of {}: {}".format(node, children))
+        #to_expand = [children[random.randint(0, len(children) - 1)] for c in range(branch)]
+        if fullFirstLayer == True:
+            to_expand = [children[random.randint(0, len(children) - 1)] for c in range(branch)]
+        else:
+            to_expand = children
+
+        gp.fit(*training_pairs)
+        preds = self.GP.predict([self.PG.index2state(t) for t in to_expand], return_std=True)
+        scores = [acquisition(*pred) for pred in zip(preds[0], preds[1])] 
+        
+        if depth == 1:
+            return max(scores), to_expand[np.argmax(np.array(scores))]
+            
+        scores = [scores[i] + self.getMaxScore(to_expand[i], depth - 1, max(1, int(branch/2)), False, gp, (training_pairs[0] + [self.PG.index2state(to_expand[i])], training_pairs[1] + [preds[0][i]]))[0] for i in range(0, len(scores))]
+        
+        return max(scores), to_expand[np.argmax(np.array(scores))]
+
     def callback(self, img, joint_state): # use eef
         print("entering callback")
         cv_image = CvBridge().imgmsg_to_cv2(img, "bgr8")
@@ -412,17 +440,19 @@ class ActivePlanner(object):
             print("reward: " + str(reward))
             
             ## REPLACE WITH MOST RECENT TRAINING POINT
-            training_indices = [self.PG.state2index(n) for n in self.training_pts]
-            if current_index in training_indices:
-                index = training_indices.index(current_index)
-                print(index)
-                self.training_pts.pop(index)
-                self.training_labels.pop(index)
-                print("training points: {}, {}".format(np.shape(self.training_pts), np.shape(self.training_labels)))
+            # training_indices = [self.PG.state2index(n) for n in self.training_pts]
+            # if current_index in training_indices:
+            #     index = training_indices.index(current_index)
+            #     print(index)
+            #     self.training_pts.pop(index)
+            #     self.training_labels.pop(index)
+            #     print("training points: {}, {}".format(np.shape(self.training_pts), np.shape(self.training_labels)))
                 
-            self.training_pts.append(position)
+            state = np.append(np.array(position), self.time)
+            self.training_pts.append(state)
             self.training_labels.append(reward)
-            print("training points: {}, {}".format(np.shape(self.training_pts), np.shape(self.training_labels)))
+
+            self.time += 1
        
         except ValueError:
             print("something isn't working right")
@@ -432,7 +462,8 @@ class ActivePlanner(object):
 
 
         if len(self.training_pts) > 1000:
-            index = random.randint(0, len(self.training_pts) - 1)
+            #index = random.randint(0, len(self.training_pts) - 1)
+            index = len(self.training_pts) - 1
             self.training_pts.pop(index)
             self.training_labels.pop(index)
            
@@ -574,7 +605,7 @@ if __name__ == "__main__":
         ap = ActivePlanner(target_im, args.vfile, args.efile, args.robot_name, n, init_pose=1, visualize=True)
         #num_views = len(ap.PG.getNodes()) - 1
         num_views = 15
-        while ap.trial_num <= num_trials:
+        while ap.trial_num <= num_trials and not rospy.is_shutdown():
             print("trial: " + str(ap.trial_num))
             ap.run(num_views)
             ap.reset()
