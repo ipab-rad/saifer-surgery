@@ -31,7 +31,7 @@ from keras.applications.inception_v3 import preprocess_input
 
 from add_pts import PlanningGraph
 import path_plan as pp 
-from kernel import RBF_sep
+from kernel import RBF_Sep
 
 def kernel(dist):
     return np.exp(dist**2 / -2)
@@ -397,25 +397,25 @@ class ActivePlanner(object):
         
         return max(scores), to_expand[np.argmax(np.array(scores))]
 
-    def getMaxScore_v2(self, node, depth=5, branch=10, fullFirstLayer=True, gp=self.GP, training_pairs=(self.training_pts, self.training_labels)):
-        children = self.PG.getNodesWithinDist(node, 1) 
-        #print("children of {}: {}".format(node, children))
-        #to_expand = [children[random.randint(0, len(children) - 1)] for c in range(branch)]
-        if fullFirstLayer == True:
-            to_expand = [children[random.randint(0, len(children) - 1)] for c in range(branch)]
-        else:
-            to_expand = children
-
-        gp.fit(*training_pairs)
-        preds = self.GP.predict([self.PG.index2state(t) for t in to_expand], return_std=True)
-        scores = [acquisition(*pred) for pred in zip(preds[0], preds[1])] 
-        
-        if depth == 1:
-            return max(scores), to_expand[np.argmax(np.array(scores))]
-            
-        scores = [scores[i] + self.getMaxScore(to_expand[i], depth - 1, max(1, int(branch/2)), False, gp, (training_pairs[0] + [self.PG.index2state(to_expand[i])], training_pairs[1] + [preds[0][i]]))[0] for i in range(0, len(scores))]
-        
-        return max(scores), to_expand[np.argmax(np.array(scores))]
+#    def getMaxScore_v2(self, node, depth=5, branch=10, fullFirstLayer=True, gp=self.GP, training_pairs=(self.training_pts, self.training_labels)):
+#        children = self.PG.getNodesWithinDist(node, 1) 
+#        #print("children of {}: {}".format(node, children))
+#        #to_expand = [children[random.randint(0, len(children) - 1)] for c in range(branch)]
+#        if fullFirstLayer == True:
+#            to_expand = [children[random.randint(0, len(children) - 1)] for c in range(branch)]
+#        else:
+#            to_expand = children
+#
+#        gp.fit(*training_pairs)
+#        preds = self.GP.predict([self.PG.index2state(t) for t in to_expand], return_std=True)
+#        scores = [acquisition(*pred) for pred in zip(preds[0], preds[1])] 
+#        
+#        if depth == 1:
+#            return max(scores), to_expand[np.argmax(np.array(scores))]
+#            
+#        scores = [scores[i] + self.getMaxScore(to_expand[i], depth - 1, max(1, int(branch/2)), False, gp, (training_pairs[0] + [self.PG.index2state(to_expand[i])], training_pairs[1] + [preds[0][i]]))[0] for i in range(0, len(scores))]
+#        
+#        return max(scores), to_expand[np.argmax(np.array(scores))]
 
     def callback(self, img, joint_state): # use eef
         print("entering callback")
