@@ -19,6 +19,11 @@ class data_collector:
         self.step = 0
         self.STEPS = num_steps
         self.joint_states = []
+        self.first_img = None 
+        self.rewards = []
+                
+        self.model = InceptionV3(include_top=False, weights='imagenet', input_tensor=None, input_shape=(480,640,3), pooling='avg', classes=1000)
+
 
     #def collect_data():
 
@@ -33,17 +38,33 @@ class data_collector:
 
         #while not rospy.is_shutdown():
 
+    def toFeatureRepresentation(self, img, img_shape=(480,640,3)):
+        img = np.expand_dims(img, axis=0)
+        img = preprocess_input(img)
+        with self.graph.as_default():
+            return np.array(self.model.predict(img)).flatten()
+
+
+    def imageCompare(self, img):
+        target = self.toFeatureRepresentation(self.first_img)
+        return np.dot(target, img)/(np.linalg.norm(target) * np.linalg.norm(img))
 
 
     def callback(self, img, joint_state): # use eef
             print("entering callback")
             cv_image = CvBridge().imgmsg_to_cv2(img, "bgr8")
 
+            if self.first_img is None:
+                self.first_img = cv_image
+
             state = joint_state.position[0:6]
 
             cv2.imwrite("image_data/{}.jpg".format(self.step), cv_image)
 
             self.joint_states.append(state)
+
+            reward = self.imageCompare(cv_image)
+            self.rewards.append(reward)
 
             self.step += 1
 
@@ -61,6 +82,7 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         print("Shutting down module")
         np.save(np.array("joint_data.npy", dc.joint_states))
+        np.save(np.array("reward.npy", dc.rewards))
 
     # rate = rospy.Rate(10) # 10hz
 
