@@ -1,16 +1,18 @@
 from abc import ABCMeta, abstractmethod
 from collections import namedtuple
 import math
-from inspect import signature
+
+from funcsigs import signature
 import warnings
 
 import numpy as np
 from scipy.special import kv, gamma
 from scipy.spatial.distance import pdist, cdist, squareform
 
-from ..metrics.pairwise import pairwise_kernels
-from ..base import clone
-from ..utils.validation import _num_samples
+#from ..metrics.pairwise import pairwise_kernels
+#from ..base import clone
+#from ..utils.validation import _num_samples
+from sklearn.gaussian_process import *
 
 
 def _check_length_scale(X, length_scale):
@@ -119,7 +121,8 @@ class NormalizedKernelMixin:
         """
         return np.ones(X.shape[0])
 
-class Kernel(metaclass=ABCMeta):
+class Kernel(object):
+    __metaclass__=ABCMeta
     """Base class for all kernels.
     .. versionadded:: 0.18
     """
@@ -488,3 +491,8 @@ class RBF_Sep(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
         else:  # isotropic
             return "{0}(length_scale={1:.3g})".format(
                 self.__class__.__name__, np.ravel(self.length_scale)[0])
+
+
+
+if __name__ == "__main__":
+    rbf = RBF_Sep(1.0)
