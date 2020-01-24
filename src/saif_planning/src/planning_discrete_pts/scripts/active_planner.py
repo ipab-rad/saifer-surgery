@@ -25,9 +25,9 @@ import pylab as pl
 from IPython import display
 from keras.applications.inception_v3 import preprocess_input
 #from keras.applications.inception_resnet_v2 import preprocess_input
-#from keras.applications.resnet_v2 import preprocess_input
-from sklearn.gaussian_process.kernels import RBF
-#from pr2_controllers_msgs.msg import JointTrajectoryControllerState
+##from keras.applications.resnet_v2 import preprocess_input
+#from sklearn.gaussian_process.kernels import RBF
+##from pr2_controllers_msgs.msg import JointTrajectoryControllerState
 
 from add_pts import PlanningGraph
 import path_plan as pp 
@@ -59,7 +59,7 @@ class ActivePlanner(object):
         self.trial_num = 1
         self.done = False
         self.completion_criterion = 0
-	self.visualize = visualize
+        self.visualize = visualize
 
         self.next_view = None
         self.robot = robot
@@ -184,14 +184,14 @@ class ActivePlanner(object):
                         
             
             if self.update is True:
-		if mode == "AVS" and self.stay is False:
+                if mode == "AVS" and self.stay is False:
                	    self.chooseNextView()
 
                     
                     if (num_views is None and (self.completion_criterion > 3 or self.views > 50)) or (num_views is not None and self.views == num_views):
                         self.done = True
                 elif mode == "cycle":
- 		    self.cycleViews()
+                    self.cycleViews()
                     if self.views == len(self.PG.getNodes()) - 2:
                         self.done = True
                 elif mode == "same":
