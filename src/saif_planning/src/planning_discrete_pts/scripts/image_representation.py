@@ -109,6 +109,114 @@ import cv2
 #     return recon_loss + kl_loss
 
 
+class Embedder(tf.keras.Model):
+    def __init__(self, embedding_size, c=0.2):
+        super(Embedder, self).__init__()
+        self.embedding_size = embedding_size
+        self.w = w
+        self.h = h
+        self.c = c
+        input_shape = (3, self.w, self.h, 3)
+
+        all_inputs = Input(shape=input_shape, name='input')
+
+        single_input = Input(shape=(self.w, self.h, 3), name='single_input')
+
+        base_model = InceptionV3(include_top=False, weights='imagenet')
+        inception_layers = base_model.get_layer("Mixed_5d").output
+
+        x1 = inception_layers(single_input)
+
+        for i in range(2):
+            filters *= 2
+            x1 = Conv2D(filters=self.filters,
+               kernel_size=self.kernel_size,
+               activation='relu',
+               strides=2,
+               padding='same')(x1)
+
+        x1 = tf.contrib.layers.spatial_softmax(
+            x1,
+            temperature=None,
+            name=None,
+            variables_collections=None,
+            trainable=True,
+            data_format='NHWC'
+        )
+
+        x1 = Dense(5000, activation='relu')(x1)
+        output = Dense(self.latent_dim, name='output')
+
+
+        self.embedder = Model(single_input, output)
+
+        output_0 = self.embedder(all_inputs[0, :, :, :])
+        output_1 = self.embedder(all_inputs[1, :, :, :])
+        output_2 = self.embedder(all_inputs[2, :, :, :])
+
+        tcn_loss = np.matmul(output_1, output_2) \
+            - np.matmul(output_1, output_2) + self.c
+        loss = K.mean(tcn_loss)
+        self.model = Model(inputs, [output_0, output_1, output_2], name='TCN_model')
+        self.model.add_loss(loss)
+
+        self.model.compile(optimizer='adam')
+        self.vae.summary()
+
+    def train(self,fol_path='../data/*'):
+        
+        data_list = self.prepare_data()
+        X_train = np.array(data_list[:-1]).reshape(-1, 3, self.w,self.h,3)/255.0
+        X_test = np.array(data_list[-1]).reshape(-1, 3, self.w,self.h,3)/255.0
+
+        print(np.shape(X_train))
+        self.model.fit(X_train,epochs=500,batch_size=self.batch_size,shuffle=True,validation_data=(X_test,None),callbacks=[TensorBoard(log_dir='./logs/tcn/')])
+
+        self.vae.save_weights('./logs/tcn/embedder.h5')
+        self.encoder.save_weights('./logs/tcn/encoder.h5')
+        self.decoder.save_weights('./logs/tcn/decoder.h5')
+        print('Saved trained weights.')
+
+
+    def prepare_data(self, fol_path='../data/target*'):
+
+        fol_list = glob.glob(fol_path)
+        data_list = []
+        
+        #print(f_list)
+        for fol in fol_list:
+            seq_list = glob.glob(fol_path + "/*")
+            im_list = []
+            for seq in seq_list:
+                rewards = np.load(seq)
+                fs = sorted(glob.glob(fol_path + "/*/*.jpg"))
+                for i in range(len(fs)):
+                    im = cv2.imread(fs[i])
+                    im_list.append((im, rewards[i], seq))
+                     
+            data_list.append(self.generate_triplets(im_list))
+
+        return data_list
+
+    def generate_triplets(self, data, attract_thresh=0.01, repel_thresh=0.05, samples_per_target=10):
+        
+        triplet_list = []
+        for (image, reward, seq_index) in data:
+            attract_list = [(im, rw, seq) for (im, rw, seq) in data if abs(reward - rw) < attract_thresh and not seq_index = seq]
+            repel_list = [(im, rw, s) for (im, rw, s) in data if abs(reward - rw) > repel_thresh]
+
+            for i in range(samples_per_target):
+                a_index = random.randint(0, len(attract_list) - 1)
+                a_img = attract_list[a_index][0]
+                attract_list.pop(a_index)
+                r_index = random.randint(0, len(repel_list) - 1)
+                r_img = repel_list[r_index][0]
+                repel_list.pop(r_index)
+                triplet_list.append([image, a_img, r_img])
+
+        return np.array(triplet_list)
+
+
 class CVAE(tf.keras.Model):
   def __init__(self, latent_dim):
     super(CVAE, self).__init__()
