@@ -7,6 +7,7 @@ import glob
 import os.path
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import Matern
+import pickle
 
 class pairwise_reward_model:
 
@@ -127,11 +128,17 @@ class pairwise_reward_model:
 			sig = np.genfromtxt(self.log_path+'sig.txt')
 			reward = np.genfromtxt(self.log_path+'reward.txt')
 			self.latent = np.genfromtxt(self.log_path+'latent.txt')
+			filename = self.log_path+'pairwise_model.sav'
+			self.gp = pickle.load(open(filename, 'rb'))
 			print(self.latent.shape)
 		else:
 			l, sig, reward = self.train()
-		self.gp = GaussianProcessRegressor(kernel=Matern(length_scale=l),alpha=sig)
-		self.gp.fit(self.latent,reward)
+		
+			self.gp = GaussianProcessRegressor(kernel=Matern(length_scale=l),alpha=sig)
+			self.gp.fit(self.latent,reward)
+			filename = self.log_path+'pairwise_model.sav'
+			pickle.dump(self.gp, open(filename, 'wb'))
+	
 
 if __name__ == '__main__':
 	pair_reward = pairwise_reward_model()

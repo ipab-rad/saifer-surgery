@@ -16,11 +16,12 @@ import copy
 from visual_irl.pairwise_reward  import pairwise_reward_model
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RBF
+import pickle
 
 
 class image_processor:
 
-	def __init__(self,beta=2.0):
+	def __init__(self,beta=1.0):
 
 		pkg_path = rospkg.RosPack().get_path('visual_irl')
 		self.reward_model = pairwise_reward_model(vae_path=pkg_path+'/scripts/visual_irl/logs/')
@@ -42,7 +43,7 @@ class image_processor:
 		self.go_to_start()
 		x_pos_list = np.linspace(self.init_pose.pose.position.x-0.025,self.init_pose.pose.position.x+0.025,20)
 		y_pos_list = np.linspace(self.init_pose.pose.position.y-0.025,self.init_pose.pose.position.y+0.025,20)
-		z_pos_list = np.linspace(self.init_pose.pose.position.z,self.init_pose.pose.position.z+0.03,20)
+		z_pos_list = np.linspace(self.init_pose.pose.position.z+0.065,self.init_pose.pose.position.z+0.075,20)
 
 		xx,yy,zz = np.meshgrid(x_pos_list,y_pos_list,z_pos_list)
 		pos = np.vstack((xx.ravel(),yy.ravel(),zz.ravel())).T
@@ -91,7 +92,7 @@ class image_processor:
 		np.savetxt(self.logpath+'rewards.txt',np.array(rewards))
 
 	def go_to_start(self):
-		start_pose = [1.870887041091919,-2.2503507773028772,1.8966856002807617,-1.222773853932516,1.6179306507110596,-0.34370404878725225]
+		start_pose = [2.0953848361968994, -2.162729565297262, 2.03804349899292, -1.4732831160174769, 1.612236738204956, -0.5673425833331507]
 		self.group.go(start_pose, wait=True)
 		self.group.stop()
 
