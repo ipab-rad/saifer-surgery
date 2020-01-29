@@ -11,6 +11,31 @@ import std_msgs
 from sensor_msgs.msg import JointState
 import numpy as np
 
+
+
+from keras.applications.inception_v3 import InceptionV3
+from keras.applications.inception_resnet_v2 import InceptionResNetV2
+from keras.applications.resnet_v2 import ResNet152V2
+import tensorflow as tf
+import sys
+sys.path.remove('/opt/ros/kinetic/lib/python2.7/dist-packages') # in order to import cv2 under python3
+import cv2
+sys.path.append('/opt/ros/kinetic/lib/python2.7/dist-packages') # append back in order to import rospy
+
+
+import argparse
+
+
+
+from geometry_msgs.msg import PoseArray, Pose, PoseStamped 
+
+import moveit_commander
+import random
+import threading 
+import matplotlib.pyplot as plt
+import pylab as pl
+from IPython import display
+from keras.applications.inception_v3 import preprocess_input
 class data_collector:
 
     def __init__(self, num_steps):
@@ -32,7 +57,7 @@ class data_collector:
 
 
         synched_sub = message_filters.ApproximateTimeSynchronizer([im_sub, joints_sub], queue_size=1, slop=0.05)
-        synched_sub.registerCallback(callback)
+        synched_sub.registerCallback(self.callback)
 
         
 
@@ -52,6 +77,7 @@ class data_collector:
 
     def callback(self, img, joint_state): # use eef
             print("entering callback")
+            print("step: " + str(self.step))
             cv_image = CvBridge().imgmsg_to_cv2(img, "bgr8")
 
             if self.first_img is None:
@@ -73,7 +99,7 @@ class data_collector:
 
 if __name__ == "__main__":
 
-    dc = data_collector()
+    dc = data_collector(20)
 
     rospy.init_node('data_collector', anonymous=True)
 
