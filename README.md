@@ -54,6 +54,16 @@ rosservice call /red/robotiq_ft_sensor_acc "command_id: 0 command: 'SET ZRO'"
 roslaunch ft_compliance compliance.launch
 ```
 
+___
+### Autonomous ultrasound scanning
 
+<img align="right" alt="" src="https://github.com/ipab-rad/saifer-surgery/blob/master/docs/images/scan.gif" width="150"/>This app uses Bayesian optimisation to move an ultrasound scanner over an ultrasound imaging phantom in search of a tumour like object. The app relies on a reward model learned from demonstration ultrasound image sequences using the [visual IRL](https://github.com/ipab-rad/saifer-surgery/tree/irl/src/saif_learning/visual_irl) package. 
+
+Launch robot and ultrasound image streamer
+```
+roslaunch saifer_launch dual.launch
+roslaunch ultrasound_epiphan us.launch
+rosrun ultrasound_imager pairwise_ultrasound_scanner.py
+```
 
 
