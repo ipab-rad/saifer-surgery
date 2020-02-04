@@ -1,6 +1,6 @@
 # Robotic ultrasound scanning
 
-<img align="right" alt="" src="https://lh6.googleusercontent.com/mYc6gJawLcenGWlv45mC8hXxdiDjeRATbenvbSPODawNClQElz4GgsW3FcnjKNxTarLgniBweggy81NYMcXaOGLroyEmAknH6mjTj-dtPvzqPyDBFvA=w1280" width="400" />
+<img align="right" alt="" src="https://github.com/ipab-rad/saifer-surgery/blob/master/docs/images/scan.gif" width="150"/>
 
 This app uses Bayesian optimisation to move an ultrasound scanner over an ultrasound imaging phantom in search of a tumour like object.
 The app relies on a reward model learned from demonstration ultrasound image sequences using the [visual IRL](https://github.com/ipab-rad/saifer-surgery/tree/irl/src/saif_learning/visual_irl) package. 
