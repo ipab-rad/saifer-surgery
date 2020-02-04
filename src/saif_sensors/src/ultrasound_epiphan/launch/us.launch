@@ -1,6 +1,6 @@
 <launch>
   <node name="ultrasound_streamer" pkg="usb_cam" type="usb_cam_node" output="screen" >
-    <param name="video_device" value="/dev/video0" />
+    <param name="video_device" value="/dev/video3" />
     <param name="image_width" value="1280" />
     <param name="image_height" value="1024" />
     <param name="pixel_format" value="yuyv" />
