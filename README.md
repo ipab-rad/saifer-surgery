@@ -21,7 +21,7 @@ ___
 ___
 ### Motion planning and control
 
-<img align="right" alt="" src="https://github.com/ipab-rad/saifer-surgery/blob/master/docs/images/arms.gif" width="150" /> Launch arms, plan and execute using MoveIt!
+<img align="right" alt="" src="https://github.com/ipab-rad/saifer-surgery/blob/master/docs/images/arms.gif" width="150" /> [Launch arms](https://github.com/ipab-rad/saifer-surgery/tree/master/src/saif_ui/saifer_launch), plan and execute using MoveIt!
 ```
 roslaunch saifer_launch dual.launch
 ```
