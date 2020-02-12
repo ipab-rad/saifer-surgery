@@ -85,7 +85,7 @@ class data_collector:
 
             state = joint_state.position[0:6]
 
-            cv2.imwrite("image_data/{}.jpg".format(self.step), cv_image)
+            cv2.imwrite("{}.jpg".format(self.step), cv_image)
 
             self.joint_states.append(state)
 
