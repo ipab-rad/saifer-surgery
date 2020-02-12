@@ -14,8 +14,9 @@ from scipy.spatial.distance import pdist, cdist, squareform
 #from ..utils.validation import _num_samples
 from sklearn.gaussian_process import *
 
-from sklearn.gaussian_process.kernels import StationaryKernelMixin, NormalizedKernelMixin, Kernel
+from sklearn.gaussian_process.kernels import StationaryKernelMixin, NormalizedKernelMixin, Kernel, Hyperparameter
 
+from sklearn.gaussian_process.kernels import *
 
 class RBF_Sep(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
     """Radial-basis function kernel (aka squared-exponential kernel).
