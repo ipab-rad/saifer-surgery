@@ -92,6 +92,9 @@ class data_collector:
             reward = self.imageCompare(cv_image)
             self.rewards.append(reward)
 
+            np.save(np.array("joint_data.npy", dc.joint_states))
+            np.save(np.array("reward.npy", dc.rewards))
+
             self.step += 1
 
 
@@ -107,8 +110,7 @@ if __name__ == "__main__":
        rospy.spin()
     except KeyboardInterrupt:
         print("Shutting down module")
-        np.save(np.array("joint_data.npy", dc.joint_states))
-        np.save(np.array("reward.npy", dc.rewards))
+        
 
     # rate = rospy.Rate(10) # 10hz
 
