@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #from __future__ import absolute_import, division, print_function, unicode_literals
 from keras.applications.inception_v3 import InceptionV3
-
+from keras.applications.inception_v3 import preprocess_input
 
 # #import tensorflow as tf
 # import torch
@@ -21,10 +21,11 @@ import glob
 import random
 import matplotlib.pyplot as plt
 import PIL
+import time 
 sys.path.remove('/opt/ros/kinetic/lib/python2.7/dist-packages') # in order to import cv2 under python3
 import cv2
 sys.path.append('/opt/ros/kinetic/lib/python2.7/dist-packages') # append back in order to import rospy
-
+import copy 
 
 from keras.layers import Input, Dense, Conv2D, Conv2DTranspose, Flatten, Lambda, Reshape
 from keras.models import Model
@@ -33,6 +34,8 @@ from keras.callbacks import TensorBoard
 from keras.losses import mse, binary_crossentropy
 import glob
 import tensorflow as tf
+
+#from generate_data import generate_occluded_image
 #import imageio
 
 #from IPython import display
@@ -122,27 +125,37 @@ import tensorflow as tf
 
 
 class Embedder:  #(tf.keras.Model)
-    def __init__(self, w=480, h=640, batch_size=10, kernel_size=3, filters=32, embedding_size=1000, c=0.2):
+    def __init__(self, w=480, h=640, batch_size=10, kernel_size=3, filters=32, embedding_size=50, c=1):
         super(Embedder, self).__init__()
         self.embedding_size = embedding_size
         self.w = w
         self.h = h
         self.c = c
-        input_shape = (3, self.w, self.h, 3)
+        input_shape = (self.w, self.h, 3)
+        #input_shape = (self.w, self.h, 1)
         self.batch_size = batch_size
         self.kernel_size = kernel_size
         self.filters = filters
 
         all_inputs = Input(shape=input_shape, name='input')
 
-        input1 = Input(shape=(self.w, self.h, 3), name='input1')
-        input2 = Input(shape=(self.w, self.h, 3), name='input2')
-        input3 = Input(shape=(self.w, self.h, 3), name='input3')
+        # input1 = Input(shape=(self.w, self.h, 3), name='input1')
+        # input2 = Input(shape=(self.w, self.h, 3), name='input2')
+        # input3 = Input(shape=(self.w, self.h, 3), name='input3')
 
-        single_input = Input(shape=(self.w, self.h, 3), name='single_input')
+        # single_input = Input(shape=(self.w, self.h, 3), name='single_input')
 
-        model = InceptionV3(include_top=False, weights='imagenet')
+        input1 = Input(shape=input_shape, name='input1')
+        input2 = Input(shape=input_shape, name='input2')
+        input3 = Input(shape=input_shape, name='input3')
+
+        single_input = Input(shape=input_shape, name='single_input')
+
+        model = InceptionV3(include_top=False, weights='imagenet', input_tensor=None, input_shape=input_shape, pooling='avg')
         base_model = Model(inputs=model.input, outputs=model.get_layer("mixed5").output)
+
+        for layer in base_model.layers: # [:-20]
+            layer.trainable = False
         # inception_layers = base_model.get_layer("mixed5").output
 
         # f = K.function([base_model.layers[0].input, K.learning_phase()],
@@ -160,23 +173,23 @@ class Embedder:  #(tf.keras.Model)
                strides=2,
                padding='same')(x1)
 
-        def spat_soft(x): 
-            return tf.contrib.layers.spatial_softmax(
-                x,
-                temperature=None,
-                name=None,
-                variables_collections=None,
-                trainable=True,
-                data_format='NHWC'
-            )
+        # def spat_soft(x): 
+        #     return tf.contrib.layers.spatial_softmax(
+        #         x, 
+        #         temperature=1, 
+        #         trainable=False
+        #     )
 
-        x1 = Lambda(lambda x: spat_soft(x))(x1)
+        # x1 = Lambda(spat_soft)(x1)
+        shape = K.int_shape(x1)
+        x1 = Flatten()(x1)
 
         x1 = Dense(5000, activation='relu')(x1)
         output = Dense(self.embedding_size, name='output')(x1)
 
 
         self.embedder = Model(single_input, [output], name='embedder')
+        #self.embedder.summary()
 
         # self.embedding_net = tf.keras.Sequential(
         #     [
@@ -196,18 +209,27 @@ class Embedder:  #(tf.keras.Model)
         output_2 = self.embedder(input3)
 
         triplet_loss = tf.math.maximum(euclidean_dist(output_1, output_0) - euclidean_dist(output_0, output_2) + self.c, 0)
+        #triplet_loss = euclidean_dist(output_1, output_0) - euclidean_dist(output_0, output_2) + self.c
 
-        loss = K.mean(triplet_loss)
+
+        loss = K.mean(triplet_loss) # max?
         self.model = Model([input1, input2, input3], [output_0, output_1, output_2], name='TCN_model')
         self.model.add_loss(loss)
 
         self.model.compile(optimizer='adam')
         self.model.summary()
 
+    def predict(self, input):
+        input = K.constant(input)
+
+        #out, _, _ = self.model([input, input, input])
+        return self.embedder(input)
+        #return out
+
     def train(self,fol_path='../data/*'):
         
         #data_list = self.prepare_data_v2()
-        data_list1, data_list2, data_list3 = self.prepare_data_v2()
+        data_list1, data_list2, data_list3 = self.prepare_data_v3()
         print("data list shape ")
         print(np.shape(np.array(data_list1[:-1])))
         #X_train = np.array(data_list[:-1]).reshape(-1, 3, self.w,self.h,3)/255.0
@@ -215,16 +237,72 @@ class Embedder:  #(tf.keras.Model)
         # X_train = np.array(data_list[:-1])
         # X_test = np.array(data_list[-1])
 
-        X_train = [np.array(data_list1[:-1]).reshape(-1, self.w,self.h,3)/255.0, np.array(data_list2[:-1]).reshape(-1, self.w,self.h,3)/255.0, np.array(data_list3[:-1]).reshape(-1, self.w,self.h,3)/255.0]
-        X_test = [np.array(data_list1[-1]).reshape(-1, self.w,self.h,3)/255.0, np.array(data_list2[-1]).reshape(-1, self.w,self.h,3)/255.0, np.array(data_list3[-1]).reshape(-1, self.w,self.h,3)/255.0]
+        #X_train = [np.array(data_list1[:-1]).reshape(-1, self.w,self.h,3)/255.0, np.array(data_list2[:-1]).reshape(-1, self.w,self.h,3)/255.0, np.array(data_list3[:-1]).reshape(-1, self.w,self.h,3)/255.0]
+        #X_test = [np.array(data_list1[-1]).reshape(-1, self.w,self.h,3)/255.0, np.array(data_list2[-1]).reshape(-1, self.w,self.h,3)/255.0, np.array(data_list3[-1]).reshape(-1, self.w,self.h,3)/255.0]
         
-        self.model.fit([data_list1, data_list2, data_list3],epochs=100,batch_size=self.batch_size,shuffle=True,validation_data=(X_test,None),callbacks=[TensorBoard(log_dir='./logs/tcn/')])
+        X_train = [preprocess_input(np.array(data_list1[:-1]).reshape(-1, self.w,self.h,3)), preprocess_input(np.array(data_list2[:-1]).reshape(-1, self.w,self.h,3)), preprocess_input(np.array(data_list3[:-1]).reshape(-1, self.w,self.h,3))]
+        X_test = [preprocess_input(np.array(data_list1[-1]).reshape(-1, self.w,self.h,3)), preprocess_input(np.array(data_list2[-1]).reshape(-1, self.w,self.h,3)), preprocess_input(np.array(data_list3[-1]).reshape(-1, self.w,self.h,3))]
+        
+        self.model.fit([data_list1, data_list2, data_list3],epochs=50,batch_size=self.batch_size,shuffle=True,validation_data=(X_test,None),callbacks=[TensorBoard(log_dir='./logs/tcn/')])
 
-        self.model.save_weights('./logs/tcn/embedder.h5')
-        self.encoder.save_weights('./logs/tcn/encoder.h5')
-        self.decoder.save_weights('./logs/tcn/decoder.h5')
+        self.embedder.save_weights('./logs/tcn/test_B_embedder.h5')
+
+        self.model.save_weights('./logs/tcn/test_B_model.h5')
+ 
         print('Saved trained weights.')
 
+    def prepare_data_v3(self, fol_path='data/target_*', num_samples=100, samples_per_target=50):
+
+        fol_list = glob.glob(fol_path)
+        triplet_list = []
+        n = 0
+        
+        print("folder list: " + str(fol_list))
+        for fol in fol_list:
+            anchor_paths = glob.glob(fol + '/anchors/*.jpg')
+            warped_paths = glob.glob(fol + '/warped/*.jpg')
+            #occluded_paths = glob.glob(fol + '/occluded/*.jpg')
+
+            print(anchor_paths)
+
+            positive_paths = anchor_paths + warped_paths
+            print("pos paths " + str(positive_paths))
+            
+            anchor_imgs = [cv2.imread(anchor_paths[random.randint(0, len(anchor_paths)-1)]) for i in range(num_samples)]
+            #anchor_imgs = [cv2.cvtColor(image, cv2.COLOR_BGR2GRAY) for image in anchor_imgs]
+            warped_imgs = [cv2.imread(warped_paths[random.randint(0, len(warped_paths)-1)]) for i in range(num_samples)]
+            #warped_imgs = [cv2.cvtColor(image, cv2.COLOR_BGR2GRAY) for image in warped_imgs]
+            #occluded_imgs = [cv2.imread(occluded_paths[random.randint(0, len(occluded_paths)-1)]) for i in range(num_samples)]
+
+            positives = anchor_imgs + warped_imgs
+
+            print("img shape")
+            print(np.shape(np.array(anchor_imgs[0])))
+
+            for i in range(samples_per_target):
+                a_index = random.randint(0, len(positives) - 1)
+                a_img = positives[a_index]
+                remaining_positives = positives[:a_index] + positives[a_index+1:]
+
+                w_index = random.randint(0, len(remaining_positives) - 1)
+                w_img = remaining_positives[w_index]
+            
+                r_img = generate_blurred_image(copy.deepcopy(a_img))   ##########
+                #r_img = cv2.cvtColor(r_img, cv2.COLOR_BGR2GRAY)
+
+                cv2.imwrite("data/triplets/a_{}.jpg".format(n), a_img)
+                cv2.imwrite("data/triplets/w_{}.jpg".format(n), w_img)
+                cv2.imwrite("data/triplets/occ_{}.jpg".format(n), r_img)
+                n += 1
+
+                triplet_list.append([preprocess_input(a_img), preprocess_input(w_img), preprocess_input(r_img)])
+                positives.insert(a_index, a_img)
+
+        triplet_list = np.array(triplet_list)
+
+        return triplet_list[:, 0], triplet_list[:, 1], triplet_list[:, 2]
+
+    
 
     def prepare_data_v2(self, fol_path='data/target_*', num_samples=100):
 
@@ -241,8 +319,8 @@ class Embedder:  #(tf.keras.Model)
 
             positive_paths = anchor_paths + warped_paths
             
-            anchor_imgs = [np.array(cv2.imread(positive_paths[random.randint(0, len(positive_paths)-1)])) for i in range(num_samples)]
-            warped_imgs = [cv2.imread(positive_paths[random.randint(0, len(positive_paths)-1)]) for i in range(num_samples)]
+            anchor_imgs = [np.array(cv2.imread(anchor_paths[random.randint(0, len(anchor_paths)-1)])) for i in range(num_samples)]
+            warped_imgs = [cv2.imread(warped_paths[random.randint(0, len(warped_paths)-1)]) for i in range(num_samples)]
             occluded_imgs = [cv2.imread(occluded_paths[random.randint(0, len(occluded_paths)-1)]) for i in range(num_samples)]
 
             positives = anchor_imgs + warped_imgs
@@ -276,8 +354,8 @@ class Embedder:  #(tf.keras.Model)
             seq_list = glob.glob(fol_path + "/*")
             im_list = []
             for seq in seq_list:
-                rewards = np.load(seq + 'rewards.npy')
-                fs = sorted(glob.glob(fol_path + "/*/*.jpg"))
+                rewards = np.load(seq + '/rewards.npy')
+                fs = sorted(glob.glob(seq + "/*.jpg"))
                 for i in range(len(fs)):
                     im = cv2.imread(fs[i])
                     im_list.append((im, rewards[i], seq))
@@ -303,6 +381,368 @@ class Embedder:  #(tf.keras.Model)
                 triplet_list.append([image, a_img, r_img])
 
         return np.array(triplet_list)
+
+
+    def load(self,path='./logs/tcn/test_B_'):
+        self.embedder.load_weights(path+'embedder.h5')
+        #self.model.load_weights(path+'model.h5')
+        print('Loaded saved weights.')
+
+class EmbedderAtt(Embedder):  #(tf.keras.Model)
+    def __init__(self, w=480, h=640, batch_size=10, kernel_size=3, filters=32, embedding_size=50, c=1):
+        super(Embedder, self).__init__()
+        self.embedding_size = embedding_size
+        self.w = w
+        self.h = h
+        self.c = c
+        input_shape = (self.w, self.h, 3)
+        #input_shape = (self.w, self.h, 1)
+        self.batch_size = batch_size
+        self.kernel_size = kernel_size
+        self.filters = filters
+
+        all_inputs = Input(shape=input_shape, name='input')
+
+        # input1 = Input(shape=(self.w, self.h, 3), name='input1')
+        # input2 = Input(shape=(self.w, self.h, 3), name='input2')
+        # input3 = Input(shape=(self.w, self.h, 3), name='input3')
+
+        # single_input = Input(shape=(self.w, self.h, 3), name='single_input')
+
+        input1 = Input(shape=input_shape, name='input1')
+        input2 = Input(shape=input_shape, name='input2')
+        input3 = Input(shape=input_shape, name='input3')
+
+        single_input = Input(shape=input_shape, name='single_input')
+
+        model = InceptionV3(include_top=False, weights='imagenet', input_tensor=None, input_shape=input_shape, pooling='avg')
+        base_model = Model(inputs=model.input, outputs=model.get_layer("mixed5").output)
+
+        for layer in base_model.layers: # [:-20]
+            layer.trainable = False
+        # inception_layers = base_model.get_layer("mixed5").output
+
+        # f = K.function([base_model.layers[0].input, K.learning_phase()],
+        #                       [inception_layers])
+
+        #x1 = f([single_input, 1])[0]
+
+        x_att = single_input
+
+        for i in range(4):
+            filters *= 2
+            x1 = Conv2D(filters=self.filters,
+               kernel_size=self.kernel_size,
+               activation='relu',
+               strides=2,
+               padding='same')(x_att)
+
+        x_att = Flatten()(x_att)
+        x_att = Dense(5000, activation='relu')(x_att)
+        x_att = Dense(self.embedding_size, activation='relu')(x_att)
+
+        x1 = base_model(single_input)
+
+        for i in range(2):
+            filters *= 2
+            x1 = Conv2D(filters=self.filters,
+               kernel_size=self.kernel_size,
+               activation='relu',
+               strides=2,
+               padding='same')(x1)
+
+        # def spat_soft(x): 
+        #     return tf.contrib.layers.spatial_softmax(
+        #         x, 
+        #         temperature=1, 
+        #         trainable=False
+        #     )
+
+        # x1 = Lambda(spat_soft)(x1)
+        shape = K.int_shape(x1)
+        x1 = Flatten()(x1)
+
+        x1 = Dense(5000, activation='relu')(x1)
+        output = Dense(self.embedding_size, name='output')(x1)
+
+
+        self.embedder = Model(single_input, [output], name='embedder')
+        #self.embedder.summary()
+
+        # self.embedding_net = tf.keras.Sequential(
+        #     [
+        #         tf.keras.layers.InputLayer(input_shape=(480, 640, 3)), #(480,640,3)
+        #         tf.keras.layers.Conv2D(
+        #             filters=32, kernel_size=3, strides=(2, 2), activation='relu'),
+        #         tf.keras.layers.Conv2D(
+        #             filters=64, kernel_size=3, strides=(2, 2), activation='relu'),
+        #         tf.keras.layers.Flatten(),
+        #         # No activation
+        #         tf.keras.layers.Dense(latent_dim + latent_dim),
+        #     ]
+        # )
+
+        output_0 = self.embedder(input1)
+        output_1 = self.embedder(input2)
+        output_2 = self.embedder(input3)
+
+        triplet_loss = tf.math.maximum(euclidean_dist(output_1, output_0) - euclidean_dist(output_0, output_2) + self.c, 0)
+        #triplet_loss = euclidean_dist(output_1, output_0) - euclidean_dist(output_0, output_2) + self.c
+
+
+        loss = K.mean(triplet_loss) # max?
+        self.model = Model([input1, input2, input3], [output_0, output_1, output_2], name='TCN_model')
+        self.model.add_loss(loss)
+
+        self.model.compile(optimizer='adam')
+        self.model.summary()
+
+class EmbedderV:  #(tf.keras.Model)
+    def __init__(self, w=480, h=640, batch_size=10, kernel_size=3, filters=32, embedding_size=1000, c=1):
+        super(EmbedderV, self).__init__()
+        self.embedding_size = embedding_size
+        self.w = w
+        self.h = h
+        self.c = c
+        input_shape = (self.w, self.h, 3)
+        #input_shape = (self.w, self.h, 1)
+        self.batch_size = batch_size
+        self.kernel_size = kernel_size
+        self.filters = filters
+
+        all_inputs = Input(shape=input_shape, name='input')
+
+        # input1 = Input(shape=(self.w, self.h, 3), name='input1')
+        # input2 = Input(shape=(self.w, self.h, 3), name='input2')
+        # input3 = Input(shape=(self.w, self.h, 3), name='input3')
+
+        # single_input = Input(shape=(self.w, self.h, 3), name='single_input')
+
+        input1 = Input(shape=input_shape, name='input1')
+        input2 = Input(shape=input_shape, name='input2')
+
+        single_input = Input(shape=input_shape, name='single_input')
+
+        model = InceptionV3(include_top=False, weights='imagenet', input_tensor=None, input_shape=input_shape, pooling='avg')
+        #base_model = Model(inputs=model.input, outputs=model.get_layer("mixed5").output)
+
+        for layer in model.layers[:-50]: # [:-20]
+            layer.trainable = False
+        # inception_layers = base_model.get_layer("mixed5").output
+
+        # f = K.function([base_model.layers[0].input, K.learning_phase()],
+        #                       [inception_layers])
+
+        #x1 = f([single_input, 1])[0]
+
+        output = model(single_input)
+
+        # for i in range(2):
+        #     filters *= 2
+        #     x1 = Conv2D(filters=self.filters,
+        #        kernel_size=self.kernel_size,
+        #        activation='relu',
+        #        strides=2,
+        #        padding='same')(x1)
+
+        # def spat_soft(x): 
+        #     return tf.contrib.layers.spatial_softmax(
+        #         x, 
+        #         temperature=1, 
+        #         trainable=False
+        #     )
+
+        # x1 = Lambda(spat_soft)(x1)
+        # shape = K.int_shape(x1)
+        # x1 = Flatten()(x1)
+
+        # x1 = Dense(5000, activation='relu')(x1)
+        # output = Dense(self.embedding_size, name='output')(x1)
+
+
+        self.embedder = Model(single_input, [output], name='embedder')
+        #self.embedder.summary()
+
+        # self.embedding_net = tf.keras.Sequential(
+        #     [
+        #         tf.keras.layers.InputLayer(input_shape=(480, 640, 3)), #(480,640,3)
+        #         tf.keras.layers.Conv2D(
+        #             filters=32, kernel_size=3, strides=(2, 2), activation='relu'),
+        #         tf.keras.layers.Conv2D(
+        #             filters=64, kernel_size=3, strides=(2, 2), activation='relu'),
+        #         tf.keras.layers.Flatten(),
+        #         # No activation
+        #         tf.keras.layers.Dense(latent_dim + latent_dim),
+        #     ]
+        # )
+
+        output_0 = self.embedder(input1)
+        output_1 = self.embedder(input2)
+
+        #triplet_loss = tf.math.maximum(euclidean_dist(output_1, output_0) - euclidean_dist(output_0, output_2) + self.c, 0)
+        #triplet_loss = euclidean_dist(output_1, output_0) - euclidean_dist(output_0, output_2) + self.c
+        vp_loss = euclidean_dist(output_0, output_1)
+
+        loss = K.mean(vp_loss) # max?
+        self.model = Model([input1, input2], [output_0, output_1], name='VP_model')
+        self.model.add_loss(loss)
+
+        self.model.compile(optimizer='adam')
+        self.model.summary()
+
+    def predict(self, input):
+        input = K.constant(input)
+
+        #out, _, _ = self.model([input, input, input])
+        return self.embedder(input)
+        #return out
+
+    def train(self,fol_path='../data/*'):
+        
+        #data_list = self.prepare_data_v2()
+        data_list1, data_list2 = self.generate_pairs2()
+        print("data list shape ")
+        print(np.shape(np.array(data_list2[-1])))
+        #X_train = np.array(data_list[:-1]).reshape(-1, 3, self.w,self.h,3)/255.0
+        #X_test = np.array(data_list[-1]).reshape(-1, 3, self.w,self.h,3)/255.0
+        # X_train = np.array(data_list[:-1])
+        # X_test = np.array(data_list[-1])
+
+        #X_train = [np.array(data_list1[:-1]).reshape(-1, self.w,self.h,3)/255.0, np.array(data_list2[:-1]).reshape(-1, self.w,self.h,3)/255.0, np.array(data_list3[:-1]).reshape(-1, self.w,self.h,3)/255.0]
+        #X_test = [np.array(data_list1[-1]).reshape(-1, self.w,self.h,3)/255.0, np.array(data_list2[-1]).reshape(-1, self.w,self.h,3)/255.0, np.array(data_list3[-1]).reshape(-1, self.w,self.h,3)/255.0]
+        
+        X_train = [preprocess_input(np.array(data_list1[:-1]).reshape(-1, self.w,self.h,3)), preprocess_input(np.array(data_list2[:-1]).reshape(-1, self.w,self.h,3))]
+        X_test = [preprocess_input(np.array(data_list1[-1]).reshape(-1, self.w,self.h,3)), preprocess_input(np.array(data_list2[-1]).reshape(-1, self.w,self.h,3))]
+        
+        self.model.fit(X_train,epochs=50,batch_size=self.batch_size,shuffle=True,validation_data=(X_test,None),callbacks=[TensorBoard(log_dir='./logs/v_model/')])
+
+        self.embedder.save_weights('./logs/v_model/test2_embedder.h5')
+
+        self.model.save_weights('./logs/v_model/test2_model.h5')
+ 
+        print('Saved trained weights.')
+
+
+    def generate_pairs(self, samples_per_target=50, fol_path='./data/v_target*'):
+        data_list1 = []
+        data_list2 = []
+
+        fol_list = glob.glob(fol_path)
+
+        for fol in fol_list:
+            im_list = [cv2.imread(f) for f in glob.glob(fol_path + "/*.jpg")]
+
+            for n in range(samples_per_target):
+                
+                i = random.randint(0, len(im_list) - 1)
+                data_list1.append(im_list[i])
+                data_list2.append((im_list[0:i] + im_list[i+1:])[random.randint(0, len(im_list) - 2)])
+        
+        return data_list1, data_list2
+
+
+    def generate_pairs2(self, samples_per_target=20, fol_path='./data/v_target*'):
+        data_list1 = []
+        data_list2 = []
+
+        fol_list = glob.glob(fol_path)
+        fol_list = ['./data/v_target_0']
+
+        for fol in fol_list:
+
+            real_paths = glob.glob(fol + '/real/*.jpg')
+            print(real_paths)
+            real_im_list = [cv2.imread(f) for f in real_paths]
+            fake_paths = glob.glob(fol + '/fake/*.jpg')
+            fake_im_list = [cv2.imread(f) for f in fake_paths]
+
+            print(fake_im_list)
+
+            for n in range(samples_per_target):
+                
+                i = random.randint(0, len(real_im_list) - 1)
+                print(i)
+                data_list1.append(real_im_list[i])
+                i2 = random.randint(0, len(fake_im_list) - 1)
+                data_list2.append(fake_im_list[i2])
+        
+        return data_list1, data_list2
+
+
+
+
+    def load(self,path='./logs/v_model/test_'):
+        self.embedder.load_weights(path+'embedder.h5')
+        #self.model.load_weights(path+'model.h5')
+        print('Loaded saved weights.')
+
+
+def generate_blurred_image(image):
+
+    #image = cv2.imread(image_path)
+    sigma = 81    
+    topLeft = (random.randint(250, 350), random.randint(100, 250))
+    x, y = topLeft[0], topLeft[1]
+    w, h = random.randint(200, 300), random.randint(100, 200)
+    # Grab ROI with Numpy slicing and blur
+    ROI = image[y:y+h, x:x+w]
+    blur = cv2.GaussianBlur(ROI, (sigma,sigma), 0) 
+    # Insert ROI back into image
+    image[y:y+h, x:x+w] = blur
+    #cv2.imwrite("./b_{}".format(image_path), image)
+
+    return image
+
+def generate_occluded_image(image):
+
+        w = 640
+        h = 480
+        offset = 150
+        #image = cv2.imread(image_path)
+
+        occluder_paths = ['/home/ultrasound/Downloads/hand-removebg-preview.png', '/home/ultrasound/Downloads/istockphoto-855895392-612x612-removebg-preview.png']
+        occluder = occluder_paths[random.randint(0, len(occluder_paths) - 1)]
+
+        print(occluder)
+
+        background = copy.deepcopy(image)
+        overlay = cv2.imread(occluder)
+
+        rows,cols,channels = overlay.shape
+
+        row_start = random.randint(200, 300)
+        col_start = random.randint(0, 200)
+        overlay=cv2.addWeighted(background[row_start:row_start+rows, col_start:col_start+cols],1.0,overlay,1.0,0)
+
+        background[row_start:row_start+rows, col_start:col_start+cols] = overlay
+
+        num_occlusions = random.randint(2, 4)
+        for i in range(num_occlusions):
+            shape = 0
+            color_type = random.randint(0, 1)
+            print("shape: " + str(shape))
+            print("color type " + str(color_type))
+            if color_type == 0:
+                R = random.randint(50, 255)
+                G = random.randint(int(.75 * R), int(.9 * R))
+                B = random.randint(int(.85 * G), int(.9 * G))
+                color = (B, G, R)
+            elif color_type == 1:
+                R = random.randint(0, 255)
+                color = (random.randint(max(R - 5, 0), min(R + 5, 255)), random.randint(max(R - 5, 0), min(R + 5, 255)), R)
+            print("color " + str(color))
+            start = (random.randint(offset, w - offset), random.randint(offset, h - offset))
+            if shape == 0:
+                end = (random.randint(offset, w - offset), random.randint(offset, h - offset))
+                cv2.line(image, start, end, color, random.randint(50,100))
+
+            elif shape == 1:
+                radius = random.randint(80, 150)
+                cv2.circle(image, start, radius, color, -1)
+
+        cv2.imwrite("data/occluded/occ_{}.jpg".format(time.time()), image)
+        #return image 
+        return background
 
 
 def all_diffs(a, b):
@@ -583,5 +1023,6 @@ def scatter(x, labels, subtitle=None):
 
 
 if __name__ == "__main__":
-    embedder = Embedder()
+    embedder = EmbedderV()
+    #embedder.load()
     embedder.train()
