@@ -97,8 +97,7 @@ class RBF_Sep(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
 
         X_1 = X[:,:-1]
         X_t = X[:, -1]
-        Y_1 = Y[:,:-1]
-        Y_t = Y[:, -1]
+        
 
         if Y is None:
             dists1 = pdist(X_1 / length_scale, metric='sqeuclidean')
@@ -115,6 +114,8 @@ class RBF_Sep(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
 
             K = np.matmul(K1, K2)
         else:
+            Y_1 = Y[:,:-1]
+            Y_t = Y[:, -1]
             if eval_gradient:
                 raise ValueError(
                     "Gradient can only be evaluated when Y is None.")
