@@ -125,7 +125,7 @@ import tensorflow as tf
 
 
 class Embedder:  #(tf.keras.Model)
-    def __init__(self, w=480, h=640, batch_size=10, kernel_size=3, filters=32, embedding_size=50, c=1):
+    def __init__(self, w=480, h=640, batch_size=10, kernel_size=3, filters=32, embedding_size=1000, c=1):
         super(Embedder, self).__init__()
         self.embedding_size = embedding_size
         self.w = w
@@ -428,20 +428,21 @@ class EmbedderAtt(Embedder):  #(tf.keras.Model)
         #x1 = f([single_input, 1])[0]
 
         x_att = single_input
+        x1 = base_model(single_input)
 
-        for i in range(4):
+        for i in range(2):
             filters *= 2
             x1 = Conv2D(filters=self.filters,
                kernel_size=self.kernel_size,
                activation='relu',
                strides=2,
-               padding='same')(x_att)
+               padding='same')(x1)
 
-        x_att = Flatten()(x_att)
-        x_att = Dense(5000, activation='relu')(x_att)
-        x_att = Dense(self.embedding_size, activation='relu')(x_att)
+        l1 = Flatten()(x1)
+        l1 = Dense(1000, activation='relu')(l1)
+        l1 = Dense(self.embedding_size, activation='relu')(l1)
 
-        x1 = base_model(single_input)
+        
 
         for i in range(2):
             filters *= 2
@@ -464,6 +465,31 @@ class EmbedderAtt(Embedder):  #(tf.keras.Model)
 
         x1 = Dense(5000, activation='relu')(x1)
         output = Dense(self.embedding_size, name='output')(x1)
+
+        for i in range(2):
+            filters *= 2
+            xatt = Conv2D(filters=self.filters,
+               kernel_size=self.kernel_size,
+               activation='relu',
+               strides=2,
+               padding='same')(x1)
+
+        xatt = Flatten()(x1)
+        xatt = Dense(1000, activation='relu')(xatt)
+        xatt = Dense(self.embedding_size, activation='relu')(xatt)
+
+        c1 = tf.keras.backend.dot(
+            xatt,
+            keras.layers.add([l1, output])
+
+        )
+
+        a1 = tf.keras.activations.softmax(
+            c1,
+            axis=3 #?
+        )
+
+
 
 
         self.embedder = Model(single_input, [output], name='embedder')
