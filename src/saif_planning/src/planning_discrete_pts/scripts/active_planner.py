@@ -204,6 +204,7 @@ class ActivePlanner(object):
 
             rate.sleep()
 
+    # visit each viewpoint in view set once
     def cycleViews(self):
         position = self.position
 
@@ -458,7 +459,6 @@ class ActivePlanner(object):
             print("something isn't working right")
             reward = None
             print(self.toFeatureRepresentation(self.target_img, (img.height, img.width, 3)))
-        #finally:
 
 
         if len(self.training_pts) > 1000:
