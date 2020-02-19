@@ -66,21 +66,21 @@ def generate_occluded_image(image):
     h = 480
     offset = 150
 
-    occluder_paths = ['/home/ultrasound/Downloads/hand-removebg-preview.png']
-    occluder = occluder_paths[random.randint(0, len(occluder_paths) - 1)]
+    # occluder_paths = ['/home/ultrasound/Downloads/hand-removebg-preview.png']
+    # occluder = occluder_paths[random.randint(0, len(occluder_paths) - 1)]
 
-    print(occluder)
+    # print(occluder)
 
-    background = copy.deepcopy(image)
-    overlay = cv2.imread(occluder)
+    # background = copy.deepcopy(image)
+    # overlay = cv2.imread(occluder)
 
-    rows,cols,channels = overlay.shape
+    # rows,cols,channels = overlay.shape
 
-    row_start = random.randint(200, 300)
-    col_start = random.randint(0, 200)
-    overlay=cv2.addWeighted(background[row_start:row_start+rows, col_start:col_start+cols],1.0,overlay,1.0,0)
+    # row_start = random.randint(200, 300)
+    # col_start = random.randint(0, 200)
+    # overlay=cv2.addWeighted(background[row_start:row_start+rows, col_start:col_start+cols],1.0,overlay,1.0,0)
 
-    background[row_start:row_start+rows, col_start:col_start+cols ] = overlay
+    # background[row_start:row_start+rows, col_start:col_start+cols ] = overlay
 
 
     num_occlusions = random.randint(2, 4)
@@ -109,8 +109,8 @@ def generate_occluded_image(image):
             radius = random.randint(80, 150)
             cv2.circle(image, start, radius, color, -1)
 
-    #return image 
-    return background
+    return image 
+    #return background
 
 def generate_blurred_images(image_files="*.jpg"):
     image_paths = glob.glob(image_files)
@@ -216,6 +216,6 @@ if __name__ == "__main__":
     #generate_occluded_image(cv2.imread('liquid.jpg'))
     #generate_warped_images()
 
-    #generate_occluded_images(7)
-    generate_blurred_images()
+    generate_occluded_images(4)
+    #generate_blurred_images()
 

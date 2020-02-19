@@ -227,8 +227,12 @@ def prepareLabels(label_list):
             labels.append(np.array([0, 1, 0, 1]))
         elif label == 3:
             labels.append(np.array([0, 0, 1, 1]))
-        else:
+        elif label == 4:
             labels.append(np.array([1, 0, 1, 1]))
+        elif label == 5:
+            labels.append(np.array([1, 1, 0, 1]))
+        else:
+            labels.append(np.array([0, 1, 1, 1]))
 
     return labels
 
@@ -258,7 +262,7 @@ if __name__ == "__main__":
 
     triplets = np.array(getTriplets(path='data/test_triplets/'))
     print(triplets)
-    visualizeTriplets(triplets, v_model)
+    #visualizeTriplets(triplets, model)
 
     #a, w, o = prepare_data()
 
@@ -280,26 +284,30 @@ if __name__ == "__main__":
     w = [cv2.imread(f) for f in w_paths]
     o = [cv2.imread(f) for f in occ_paths]
 
-    #showDistances(a[0], o, model)
+    
 
     print('flag1')
 
     test_paths = sorted(glob.glob('data/test_imgs/*.jpg'))
     test_paths_B = sorted(glob.glob('data/test_imgs_B/*.jpg'))
+    test_paths_occ = sorted(glob.glob('data/test_occ_imgs/*.jpg'))
+
     test_imgs = [cv2.imread(p) for p in test_paths]
     test_imgs_B = [cv2.imread(p) for p in test_paths_B]
+    test_imgs_occ = [cv2.imread(p) for p in test_paths_occ]
 
     ## embedder
-    #num_features = 1000
+    num_features = 1000
     #embedded = np.array([K.eval(toFeatureRepresentation(model, im)[0]) for im in a + w + o])
     #test_embeddings = toEmbeddings(test_paths, model)
     #test_embeddings_B = toEmbeddings(test_paths_B, model)
+    test_embeddings_occ = toEmbeddings(test_paths_occ, model)
 
     ## embedderV
-    num_features = 2048
-    #embedded = np.array([K.eval(toFeatureRepresentation(v_model, im)[0]) for im in a + w + o])
-    #test_embeddings = toEmbeddings(test_paths, v_model)
-    test_embeddings_B = toEmbeddings(test_paths_B, v_model)
+    # num_features = 2048
+    # #embedded = np.array([K.eval(toFeatureRepresentation(v_model, im)[0]) for im in a + w + o])
+    # #test_embeddings = toEmbeddings(test_paths, v_model)
+    # test_embeddings_B = toEmbeddings(test_paths_B, v_model)
 
     # ## vae
     # num_features = 1000
@@ -319,12 +327,17 @@ if __name__ == "__main__":
 
     test_labels = prepareLabels([1 for i in range(33)] + [3 for i in range(4)] + [4 for i in range(12)] + [2 for i in range(9)])
     test_labels_B = prepareLabels([2 for i in range(33)] + [3 for i in range(13)] + [1 for i in range(33)] + [4 for i in range(12)])
+    test_labels_occ = prepareLabels([5 for i in range(5)] + [1 for i in range(12)] + [2 for i in range(8)] + [6 for i in range(10)] + [3 for i in range(4)] + [4 for i in range(10)] + [5 for i in range(12)])
+
 
     #plotEmbeddings(embedded, labels, num_features)
     #plotEmbeddings(test_embeddings, test_labels, num_features)
     #plotEmbeddings(test_embeddings_B, test_labels_B, num_features)
+    #plotEmbeddings(test_embeddings_occ, test_labels_occ, num_features)
 
+    image_seq = [cv2.imread(img) for img in sorted(glob.glob('data/image_seq/*.jpg'))]
 
+    showDistances(image_seq[0], image_seq, model)
     #a, w, o = triplets[:, 0, :, :, :], triplets[:, 1, :, :, :], triplets[:, 2, :, :, :]
 
     # embedded = np.array([K.eval(toFeatureRepresentation(model, im)[0]) for im in a + w + o])

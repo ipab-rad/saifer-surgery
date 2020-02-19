@@ -124,6 +124,7 @@ import tensorflow as tf
 #     return recon_loss + kl_loss
 
 
+# triplet loss embedder class
 class Embedder:  #(tf.keras.Model)
     def __init__(self, w=480, h=640, batch_size=10, kernel_size=3, filters=32, embedding_size=1000, c=1):
         super(Embedder, self).__init__()
@@ -383,7 +384,7 @@ class Embedder:  #(tf.keras.Model)
         return np.array(triplet_list)
 
 
-    def load(self,path='./logs/tcn/test_B_'):
+    def load(self,path='./logs/tcn/testc50_'):
         self.embedder.load_weights(path+'embedder.h5')
         #self.model.load_weights(path+'model.h5')
         print('Loaded saved weights.')
@@ -523,6 +524,7 @@ class EmbedderAtt(Embedder):  #(tf.keras.Model)
         self.model.compile(optimizer='adam')
         self.model.summary()
 
+# embedder with paired distance loss
 class EmbedderV:  #(tf.keras.Model)
     def __init__(self, w=480, h=640, batch_size=10, kernel_size=3, filters=32, embedding_size=1000, c=1):
         super(EmbedderV, self).__init__()
