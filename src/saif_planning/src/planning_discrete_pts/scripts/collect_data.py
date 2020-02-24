@@ -48,6 +48,7 @@ class data_collector:
         self.rewards = []
                 
         self.model = InceptionV3(include_top=False, weights='imagenet', input_tensor=None, input_shape=(480,640,3), pooling='avg', classes=1000)
+	self.graph = tf.get_default_graph()
 
 
     #def collect_data():
@@ -89,14 +90,14 @@ class data_collector:
 
             self.joint_states.append(state)
 
-            reward = self.imageCompare(cv_image)
+            reward = self.imageCompare(self.toFeatureRepresentation(cv_image))
             self.rewards.append(reward)
 
-            np.save(np.array("joint_data.npy", dc.joint_states))
-            np.save(np.array("reward.npy", dc.rewards))
+            np.save("joint_data.npy",np.array(self.joint_states))
+            np.save("reward.npy", np.array(self.rewards))
 
             self.step += 1
-
+	    
 
 
 

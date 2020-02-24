@@ -20,6 +20,7 @@
 
 	<node name="planning_scene_constraints" pkg="planning_scene_constraints" type="add_static_objects.py" output="screen"/>
 
+	<node name="planning_discrete_pts" pkg="planning_discrete_pts" type="planning_discrete_pts" output="screen"/>
 	<include file="$(find dual_moveit)/launch/move_group.launch"/>
 
 

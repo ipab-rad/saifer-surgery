@@ -4,7 +4,7 @@ import math
 
 from funcsigs import signature
 import warnings
-from inspect import signature
+#from inspect import signature
 import numpy as np
 from scipy.special import kv, gamma
 from scipy.spatial.distance import pdist, cdist, squareform
@@ -97,17 +97,16 @@ class RBF_Sep(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
 
         X_1 = X[:,:-1]
         X_t = X[:, -1]
-        
 
         if Y is None:
             dists1 = pdist(X_1 / length_scale, metric='sqeuclidean')
-            K1 = np.exp(-.5 * dists)
+            K1 = np.exp(-.5 * dists1)
             # convert from upper-triangular matrix to square matrix
             K1 = squareform(K1)
             np.fill_diagonal(K1, 1)
 
             dists2 = pdist(X_t / length_scale, metric='sqeuclidean')
-            K2 = np.exp(-.5 * dists)
+            K2 = np.exp(-.5 * dists2)
             # convert from upper-triangular matrix to square matrix
             K2 = squareform(K2)
             np.fill_diagonal(K2, 1)
