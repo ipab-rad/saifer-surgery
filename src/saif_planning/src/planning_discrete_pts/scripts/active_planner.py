@@ -19,6 +19,7 @@ from geometry_msgs.msg import PoseArray, Pose, PoseStamped
 import numpy as np
 import moveit_commander
 import random
+from keras import backend as K
 import threading 
 import matplotlib.pyplot as plt
 import pylab as pl
@@ -85,7 +86,7 @@ class ActivePlanner(object):
 
         self.update = False
 
-        self.GP = GaussianProcessRegressor(kernel=RBF_sep(0.1), alpha=0.01, optimizer='fmin_l_bfgs_b', n_restarts_optimizer=0, normalize_y=True, copy_X_train=True, random_state=None)
+        self.GP = GaussianProcessRegressor(kernel=RBF_Sep(0.1), alpha=0.01, optimizer='fmin_l_bfgs_b', n_restarts_optimizer=0, normalize_y=True, copy_X_train=True, random_state=None)
         #self.GP = GaussianProcessRegressor(kernel=RBF(0.1), alpha=0.01, optimizer='fmin_l_bfgs_b', n_restarts_optimizer=0, normalize_y=True, copy_X_train=True, random_state=None)
         
         #self.model = InceptionV3(include_top=False, weights='imagenet', input_tensor=None, input_shape=(480,640,3), pooling='avg', classes=1000)
@@ -252,7 +253,8 @@ class ActivePlanner(object):
         labels = self.training_labels
         position = self.position
          
-        try:
+        #try:
+	if True:
             self.GP.fit(points, labels)
             current_index, _ = self.PG.findClosestNode(position)
         
@@ -365,11 +367,11 @@ class ActivePlanner(object):
             self.next_view = best_view
             
             
-        except ValueError:
-            print("gp fit error")
-            self.update = False
-            error = True
-            return
+        #except ValueError:
+        #    print("gp fit error")
+        #    self.update = False
+        #    error = True
+        #    return
         
         
 
@@ -463,6 +465,7 @@ class ActivePlanner(object):
                 
             state = np.append(np.array(position), self.time)
             self.training_pts.append(state)
+	    print("state: " + str(state))
             self.training_labels.append(reward)
 
             self.time += 1
@@ -508,25 +511,25 @@ class ActivePlanner(object):
             print("trajectory: {}".format(self.trajectory))
             self.saves += 1
             
-            if self.visualize == True:
-                pl.clf()
-                means, stds = self.GP.predict(self.PG.getNodes(), return_std=True)
-                x = range(len(self.PG.getNodes()))
-                pl.plot(range(len(self.PG.getNodes())), [acquisition(*pred) for pred in zip(means, stds)], c='r')
-                pl.plot(range(len(self.PG.getNodes())), means)
-#                 pl.fill(np.concatenate([x, x[::-1]]),
-#                  np.concatenate([means - 1.9600 * stds,
-#                             (means + 1.9600 * stds)[::-1]]),
-#                  alpha=.5, fc='b', ec='None', label='95% confidence interval')
-                pl.fill(np.concatenate([x, x[::-1]]),
-                 np.concatenate([means - stds,
-                            (means + stds)[::-1]]),
-                 alpha=.5, fc='b', ec='None', label='1 std')
-                #pl.plot(range(len(self.PG.getNodes())), stds)
-                pl.title("current index: {}, best index: {}, view: {}".format(self.PG.findClosestNode(position)[0], self.PG.findClosestNode(self.next_view)[0], self.views))
-                #pl.savefig("gp_{}_t{}_v{}_c{}b{}".format(self.target_name, self.trial_num, self.views, current_index, best_index))
-                display.clear_output(wait=True)
-                display.display(pl.gcf())
+            #if self.visualize == True:
+            #    pl.clf()
+            #    means, stds = self.GP.predict(self.PG.getNodes(), return_std=True)
+            #    x = range(len(self.PG.getNodes()))
+            #    pl.plot(range(len(self.PG.getNodes())), [acquisition(*pred) for pred in zip(means, stds)], c='r')
+            #    pl.plot(range(len(self.PG.getNodes())), means)
+#           #      pl.fill(np.concatenate([x, x[::-1]]),
+#           #       np.concatenate([means - 1.9600 * stds,
+#           #                  (means + 1.9600 * stds)[::-1]]),
+#           #       alpha=.5, fc='b', ec='None', label='95% confidence interval')
+            #    pl.fill(np.concatenate([x, x[::-1]]),
+            #     np.concatenate([means - stds,
+            #                (means + stds)[::-1]]),
+            #     alpha=.5, fc='b', ec='None', label='1 std')
+            #    #pl.plot(range(len(self.PG.getNodes())), stds)
+            #    pl.title("current index: {}, best index: {}, view: {}".format(self.PG.findClosestNode(position)[0], self.PG.findClosestNode(self.next_view)[0], self.views))
+            #    #pl.savefig("gp_{}_t{}_v{}_c{}b{}".format(self.target_name, self.trial_num, self.views, current_index, best_index))
+            #    display.clear_output(wait=True)
+            #    display.display(pl.gcf())
 
     def toFeatureRepresentation(self, img, img_shape=(480,640,3), pretrained=False):
         img = np.expand_dims(img, axis=0)
@@ -579,7 +582,7 @@ class ActivePlanner(object):
         #self.views_to_completion.append(self.views)
         self.next_view = None 
         self.views = 0
-        self.GP = GaussianProcessRegressor(kernel=RBF_sep(0.1), alpha=0.001, optimizer='fmin_l_bfgs_b', n_restarts_optimizer=0, normalize_y=True, copy_X_train=True, random_state=None)
+        self.GP = GaussianProcessRegressor(kernel=RBF_Sep(0.1), alpha=0.001, optimizer='fmin_l_bfgs_b', n_restarts_optimizer=0, normalize_y=True, copy_X_train=True, random_state=None)
         
 
         self.rewards = []
@@ -597,8 +600,8 @@ class ActivePlanner(object):
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--vfile", default="test_graph_pts.npy", help="File path for saving vertices")
-    parser.add_argument("--efile", default="test_graph_edges.npy", help="File path for saving edges")
+    parser.add_argument("--vfile", default="task_graph_pts3.npy", help="File path for saving vertices")
+    parser.add_argument("--efile", default="task_graph_edges3.npy", help="File path for saving edges")
     parser.add_argument("--robot_name", default="ur10", help="Name of robot")
     args, unknown_args = parser.parse_known_args()
 
