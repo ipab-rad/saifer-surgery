@@ -27,7 +27,7 @@ import cv2
 sys.path.append('/opt/ros/kinetic/lib/python2.7/dist-packages') # append back in order to import rospy
 import copy 
 
-from keras.layers import Input, Dense, Conv2D, Conv2DTranspose, Flatten, Lambda, Reshape
+from keras.layers import Input, Dense, Conv2D, Conv2DTranspose, Flatten, Lambda, Reshape, Dot
 from keras.models import Model
 from keras import backend as K
 from keras.callbacks import TensorBoard
@@ -52,76 +52,6 @@ import tensorflow as tf
 
 # keras.applications.inception_resnet_v2.InceptionResNetV2(include_top=True, weights='imagenet', input_tensor=None, input_shape=None, pooling=None, classes=1000)
 
-
-# class VAE(nn.Module):
-#     def __init__(self, in_shape, n_latent):
-#         super().__init__()
-#         self.in_shape = in_shape
-#         self.n_latent = n_latent
-#         c,h,w = in_shape
-#         self.z_dim = h//2**2 # receptive field downsampled 2 times
-#         self.encoder = nn.Sequential(
-#             nn.BatchNorm2d(c),
-#             nn.Conv2d(c, 32, kernel_size=4, stride=2, padding=1),  # 32, 16, 16
-#             nn.BatchNorm2d(32),
-#             nn.LeakyReLU(),
-#             nn.Conv2d(32, 64, kernel_size=4, stride=2, padding=1),  # 32, 8, 8
-#             nn.BatchNorm2d(64),
-#             nn.LeakyReLU(),
-#         )
-#         self.z_mean = nn.Linear(64 * self.z_dim**2, n_latent)
-#         self.z_var = nn.Linear(64 * self.z_dim**2, n_latent)
-#         self.z_develop = nn.Linear(n_latent, 64 * self.z_dim**2)
-#         self.decoder = nn.Sequential(
-#             nn.ConvTranspose2d(64, 32, kernel_size=3, stride=2, padding=0),
-#             nn.BatchNorm2d(32),
-#             nn.ReLU(),
-#             nn.ConvTranspose2d(32, 1, kernel_size=3, stride=2, padding=1),
-#             CenterCrop(h,w),
-#             nn.Sigmoid()
-#         )
-
-#     def sample_z(self, mean, logvar):
-#         stddev = torch.exp(0.5 * logvar)
-#         noise = Variable(torch.randn(stddev.size()))
-#         return (noise * stddev) + mean
-
-#     def encode(self, x):
-#         x = self.encoder(x)
-#         x = x.view(x.size(0), -1)
-#         mean = self.z_mean(x)
-#         var = self.z_var(x)
-#         return mean, var
-
-#     def decode(self, z):
-#         out = self.z_develop(z)
-#         out = out.view(z.size(0), 64, self.z_dim, self.z_dim)
-#         out = self.decoder(out)
-#         return out
-
-#     def forward(self, x):
-#         mean, logvar = self.encode(x)
-#         z = self.sample_z(mean, logvar)
-#         out = self.decode(z)
-#         return out, mean, logvar
-
-# def train(model, loader, loss_func, optimizer):
-#     model.train()
-#     for inputs, _ in loader:
-#         inputs = Variable(inputs)
-
-#         output, mean, logvar = model(inputs)
-#         loss = vae_loss(output, inputs, mean, logvar, loss_func)
-
-#         optimizer.zero_grad()
-#         loss.backward()
-#         optimizer.step()
-        
-# def vae_loss(output, input, mean, logvar, loss_func):
-#     recon_loss = loss_func(output, input)
-#     kl_loss = torch.mean(0.5 * torch.sum(
-#         torch.exp(logvar) + mean**2 - 1. - logvar, 1))
-#     return recon_loss + kl_loss
 
 
 # triplet loss embedder class
@@ -610,6 +540,7 @@ class EmbedderV:  #(tf.keras.Model)
         #triplet_loss = tf.math.maximum(euclidean_dist(output_1, output_0) - euclidean_dist(output_0, output_2) + self.c, 0)
         #triplet_loss = euclidean_dist(output_1, output_0) - euclidean_dist(output_0, output_2) + self.c
         vp_loss = euclidean_dist(output_0, output_1)
+        #vp_loss = -1 * Dot(1, normalize=True)([output_0, output_1])
 
         loss = K.mean(vp_loss) # max?
         self.model = Model([input1, input2], [output_0, output_1], name='VP_model')
@@ -644,9 +575,9 @@ class EmbedderV:  #(tf.keras.Model)
         
         self.model.fit(X_train,epochs=50,batch_size=self.batch_size,shuffle=True,validation_data=(X_test,None),callbacks=[TensorBoard(log_dir='./logs/v_model/')])
 
-        self.embedder.save_weights('./logs/v_model/test2_embedder.h5')
+        self.embedder.save_weights('./logs/v_model/test_csim_embedder.h5')
 
-        self.model.save_weights('./logs/v_model/test2_model.h5')
+        self.model.save_weights('./logs/v_model/test_csim_model.h5')
  
         print('Saved trained weights.')
 
@@ -699,7 +630,7 @@ class EmbedderV:  #(tf.keras.Model)
 
 
 
-    def load(self,path='./logs/v_model/test_'):
+    def load(self,path='./logs/v_model/test2_'):
         self.embedder.load_weights(path+'embedder.h5')
         #self.model.load_weights(path+'model.h5')
         print('Loaded saved weights.')
