@@ -29,6 +29,8 @@ from keras.applications.inception_v3 import preprocess_input
 #from sklearn.gaussian_process.kernels import RBF
 ##from pr2_controllers_msgs.msg import JointTrajectoryControllerState
 
+from image_representation import EmbedderV
+
 from add_pts import PlanningGraph
 import path_plan as pp 
 from kernel import RBF_Sep
@@ -85,9 +87,12 @@ class ActivePlanner(object):
 
         self.GP = GaussianProcessRegressor(kernel=RBF_sep(0.1), alpha=0.01, optimizer='fmin_l_bfgs_b', n_restarts_optimizer=0, normalize_y=True, copy_X_train=True, random_state=None)
         #self.GP = GaussianProcessRegressor(kernel=RBF(0.1), alpha=0.01, optimizer='fmin_l_bfgs_b', n_restarts_optimizer=0, normalize_y=True, copy_X_train=True, random_state=None)
-        self.model = InceptionV3(include_top=False, weights='imagenet', input_tensor=None, input_shape=(480,640,3), pooling='avg', classes=1000)
+        
+        #self.model = InceptionV3(include_top=False, weights='imagenet', input_tensor=None, input_shape=(480,640,3), pooling='avg', classes=1000)
         #self.model = InceptionResNetV2(include_top=False, weights='imagenet', input_tensor=None, input_shape=(480,640,3), pooling='avg', classes=1000)
         #self.model = ResNet152V2(include_top=False, weights='imagenet', input_tensor=None, input_shape=(480,640,3), pooling='avg', classes=1000)
+        self.model = EmbedderV
+        
         rospy.init_node('active_planner', anonymous=False)
         self.init_pose = init_pose
         self.setInitialPose(init_pose)
@@ -114,6 +119,7 @@ class ActivePlanner(object):
             index = random.randint(1, len(nodes) - 1)
         else:
             index = init_index
+
         print("initial index: " + str(index))
         print("initial state: " + str(nodes[index]))
         pp.planAndExecuteFromWaypoints(current, nodes[index], self.PG, self.group_name, max_dist = .5)
@@ -126,6 +132,7 @@ class ActivePlanner(object):
 
     def run(self, num_views=20, mode="AVS"):
 
+        # set up subscribers
         if self.robot == "pr2":
             im_sub = message_filters.Subscriber("/l_forearm_cam/image_color", Image, queue_size=1)
             joints_sub = message_filters.Subscriber("/l_arm_controller/state", JointTrajectoryControllerState, queue_size=1) 
@@ -166,6 +173,7 @@ class ActivePlanner(object):
 
         if rospy.is_shutdown():
             print("rospy shutdown")
+
         while not rospy.is_shutdown() and self.done == False:
             h = std_msgs.msg.Header()
             h.stamp = rospy.Time.now()
@@ -177,12 +185,14 @@ class ActivePlanner(object):
             #print("current pose: " + str(current_pose))
             pub_current.publish(current_pose)
 
+            # publish next view pose
             if self.next_view is not None and self.PG.state2index(self.next_view) < 11:
                     pose.pose = pose_list[self.PG.state2index(self.next_view)]
                     pose.header.stamp = rospy.Time.now()
                     pub_next.publish(pose)
                         
             
+            # if new information has been received, plan next view
             if self.update is True:
                 if mode == "AVS" and self.stay is False:
                	    self.chooseNextView()
@@ -219,6 +229,7 @@ class ActivePlanner(object):
         self.update = False
         print("num views: " + str(self.views))
         
+    # stay at a fixed view
     def sameView(self):
         position = self.position
         print(position)
@@ -245,7 +256,7 @@ class ActivePlanner(object):
             self.GP.fit(points, labels)
             current_index, _ = self.PG.findClosestNode(position)
         
-            #### ALL 
+            #### ALL, compare all views as candidate views 
 
             cand_pts = self.PG.getNodes()[1:]
             cand_states = np.zeros((np.shape(cand_pts)[0], np.shape(cand_pts)[1] + 1))
@@ -322,6 +333,7 @@ class ActivePlanner(object):
     #         best_view = self.PG.index2state(best_index)
             ####
 
+            # plot GP
             if self.visualize == True:
                 pl.clf()
                 means, stds = self.GP.predict(self.PG.getNodes(), return_std=True)
@@ -429,7 +441,7 @@ class ActivePlanner(object):
         current_index = self.PG.state2index(position)
         try:
             feature_rep = self.toFeatureRepresentation(cv_image, (img.height, img.width, 3))
-            reward = self.imageCompare(feature_rep) 
+            reward = self.imageCompare(feature_rep, pflag=False) 
             if reward > self.STAY_THRESH:
                 print("stay here, good view, reward {}".format(reward))
                 #self.stay = True
@@ -516,16 +528,21 @@ class ActivePlanner(object):
                 display.clear_output(wait=True)
                 display.display(pl.gcf())
 
-    def toFeatureRepresentation(self, img, img_shape=(480,640,3)):
+    def toFeatureRepresentation(self, img, img_shape=(480,640,3), pretrained=False):
         img = np.expand_dims(img, axis=0)
         img = preprocess_input(img)
         with self.graph.as_default():
-            return np.array(self.model.predict(img)).flatten()
+            if pretrained == True:
+                return np.array(self.model.predict(img)).flatten()
+            else:
+                return K.eval(np.array(self.model.predict(img)).flatten()[0])
 
 
-    def imageCompare(self, img):
+    def imageCompare(self, img, pflag=False):
+        """ compute cosine similarity between target image and given image embeddings"""
         target = self.toFeatureRepresentation(self.first_img)
-        return np.dot(target, img)/(np.linalg.norm(target) * np.linalg.norm(img))
+        return np.sqrt(np.sum(np.square(target - img)))
+        #return np.dot(target, img)/(np.linalg.norm(target) * np.linalg.norm(img))
 
     def saveRewards(self, dirname="data"):
         rewards = [str(tl) for tl in self.rewards]
@@ -562,7 +579,7 @@ class ActivePlanner(object):
         #self.views_to_completion.append(self.views)
         self.next_view = None 
         self.views = 0
-        self.GP = GaussianProcessRegressor(kernel=None, alpha=0.001, optimizer='fmin_l_bfgs_b', n_restarts_optimizer=0, normalize_y=True, copy_X_train=True, random_state=None)
+        self.GP = GaussianProcessRegressor(kernel=RBF_sep(0.1), alpha=0.001, optimizer='fmin_l_bfgs_b', n_restarts_optimizer=0, normalize_y=True, copy_X_train=True, random_state=None)
         
 
         self.rewards = []
