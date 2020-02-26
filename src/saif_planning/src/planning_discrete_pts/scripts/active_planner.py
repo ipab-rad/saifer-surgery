@@ -92,7 +92,8 @@ class ActivePlanner(object):
         #self.model = InceptionV3(include_top=False, weights='imagenet', input_tensor=None, input_shape=(480,640,3), pooling='avg', classes=1000)
         #self.model = InceptionResNetV2(include_top=False, weights='imagenet', input_tensor=None, input_shape=(480,640,3), pooling='avg', classes=1000)
         #self.model = ResNet152V2(include_top=False, weights='imagenet', input_tensor=None, input_shape=(480,640,3), pooling='avg', classes=1000)
-        self.model = EmbedderV
+        self.model = EmbedderV()
+        self.model.load()
         
         rospy.init_node('active_planner', anonymous=False)
         self.init_pose = init_pose
@@ -464,8 +465,9 @@ class ActivePlanner(object):
             #     print("training points: {}, {}".format(np.shape(self.training_pts), np.shape(self.training_labels)))
                 
             state = np.append(np.array(position), self.time)
+            print("state " + str(state))
             self.training_pts.append(state)
-	    print("state: " + str(state))
+
             self.training_labels.append(reward)
 
             self.time += 1
