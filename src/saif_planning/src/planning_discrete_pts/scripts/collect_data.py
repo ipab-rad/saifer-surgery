@@ -50,9 +50,6 @@ class data_collector:
         self.model = InceptionV3(include_top=False, weights='imagenet', input_tensor=None, input_shape=(480,640,3), pooling='avg', classes=1000)
 	self.graph = tf.get_default_graph()
 
-
-    #def collect_data():
-
         im_sub = message_filters.Subscriber("/camera/color/image_raw", Image, queue_size=1)
         joints_sub = message_filters.Subscriber("/joint_states", JointState, queue_size=1)
 
@@ -60,9 +57,7 @@ class data_collector:
         synched_sub = message_filters.ApproximateTimeSynchronizer([im_sub, joints_sub], queue_size=1, slop=0.05)
         synched_sub.registerCallback(self.callback)
 
-        
 
-        #while not rospy.is_shutdown():
 
     def toFeatureRepresentation(self, img, img_shape=(480,640,3)):
         img = np.expand_dims(img, axis=0)
@@ -113,19 +108,5 @@ if __name__ == "__main__":
         print("Shutting down module")
         
 
-    # rate = rospy.Rate(10) # 10hz
-
-    # if rospy.is_shutdown():
-    #     print("rospy shutdown")
-    
-    # 
 
 
-
-    # TODO  COLLECT 10 SEQUENCES FOR EACH OF 10 DIFFERENT TARGET OBJECTS
-
-    # FOR EACH SEQUENCE, RECORD COSINE SIM TO TARGET 
-
-    # TO TRAIN, INPUT 2 IMGS WITH SIMILAR SCORES AND 1 WITH A SIGNIFICANTLY DIFFERENT SCORE (> THAN SOME MIN DIST AWAY)
-
-    #LET LOSS BE C * |I1 - I2| - |I1 - I3|
