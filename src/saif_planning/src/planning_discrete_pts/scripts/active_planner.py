@@ -86,8 +86,8 @@ class ActivePlanner(object):
 
         self.update = False
 
-        self.GP = GaussianProcessRegressor(kernel=RBF_Sep(0.1), alpha=0.01, optimizer='fmin_l_bfgs_b', n_restarts_optimizer=0, normalize_y=True, copy_X_train=True, random_state=None)
-        #self.GP = GaussianProcessRegressor(kernel=RBF(0.1), alpha=0.01, optimizer='fmin_l_bfgs_b', n_restarts_optimizer=0, normalize_y=True, copy_X_train=True, random_state=None)
+        #self.GP = GaussianProcessRegressor(kernel=RBF_Sep(0.1), alpha=0.01, optimizer='fmin_l_bfgs_b', n_restarts_optimizer=0, normalize_y=True, copy_X_train=True, random_state=None)
+        self.GP = GaussianProcessRegressor(kernel=RBF(0.1), alpha=0.01, optimizer='fmin_l_bfgs_b', n_restarts_optimizer=0, normalize_y=True, copy_X_train=True, random_state=None)
         
         #self.model = InceptionV3(include_top=False, weights='imagenet', input_tensor=None, input_shape=(480,640,3), pooling='avg', classes=1000)
         #self.model = InceptionResNetV2(include_top=False, weights='imagenet', input_tensor=None, input_shape=(480,640,3), pooling='avg', classes=1000)
@@ -464,9 +464,8 @@ class ActivePlanner(object):
             #     self.training_labels.pop(index)
             #     print("training points: {}, {}".format(np.shape(self.training_pts), np.shape(self.training_labels)))
                 
-            state = np.append(np.array(position), self.time)
-            print("state " + str(state))
-            self.training_pts.append(state)
+            #state = np.append(np.array(position), self.time)
+            self.training_pts.append(np.array(position))
 
             self.training_labels.append(reward)
 
@@ -584,7 +583,7 @@ class ActivePlanner(object):
         #self.views_to_completion.append(self.views)
         self.next_view = None 
         self.views = 0
-        self.GP = GaussianProcessRegressor(kernel=RBF_Sep(0.1), alpha=0.001, optimizer='fmin_l_bfgs_b', n_restarts_optimizer=0, normalize_y=True, copy_X_train=True, random_state=None)
+        self.GP = GaussianProcessRegressor(kernel=RBF(0.1), alpha=0.001, optimizer='fmin_l_bfgs_b', n_restarts_optimizer=0, normalize_y=True, copy_X_train=True, random_state=None)
         
 
         self.rewards = []
