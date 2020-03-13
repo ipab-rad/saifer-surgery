@@ -4,9 +4,6 @@
 [submodule "src/saif_tools/ros_numpy"]
 	path = src/saif_tools/ros_numpy
 	url = https://github.com/eric-wieser/ros_numpy.git
-[submodule "src/saif_sensors/src/iai_kinect2"]
-	path = src/saif_sensors/src/iai_kinect2
-	url = https://github.com/code-iai/iai_kinect2.git
 [submodule "src/saif_learning/visual_irl"]
 	path = src/saif_learning/visual_irl
 	url = git@github.com:ipab-rad/visual_irl.git
@@ -25,3 +22,6 @@
 [submodule "src/saif_devices/src/ur_modern_driver"]
 	path = src/saif_devices/src/ur_modern_driver
 	url = git@github.com:ipab-rad/ur_modern_driver
+[submodule "src/saif_sensors/src/iai_kinect2"]
+	path = src/saif_sensors/src/iai_kinect2
+	url = git@github.com:ipab-rad/iai_kinect2
