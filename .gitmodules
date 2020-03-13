@@ -31,3 +31,6 @@
 [submodule "src/saif_control/ft_compliance"]
 	path = src/saif_control/ft_compliance
 	url = https://github.com/ipab-rad/ft_compliance
+[submodule "src/saif_perception/src/contour_tracer"]
+	path = src/saif_perception/src/contour_tracer
+	url = https://github.com/ipab-rad/contour_tracer
