@@ -19,7 +19,7 @@ source devel/setup.bash
 
 - Bug fixes, code cleanups and functionality improvements are encouraged, along with testing and documenting
 - At the moment, the preferred integration strategy is: 
-  - Build standalone library/ tool with core functionality (eg. [visual IRL approach](https://github.com/ipab-rad/visual_irl/tree/4bd514caab754971353f7e77a481f564f747c311)) and link using a git submodule
+  - Build standalone library/ tool with core functionality (eg. [visual IRL](https://github.com/ipab-rad/visual_irl/tree/4bd514caab754971353f7e77a481f564f747c311)) and link using a git submodule
   - Develop a small app showing how to use this functionality (eg. [autonomous ultrasound scanner](https://github.com/ipab-rad/saifer-surgery/tree/master/src/saif_apps/src/ultrasound_imager))
   - Document both with READMEs
 ___
