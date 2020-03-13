@@ -1,6 +1,6 @@
 ## Contour following
 
-Follows a set of points provided by the [contour tracing](../../saif_perception/src/contour_tracing) node. The MoveIt! Cartesian planner is used to move between points and send commands to the robot. Only positions are controlled, orientations are set to remain the same (initial pose) throughout.
+Follows a set of points provided by a suitable node (eg. the [contour tracing](../../saif_perception/src/contour_tracing) node). The MoveIt! Cartesian planner is used to move between points and send commands to the robot. Only positions are controlled, orientations are set to remain the same (initial pose) throughout.
 
 ### Parameters
 
