@@ -1,6 +1,6 @@
 ## Contour tracing
 
-This node listens for a pointcloud selection (published using the [selected points publisher](../../../saif_ui/publish_selected_patch) plugin in rviz), subsamples these points and then solves a travelling salesman problem to produce a path moving through these. This path can be used by the [contour_following](../../../saif_control/contour_following) node for contour following.
+This node listens for a pointcloud selection (eg. published using the [selected points publisher](../../../saif_ui/publish_selected_patch) plugin in rviz), subsamples these points and then solves a travelling salesman problem to produce a path moving through these. This path can be used by the [contour_following](../../../saif_control/contour_following) node for contour following.
 
 ### Parameters
 
