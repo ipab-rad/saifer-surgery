@@ -15,7 +15,7 @@ catkin_make
 source devel/setup.bash
 ```
 
-## How to contribute
+## How to contribute:
 
 - Bug fixes, code cleanups and functionality improvements are encouraged, along with testing and documenting
 - At the moment, the preferred integration strategy is: 
