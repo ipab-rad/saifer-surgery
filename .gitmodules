@@ -28,3 +28,6 @@
 [submodule "src/saif_control/spacenav_teleop"]
 	path = src/saif_control/spacenav_teleop
 	url = https://github.com/ipab-rad/spacenav_teleop
+[submodule "src/saif_control/ft_compliance"]
+	path = src/saif_control/ft_compliance
+	url = https://github.com/ipab-rad/ft_compliance
