@@ -20,4 +20,4 @@ To use, execute:
 <img src="https://github.com/ipab-rad/saifer-surgery/blob/master/src/saif_ui/contour_launch/ims/surface.gif" width="200" />
 </p>
 
-This node relies on the [contour_tracing](../../saif_perception/src/contour_tracing) node for perception and the [contour_following](../../saif_control/contour_following) node for planning and control.
+This node relies on the [contour_tracing](https://github.com/ipab-rad/contour_tracer) node for perception and the [contour_following](../../saif_control/contour_following) node for planning and control.
