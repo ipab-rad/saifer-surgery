@@ -14,12 +14,20 @@ git submodule update --init --recursive
 catkin_make
 source devel/setup.bash
 ```
+
+## How to contribute
+
+- Bug fixes, code cleanups and functionality improvements are encouraged, along with testing and documenting
+- At the moment, the preferred integration strategy is: 
+  - Build standalone library/ tool with core functionality (eg. [visual IRL approach](https://github.com/ipab-rad/visual_irl/tree/4bd514caab754971353f7e77a481f564f747c311)) and link using a git submodule
+  - Develop a small app showing how to use this functionality (eg. [autonomous ultrasound scanner](https://github.com/ipab-rad/saifer-surgery/tree/master/src/saif_apps/src/ultrasound_imager))
+  - Document both with READMEs
 ___
 ## Current functionality 
 ### (Warning: this is semi-functional research code under active development):
 
 ___
-### Motion planning and control
+### Motion planning and control with MoveIt!
 
 <img align="right" alt="" src="https://github.com/ipab-rad/saifer-surgery/blob/master/docs/images/arms.gif" width="150" /> [Launch arms](https://github.com/ipab-rad/saifer-surgery/tree/master/src/saif_ui/saifer_launch), plan and execute using MoveIt!
 ```
@@ -43,7 +51,6 @@ ___
 ```
 roslaunch contour_launch contour.launch
 ```
-
 
 ___
 ### Kinesthetic demonstration
