@@ -25,3 +25,6 @@
 [submodule "src/saif_tools/ros_numpy"]
 	path = src/saif_tools/ros_numpy
 	url = git@github.com:ipab-rad/ros_numpy
+[submodule "src/saif_control/spacenav_teleop"]
+	path = src/saif_control/spacenav_teleop
+	url = https://github.com/ipab-rad/spacenav_teleop
