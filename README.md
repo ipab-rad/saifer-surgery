@@ -55,7 +55,7 @@ roslaunch contour_launch contour.launch
 ___
 ### Kinesthetic demonstration
 
-<img align="right" alt="" src="https://github.com/ipab-rad/saifer-surgery/blob/master/src/saif_control/ft_compliance/ims/demo.gif" width="150" />Physically move red arm (only red has this functionality at present, to avoid risk of crushing blue camera. Make sure to zero the ft sensor before using. See the [ft_compliance](./src/saif_control/ft_compliance) node for more detail.
+<img align="right" alt="" src="https://github.com/ipab-rad/ft_compliance/ims/demo.gif" width="150" />Physically move red arm (only red has this functionality at present, to avoid risk of crushing blue camera. Make sure to zero the ft sensor before using. See the [ft_compliance](https://github.com/ipab-rad/ft_compliance) node for more detail.
 ```
 rosservice call /red/robotiq_ft_sensor_acc "command_id: 0 command: 'SET ZRO'"
 roslaunch ft_compliance compliance.launch
