@@ -38,7 +38,7 @@ ___
 
 ### 3D mouse control with spacenav
 
-<img align="right" alt="" src="http://wiki.ros.org/spacenav_node?action=AttachFile&do=get&target=spacenav.png" width="120" /> Inverse dynamics on the red arm, with gripper opening and closing. See the [spacenav_teleop](./src/saif_control/spacenav_teleop) node for more detail.
+<img align="right" alt="" src="http://wiki.ros.org/spacenav_node?action=AttachFile&do=get&target=spacenav.png" width="120" /> Inverse dynamics on the red arm, with gripper opening and closing. See the [spacenav_teleop](https://github.com/ipab-rad/spacenav_teleop) node for more detail.
 ```
 roslaunch saifer_launch dual.launch
 roslaunch spacenav_teleop teleop.launch
