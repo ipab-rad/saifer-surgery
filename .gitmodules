@@ -1,6 +1,3 @@
-[submodule "src/saif_devices/src/ur_modern_driver"]
-	path = src/saif_devices/src/ur_modern_driver
-	url = https://github.com/ros-industrial/ur_modern_driver.git
 [submodule "src/saif_tools/Boost.NumPy"]
 	path = src/saif_tools/Boost.NumPy
 	url = https://github.com/gt-ros-pkg/Boost.NumPy.git
@@ -25,3 +22,6 @@
 [submodule "src/saif_devices/src/universal_robot"]
 	path = src/saif_devices/src/universal_robot
 	url = git@github.com:ipab-rad/universal_robot
+[submodule "src/saif_devices/src/ur_modern_driver"]
+	path = src/saif_devices/src/ur_modern_driver
+	url = git@github.com:ipab-rad/ur_modern_driver
