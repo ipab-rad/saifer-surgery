@@ -34,7 +34,7 @@ ___
 
 <img align="right" alt="" src="https://github.com/ipab-rad/saifer-surgery/blob/master/docs/images/arms.gif" width="150" /> [Launch arms](https://github.com/ipab-rad/saifer-surgery/tree/master/src/saif_ui/saifer_launch), plan and execute using MoveIt!
 ```
-roslaunch saifer_launch dual.launch
+roslaunch saifer_launch dual_arm.launch
 ```
 
 ___
@@ -43,7 +43,7 @@ ___
 
 <img align="right" alt="" src="http://wiki.ros.org/spacenav_node?action=AttachFile&do=get&target=spacenav.png" width="120" /> Inverse dynamics on the red arm, with gripper opening and closing. See the [spacenav_teleop](https://github.com/ipab-rad/spacenav_teleop) node for more detail.
 ```
-roslaunch saifer_launch dual.launch
+roslaunch saifer_launch dual_arm.launch
 roslaunch spacenav_teleop teleop.launch
 ```
 
