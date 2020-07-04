@@ -12,7 +12,7 @@ See [companion site](https://sites.google.com/view/ultrasound-scanner) for more 
 
 Launch robot and ultrasound image streamer
 ```
-roslaunch saifer_launch dual.launch
+roslaunch saifer_launch dual_arm.launch
 roslaunch ultrasound_epiphan us.launch
 ```
 
