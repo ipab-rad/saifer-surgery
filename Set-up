@@ -31,7 +31,7 @@ source /opt/ros/kinetic/setup.bash
 source devel/setup.bash
 jupyter notebook
 
-In newest.ipynb there are some useful commands to get started
+In docs/simple-move-commands.ipynb there are some useful commands to get started
 
 
 
