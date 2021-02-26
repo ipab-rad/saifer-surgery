@@ -1,0 +1,47 @@
+-start arms on pendant - Go to initialize -> Init -> On
+- (optional) reduce the speed of the arms - Program Robot -> Move -> Use the speed slider at the bottom ~30%
+- Open a terminal and split a few windows with tmux
+
+Window 1:
+- source /opt/ros/kinetic/setup.bash
+- catkin_make
+- source devel/setup.bash
+- 
+
+
+Window 2:
+- source /opt/ros/kinetic/setup.bash
+- source devel/setup.bash
+- roslaunch realsense2_camera rs_rgbd.launch
+     - if error: No RealSense devices were found! - Plug and unplug the thick usb cable on the PC below - the one with the label RS Blue
+
+
+Windows 3:
+source /opt/ros/kinetic/setup.bash
+source devel/setup.bash
+rosrun robotiq_3f_gripper_control Robotiq3FGripperSimpleController.py
+- activate (a) - to activate
+- pinch mode (p)
+- 107 (112 new; smaller number is less force)
+- open the gripper (o)
+
+
+Windows 4:
+source /opt/ros/kinetic/setup.bash
+source devel/setup.bash
+jupyter notebook
+
+In newest.ipynb there are some useful commands to get started
+
+
+
+# Check the camera image
+rosrun image_view image_view image:=/camera/color/image_raw
+
+# Record some topics into a rosbag
+rosbag record /tf /joint_states /camera/depth/camera_info /camera/depth/image_rect_raw /camera/color/camera_info /camera/color/image_raw
+
+# Open and close the gripper of the blue arm
+rostopic pub /gripper/cmd robotiq_85_msgs/GripperCmd "{emergency_release: false, emergency_release_dir: 0, stop: false, position: 0.01, speed: 0.05, force: 0.0}"
+
+rostopic pub /gripper/cmd robotiq_85_msgs/GripperCmd "{emergency_release: false, emergency_release_dir: 0, stop: false, position: 0.05, speed: 0.05, force: 0.0}" 
