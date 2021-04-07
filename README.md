@@ -76,4 +76,10 @@ roslaunch ultrasound_epiphan us.launch
 rosrun ultrasound_imager pairwise_ultrasound_scanner.py
 ```
 
+___
+### Probabilistic Environment Specification
 
+<img align="right" alt="" src="https://github.com/craigiedon/ProbRobScene/blob/master/pictures/dualArm.png" width="150"/>
+Declaratively specify the space of possible environments your robot can run in, then automatically sample environment configurations which conform to this specification. These configurations can then be used to initialize setups in simulation.
+
+> __Note__: Integration of this functionality with ROS-Kinetic is currently in-progress, but you can access the main functionality via the [ProbRobScene repository](https://github.com/craigiedon/ProbRobScene)
