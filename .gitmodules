@@ -34,3 +34,6 @@
 [submodule "src/saif_perception/src/contour_tracer"]
 	path = src/saif_perception/src/contour_tracer
 	url = https://github.com/ipab-rad/contour_tracer
+[submodule "src/saif_tools/probrobscene"]
+	path = src/saif_tools/probrobscene
+	url = https://github.com/craigiedon/ProbRobScene
