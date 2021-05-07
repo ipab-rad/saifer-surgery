@@ -5,7 +5,7 @@ This package allows to calibrate 4 static Kinect + 1 arm-mounted Realsense RGBD 
 ## Calibration
 
 1. Place aprilgrid board on the tabletop, centered, aligned
-2. Run `/mk_calib_tags.m`
+2. Run `src/mk_calib_tags.m` in Matlab
 3. Exports `calib/data/tags/kinect2_multi_reg_tf_link.launch`
 
 ## Lauch
